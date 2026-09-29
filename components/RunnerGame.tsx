@@ -16,11 +16,11 @@ interface RunnerGameProps {
     onExit: () => void;
 }
 
-// Home-ish screens are stripped in game-only mode — any navigation toward
-// them snaps straight back into gameplay. Playable states
+// The game front page is the original landing screen. Account / info /
+// multiplayer screens are stripped in game-only mode — any navigation
+// toward them snaps back to the landing. Playable states
 // (PLAYING / PAUSED / SHOP / LEVEL_COMPLETE / GAME_OVER / VICTORY) are kept.
-const HOME_STATUSES = new Set<GameStatus>([
-    GameStatus.LANDING,
+const AWAY_STATUSES = new Set<GameStatus>([
     GameStatus.AUTH,
     GameStatus.PROFILE,
     GameStatus.MENU,
@@ -80,11 +80,12 @@ function Scene() {
 export const RunnerGame: React.FC<RunnerGameProps> = ({ lang, onExit }) => {
     const isAr = lang === 'ar';
 
-    // Jump straight into gameplay — no landing / auth / menus.
+    // Open on the game front page (landing) — no auto-start.
+    // Any detour to a stripped screen returns to the landing.
     useEffect(() => {
-        useStore.getState().startGame(1);
+        useStore.getState().setStatus(GameStatus.LANDING);
         const unsub = useStore.subscribe((s) => {
-            if (HOME_STATUSES.has(s.status)) useStore.getState().restartGame();
+            if (AWAY_STATUSES.has(s.status)) useStore.getState().setStatus(GameStatus.LANDING);
         });
         return () => unsub();
     }, []);

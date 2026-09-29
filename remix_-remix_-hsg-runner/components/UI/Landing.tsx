@@ -1,12 +1,11 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Play, LogIn, ChevronRight, Zap, Target, Award } from 'lucide-react';
+import { Play, ChevronRight, Zap, Target, Award } from 'lucide-react';
 import { useStore } from '../../store';
-import { GameStatus } from '../../types';
 import { audio } from '../System/Audio';
 
 export const LandingScreen: React.FC = () => {
-    const { setStatus, startGame, unlockedLevels } = useStore();
+    const { startGame, unlockedLevels } = useStore();
 
     return (
         <motion.div 
@@ -27,11 +26,11 @@ export const LandingScreen: React.FC = () => {
                     transition={{ duration: 1, type: "spring" }}
                     className="text-center mb-16"
                 >
-                    <div className="inline-block px-4 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 text-xs tracking-[0.3em] font-mono mb-6 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
-                        WELCOME TO THE NEON GRID
+                    <div className="inline-block px-4 py-1 rounded-full border border-[#C9A24B]/50 bg-[#C9A24B]/10 text-[#F0DDAE] text-xs tracking-[0.3em] font-mono mb-6 shadow-[0_0_15px_rgba(201,162,75,0.25)]" dir="ltr">
+                        FIRAS ARCADE • NEON GRID
                     </div>
-                    <h1 className="text-6xl md:text-9xl font-black italic uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-cyan-200 to-cyan-500 drop-shadow-[0_0_40px_rgba(6,182,212,0.6)] leading-none mb-6">
-                        HSG<br/>RUNNER
+                    <h1 className="text-6xl md:text-9xl font-black italic uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-[#F0DDAE] to-[#C9A24B] drop-shadow-[0_0_40px_rgba(201,162,75,0.45)] leading-none mb-6" dir="ltr">
+                        FIRAS<br/>RUNNER
                     </h1>
                     <p className="text-gray-400 text-lg md:text-2xl max-w-2xl mx-auto font-cyber tracking-wide leading-relaxed">
                         Survive the cyber void. Collect data fragments. Master the ultimate synthwave endless runner.
@@ -41,24 +40,15 @@ export const LandingScreen: React.FC = () => {
                 {/* Call to Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-6 w-full max-w-2xl mb-24">
                     <motion.button
-                        whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(6, 182, 212, 0.4)" }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => { audio.init(); setStatus(GameStatus.AUTH); }}
-                        className="flex-1 py-5 bg-cyan-500 text-black font-black text-xl md:text-2xl rounded-2xl flex items-center justify-center italic tracking-widest uppercase relative overflow-hidden group"
-                    >
-                        <span className="relative z-10 flex items-center">
-                            Enter Grid <LogIn className="ml-3 w-6 h-6" />
-                        </span>
-                        <div className="absolute inset-0 bg-white/30 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                    </motion.button>
-
-                    <motion.button
-                        whileHover={{ scale: 1.05, backgroundColor: "rgba(255,255,255,0.1)" }}
+                        whileHover={{ scale: 1.05, boxShadow: "0 0 44px rgba(201, 162, 75, 0.55)" }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => { audio.init(); startGame(unlockedLevels); }}
-                        className="flex-1 py-5 bg-white/5 border border-white/20 text-white font-black text-xl md:text-2xl rounded-2xl flex items-center justify-center italic tracking-widest uppercase transition-colors"
+                        className="flex-1 py-5 bg-gradient-to-b from-[#F0DDAE] via-[#C9A24B] to-[#8A6A3A] text-black font-black text-xl md:text-2xl rounded-2xl flex items-center justify-center italic tracking-widest uppercase relative overflow-hidden group shadow-[0_0_36px_rgba(201,162,75,0.4)]"
                     >
-                        Play Demo <Play className="ml-3 w-6 h-6 fill-white" />
+                        <span className="relative z-10 flex items-center" dir="ltr">
+                            Play Now • العب الآن <Play className="ml-3 w-6 h-6 fill-black" />
+                        </span>
+                        <div className="absolute inset-0 bg-white/30 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                     </motion.button>
                 </div>
 
@@ -96,10 +86,10 @@ export const LandingScreen: React.FC = () => {
                         transition={{ delay: 0.6 }}
                         className="bg-black/40 border border-white/10 rounded-3xl p-8 backdrop-blur-md"
                     >
-                        <Award className="w-12 h-12 text-blue-400 mb-6 drop-shadow-[0_0_15px_rgba(96,165,250,0.5)]" />
-                        <h3 className="text-2xl font-black italic text-white uppercase mb-4">Global Network</h3>
+                        <Award className="w-12 h-12 text-[#D9C08A] mb-6 drop-shadow-[0_0_15px_rgba(217,192,138,0.5)]" />
+                        <h3 className="text-2xl font-black italic text-white uppercase mb-4">Arcade Records</h3>
                         <p className="text-gray-400 leading-relaxed font-cyber text-sm">
-                            Sync your progress to the cloud, compete with other runners globally, and race your friends in real-time multiplayer lobbies.
+                            No sign-up, no waiting — every run saves your best right in your browser. Beat your own legend, run after run.
                         </p>
                     </motion.div>
                 </div>
@@ -129,8 +119,8 @@ export const LandingScreen: React.FC = () => {
                                 <p className="text-xs text-gray-500 font-mono">Procedural Generation</p>
                             </div>
                             <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                                <h4 className="text-yellow-400 font-black italic uppercase text-lg mb-1">Real-Time</h4>
-                                <p className="text-xs text-gray-500 font-mono">Multiplayer Sync</p>
+                                <h4 className="text-[#D9C08A] font-black italic uppercase text-lg mb-1">Instant</h4>
+                                <p className="text-xs text-gray-500 font-mono">No Sign-Up Needed</p>
                             </div>
                         </div>
                     </motion.div>
@@ -162,11 +152,9 @@ export const LandingScreen: React.FC = () => {
 
                 {/* Footer Links */}
                 <div className="mt-12 w-full flex flex-col md:flex-row justify-between items-center text-[10px] text-gray-500 uppercase tracking-widest font-mono border-t border-white/10 pt-8 pb-12">
-                    <div>© 2026 HSG Runner Corp. All rights reserved.</div>
-                    <div className="flex gap-4 mt-4 md:mt-0">
-                        <button onClick={() => setStatus(GameStatus.ABOUT)} className="hover:text-cyan-400 transition-colors">About</button>
-                        <button onClick={() => setStatus(GameStatus.PRIVACY)} className="hover:text-cyan-400 transition-colors">Privacy</button>
-                        <button onClick={() => setStatus(GameStatus.TERMS)} className="hover:text-cyan-400 transition-colors">Terms</button>
+                    <div dir="ltr">© 2026 FIRAS • RISE WITH FIRE</div>
+                    <div className="flex gap-4 mt-4 md:mt-0" dir="ltr">
+                        <span className="text-[#C9A24B]/70">FIRAS ARCADE</span>
                     </div>
                 </div>
             </div>
