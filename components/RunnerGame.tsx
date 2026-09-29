@@ -16,11 +16,10 @@ interface RunnerGameProps {
     onExit: () => void;
 }
 
-// The game front page is the original landing screen. Account / info /
-// multiplayer screens are stripped in game-only mode — any navigation
-// toward them snaps back to the landing. Playable states
-// (PLAYING / PAUSED / SHOP / LEVEL_COMPLETE / GAME_OVER / VICTORY) are kept.
-const AWAY_STATUSES = new Set<GameStatus>([
+// Arcade mode: the front page is stripped — jump straight into gameplay.
+// Any navigation toward a home-ish screen snaps back into the run.
+const HOME_STATUSES = new Set<GameStatus>([
+    GameStatus.LANDING,
     GameStatus.AUTH,
     GameStatus.PROFILE,
     GameStatus.MENU,
@@ -32,7 +31,6 @@ const AWAY_STATUSES = new Set<GameStatus>([
     GameStatus.CONTACT,
     GameStatus.TERMS,
 ]);
-
 // Dynamic Camera Controller (same as the standalone runner)
 const CameraController = () => {
     const { camera, size } = useThree();
@@ -80,12 +78,11 @@ function Scene() {
 export const RunnerGame: React.FC<RunnerGameProps> = ({ lang, onExit }) => {
     const isAr = lang === 'ar';
 
-    // Open on the game front page (landing) — no auto-start.
-    // Any detour to a stripped screen returns to the landing.
+    // Jump straight into gameplay — no landing / auth / menus.
     useEffect(() => {
-        useStore.getState().setStatus(GameStatus.LANDING);
+        useStore.getState().startGame(1);
         const unsub = useStore.subscribe((s) => {
-            if (AWAY_STATUSES.has(s.status)) useStore.getState().setStatus(GameStatus.LANDING);
+            if (HOME_STATUSES.has(s.status)) useStore.getState().restartGame();
         });
         return () => unsub();
     }, []);
@@ -117,22 +114,20 @@ export const RunnerGame: React.FC<RunnerGameProps> = ({ lang, onExit }) => {
             </Canvas>
             <HUD />
 
-            {/* Back to the hub */}
-            <button
-                type="button"
-                onClick={onExit}
-                className="btn-arena absolute top-4 left-4 z-[300] inline-flex items-center gap-2.5 rounded-2xl border border-[#C9A24B]/50 bg-black/70 px-5 py-3 text-sm font-black text-[#F0DDAE] backdrop-blur-xl shadow-[0_10px_36px_rgba(0,0,0,0.6)] hover:bg-[#C9A24B]/15 hover:border-[#F0DDAE]/80 active:scale-95"
-            >
-                <svg className="w-4 h-4 rtl:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M19 12H5M11 18l-6-6 6-6" />
-                </svg>
-                <span dir={isAr ? 'rtl' : 'ltr'}>{isAr ? 'رجوع' : 'Back'}</span>
-            </button>
-
-            {/* Game badge */}
-            <div className="absolute top-4 right-4 z-[300] hidden sm:flex items-center gap-2 rounded-full border border-white/15 bg-black/60 px-4 py-2 backdrop-blur-xl" dir="ltr">
-                <span className="w-2 h-2 rounded-full bg-[#53FC18] animate-pulse shadow-[0_0_10px_#53FC18]" />
-                <span className="text-[10px] font-black tracking-[0.28em] text-white/70">FIRAS RUNNER</span>
+            {/* Back to the hub — strong gold */}
+            <div className="absolute top-4 left-4 z-[300] animate-fade-in">
+                <span className="absolute -inset-1.5 rounded-[20px] bg-gradient-to-b from-[#F0DDAE] to-[#8A6A3A] opacity-50 blur-lg" aria-hidden="true" />
+                <button
+                    type="button"
+                    onClick={onExit}
+                    className="btn-arena group relative inline-flex items-center gap-2.5 overflow-hidden rounded-2xl border border-[#FFF3D6]/70 bg-gradient-to-b from-[#FFF3D6] via-[#E3BD64] to-[#8A6A3A] px-6 py-3.5 text-sm font-black text-black shadow-[0_14px_44px_-8px_rgba(201,162,75,0.8)] hover:brightness-110 active:scale-95"
+                >
+                    <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M19 12H5M11 18l-6-6 6-6" />
+                    </svg>
+                    <span dir={isAr ? 'rtl' : 'ltr'}>{isAr ? 'عودة للقلعة' : 'Back to Hub'}</span>
+                    <span className="pointer-events-none absolute inset-y-0 w-1/2 -skew-x-12 bg-white/50 blur-md -left-[60%] transition-all duration-700 group-hover:left-[130%]" aria-hidden="true" />
+                </button>
             </div>
         </div>
     );

@@ -10,7 +10,7 @@ import * as THREE from 'three';
 import { Text3D, Center, Float } from '@react-three/drei';
 import { v4 as uuidv4 } from 'uuid';
 import { useStore } from '../../store';
-import { GameObject, ObjectType, LANE_WIDTH, SPAWN_DISTANCE, REMOVE_DISTANCE, GameStatus, GEMINI_COLORS, RUN_SPEED_BASE } from '../../types';
+import { GameObject, ObjectType, LANE_WIDTH, SPAWN_DISTANCE, REMOVE_DISTANCE, GameStatus, GEMINI_COLORS, RUN_SPEED_BASE, getTargetWord } from '../../types';
 import { audio } from '../System/Audio';
 
 // Geometry Constants
@@ -518,14 +518,14 @@ export const LevelManager: React.FC<{ trackOffset?: number, playerId?: string }>
 
              if (isLetterDue) {
                  const lane = getRandomLane(laneCount);
-                 const target = ['H','S','G','R','U','N'];
-                 
+                 const target = getTargetWord(level);
+
                  const availableIndices = target.map((_, i) => i).filter(i => !collectedLetters.includes(i));
 
                  if (availableIndices.length > 0) {
                      const chosenIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
                      const val = target[chosenIndex];
-                     const color = GEMINI_COLORS[chosenIndex];
+                     const color = GEMINI_COLORS[chosenIndex % GEMINI_COLORS.length];
 
                      keptObjects.push({
                         id: uuidv4(),

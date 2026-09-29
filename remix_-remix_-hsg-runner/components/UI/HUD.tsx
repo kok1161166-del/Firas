@@ -9,7 +9,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { Heart, Zap, Trophy, MapPin, Diamond, Rocket, ArrowUpCircle, Shield, Activity, PlusCircle, Play, Cpu, ChevronRight, ShoppingCart, MoreVertical, LogOut, Eye, EyeOff, Settings, RefreshCw, Volume2, VolumeX, Pause, User, Store, CheckCircle, Users, Home, Magnet, Clock, Star, Target } from 'lucide-react';
 import { useStore, OnlinePlayer } from '../../store';
-import { GameStatus, GEMINI_COLORS, ShopItem, RUN_SPEED_BASE } from '../../types';
+import { GameStatus, GEMINI_COLORS, ShopItem, RUN_SPEED_BASE, getTargetWord } from '../../types';
 import { audio } from '../System/Audio';
 import { LevelSelect } from './LevelSelect';
 
@@ -1242,7 +1242,7 @@ export const HUD: React.FC = () => {
   const resetOnlineState = useStore(state => state.resetOnlineState);
   const onlinePlayers = useStore(state => state.onlinePlayers);
 
-  const target = ['H', 'S', 'G', 'R', 'U', 'N'];
+  const target = getTargetWord(level);
   
   // Ref for tracking life loss animations
   const prevLivesRef = useRef(lives);
@@ -1937,8 +1937,8 @@ export const HUD: React.FC = () => {
                         <div className="text-[7px] md:text-[10px] text-pink-500/70 font-cyber tracking-widest uppercase italic pr-1">BIO_CORE_LINK</div>
                     </div>
 
-                    {/* More Menu Button / Home Button in Online */}
-                    <div className="relative pointer-events-auto">
+                    {/* More Menu Button removed in embedded arcade mode — back button only */}
+                    <div className="relative pointer-events-auto" style={{ display: 'none' }} aria-hidden="true">
                         <button 
                             onClick={async () => {
                                 audio.playClick();
@@ -2001,7 +2001,7 @@ export const HUD: React.FC = () => {
                     <div className="flex space-x-2 md:space-x-4">
                         {target.map((char, idx) => {
                             const isCollected = collectedLetters.includes(idx);
-                            const color = GEMINI_COLORS[idx];
+                            const color = GEMINI_COLORS[idx % GEMINI_COLORS.length];
 
                             return (
                                 <motion.div 

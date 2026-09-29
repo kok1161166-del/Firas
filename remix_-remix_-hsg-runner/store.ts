@@ -135,7 +135,6 @@ interface GameState {
   resetOnlineState: () => void;
 }
 
-const HSG_TARGET = ['H', 'S', 'G', 'R', 'U', 'N'];
 const MAX_LEVEL = 9999; // Practically infinite
 
 export const useStore = create<GameState>()(

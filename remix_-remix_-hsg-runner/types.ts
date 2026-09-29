@@ -63,15 +63,39 @@ export const RUN_SPEED_BASE = 22.5;
 export const SPAWN_DISTANCE = 120;
 export const REMOVE_DISTANCE = 20; // Behind player
 
-// Google-ish Neon Colors: Blue, Red, Yellow, Blue, Green, Red
+// Google-ish Neon Colors: Blue, Red, Yellow, Blue, Green, Red + Orange, Cyan
 export const GEMINI_COLORS = [
-    '#2979ff', // G - Blue
-    '#ff1744', // E - Red
-    '#ffea00', // M - Yellow
-    '#2979ff', // I - Blue
-    '#00e676', // N - Green
-    '#ff1744', // I - Red
+    '#2979ff', // Blue
+    '#ff1744', // Red
+    '#ffea00', // Yellow
+    '#2979ff', // Blue
+    '#00e676', // Green
+    '#ff1744', // Red
+    '#ff9100', // Orange
+    '#00e5ff', // Cyan
 ];
+
+// Word collection — a new word every level, rotating through the list.
+// FIRAS first, then arcade words. Max 8 letters (matches letter spacing).
+export const TARGET_WORDS: string[] = [
+    'FIRAS',
+    'FIRE',
+    'LEGEND',
+    'NEON',
+    'BLAZE',
+    'STORM',
+    'TITAN',
+    'CYBER',
+    'GRID',
+    'NOVA',
+    'THUNDER',
+    'FORTRESS',
+];
+
+export const getTargetWord = (level: number): string[] => {
+    const safeLevel = Math.max(1, Math.floor(level) || 1);
+    return TARGET_WORDS[(safeLevel - 1) % TARGET_WORDS.length].split('');
+};
 
 export interface ShopItem {
     id: string;
