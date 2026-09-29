@@ -217,7 +217,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
         .kick-msg{animation:kick-msg-in .22s ease}
         @media (prefers-reduced-motion:reduce){.kick-msg{animation:none}}
       `}</style>
-    <div className="flex flex-col h-full w-full bg-[#0b0e0f]/80 backdrop-blur-2xl rounded-3xl overflow-hidden border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative ring-1 ring-white/5 isolate group">
+    <div className="flex flex-col h-full min-h-0 w-full bg-[#0b0e0f]/80 backdrop-blur-2xl rounded-3xl overflow-hidden border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative ring-1 ring-white/5 isolate group">
       {/* Gold top accent */}
       <span className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-l from-transparent via-[#C9A24B]/80 to-transparent z-20 pointer-events-none" aria-hidden="true" />
 
@@ -282,7 +282,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
       <div
         ref={chatContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto overflow-x-hidden p-4 pt-5 space-y-1.5 kick-chat-scroll bg-gradient-to-b from-[#0b0e0f]/50 to-transparent relative"
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 pt-5 space-y-1.5 kick-chat-scroll bg-gradient-to-b from-[#0b0e0f]/50 to-transparent relative"
       >
         {/* Bottom-anchor: messages stack from the bottom like real stream chat.
             The auto margin absorbs empty space; it collapses to zero when full
