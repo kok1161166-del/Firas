@@ -843,7 +843,7 @@ export default function App() {
                     <div className="relative z-10 w-full max-w-[1200px] mx-auto px-3 sm:px-4 md:px-8 pb-10 overflow-clip">
 
                         {/* ===== HERO — ascension in the citadel void ===== */}
-                        <section id="top" className="relative pt-28 md:pt-44 pb-8 md:pb-12 overflow-clip">
+                        <section id="top" className="relative pt-0 md:pt-0 pb-8 md:pb-12 overflow-clip">
                             <div className="relative mx-auto w-full max-w-3xl text-center">
                                 {/* emblem seal */}
                                 <div className="animate-fade-in relative mx-auto w-fit" onMouseEnter={() => setIsHoveringProfile(true)} onMouseLeave={() => setIsHoveringProfile(false)}>
