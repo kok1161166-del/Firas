@@ -107,11 +107,12 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             .forge-topline-right{display:flex;align-items:center;gap:8px}
             .forge-top-dot{width:5px;height:5px;border-radius:50%;background:var(--forge-gold);box-shadow:0 0 12px var(--forge-gold)}
             .forge-main{position:relative;display:grid;grid-template-columns:minmax(220px,1fr) auto minmax(420px,1.35fr);align-items:center;gap:24px;min-height:76px;
-                padding:10px 12px;border:1px solid rgba(217,180,94,.42);border-radius:24px 24px 16px 16px;
-                background:linear-gradient(110deg,rgba(15,12,8,.93),rgba(24,18,9,.78) 45%,rgba(9,8,6,.95));
+                padding:10px 12px;border:1px solid rgba(217,180,94,.52);border-radius:24px 24px 16px 16px;
+                background-image:linear-gradient(90deg,rgba(6,5,3,.96),rgba(20,14,7,.7) 45%,rgba(6,5,3,.96)),url('/bg-fortress.jpg');
+                background-size:cover;background-position:center 14%;background-repeat:no-repeat;
                 box-shadow:0 20px 48px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,247,214,.12);backdrop-filter:blur(20px) saturate(1.2);-webkit-backdrop-filter:blur(20px)}
-            .forge-main::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:.13;background-image:url('/firas-f.png');
-                background-repeat:no-repeat;background-size:240px;background-position:45% 48%;mix-blend-mode:screen}
+            .forge-main::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+                background:linear-gradient(180deg,rgba(255,237,179,.1),transparent 36%,rgba(0,0,0,.26));mix-blend-mode:screen}
             .forge-main::after{content:"";position:absolute;top:-1px;left:14%;right:14%;height:2px;border-radius:99px;background:linear-gradient(90deg,transparent,#F7E4A8,transparent);box-shadow:0 0 18px rgba(247,228,168,.6)}
             .forge-status{position:relative;z-index:1;display:flex;align-items:center;gap:11px;min-width:0}
             .forge-status-orb{position:relative;width:40px;height:40px;display:grid;place-items:center;border-radius:13px;flex:none;
@@ -124,7 +125,8 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             .forge-live-dot.on{background:#53FC18;box-shadow:0 0 0 4px rgba(83,252,24,.11),0 0 14px #53FC18;animation:forge-pulse 1.7s ease-in-out infinite}
             @keyframes forge-pulse{50%{transform:scale(1.22);opacity:.72}}
             .forge-viewers{margin-inline-start:auto;padding-inline-start:12px;border-inline-start:1px solid rgba(217,180,94,.2);color:var(--forge-gold);font-size:11px;font-weight:950;direction:ltr}
-            .forge-brand{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:13px;min-width:190px;text-decoration:none;direction:ltr}
+            .forge-brand{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:13px;min-width:170px;text-decoration:none;direction:ltr}
+            .forge-brand::before{content:"";width:5px;height:5px;border-radius:1px;background:var(--forge-bright);box-shadow:0 0 12px var(--forge-bright);transform:rotate(45deg);flex:none}
             .forge-crest{position:relative;width:61px;height:61px;display:grid;place-items:center;flex:none;border-radius:50%;
                 border:1px solid rgba(247,228,168,.72);background:radial-gradient(circle at 38% 30%,rgba(247,228,168,.17),rgba(7,6,4,.92) 62%);
                 box-shadow:0 0 0 4px rgba(217,180,94,.08),0 0 0 7px rgba(217,180,94,.035),0 10px 30px -9px rgba(217,180,94,.9),inset 0 1px 0 rgba(255,255,255,.22)}
@@ -134,7 +136,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             .forge-crest img{width:37px;height:37px;object-fit:cover;border-radius:50%;filter:sepia(.25) saturate(.85) brightness(1.15);position:relative;z-index:1}
             .forge-crest-mark{position:absolute;right:-2px;bottom:2px;width:12px;height:12px;border-radius:50%;border:2px solid #0B0906;background:#8B7D5B;z-index:3}
             .forge-crest-mark.on{background:#53FC18;box-shadow:0 0 10px #53FC18}
-            .forge-brand-copy{display:flex;flex-direction:column;line-height:.9;text-align:left}
+            .forge-brand-copy{display:flex;flex-direction:column;line-height:.9;text-align:center}
             .forge-brand-copy strong{font-size:23px;font-weight:950;letter-spacing:.14em;color:#FFF8E5;text-shadow:0 2px 18px rgba(217,180,94,.35)}
             .forge-brand-copy small{margin-top:7px;color:var(--forge-gold);font-size:6px;font-weight:950;letter-spacing:.34em;white-space:nowrap}
             .forge-right{position:relative;z-index:1;display:flex;align-items:center;justify-content:flex-end;gap:13px;min-width:0}
@@ -178,7 +180,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             .forge-panel-tools button{flex:1}
             .forge-separator{display:none}
             .forge-header a:focus-visible,.forge-header button:focus-visible{outline:2px solid #F7E4A8;outline-offset:3px}
-            @media(max-width:1180px){.forge-main{grid-template-columns:minmax(175px,1fr) auto minmax(350px,1.2fr);gap:14px}.forge-link{padding-inline:7px;font-size:11px}.forge-live-cta{padding-inline:10px}.forge-brand{min-width:170px}.forge-brand-copy strong{font-size:20px}}
+            @media(max-width:1180px){.forge-main{grid-template-columns:minmax(175px,1fr) auto minmax(350px,1.2fr);gap:14px}.forge-link{padding-inline:7px;font-size:11px}.forge-live-cta{padding-inline:10px}.forge-brand{min-width:150px}.forge-brand-copy strong{font-size:20px}}
             @media(max-width:940px){.forge-header{padding:9px 12px 0}.forge-topline{display:none}.forge-main{grid-template-columns:1fr auto 1fr;min-height:68px;padding:8px 9px;border-radius:19px}.forge-status{justify-self:start}.forge-status-copy,.forge-viewers,.forge-nav,.forge-live-cta{display:none}.forge-status-orb{width:38px;height:38px}.forge-brand{grid-column:2;grid-row:1;min-width:0}.forge-brand-copy{display:none}.forge-right{grid-column:3;grid-row:1;justify-self:end}.forge-actions{gap:6px}.forge-bottom{height:17px;font-size:7px}}
             @media(max-width:520px){.forge-header{padding-inline:8px}.forge-main{min-height:61px;padding:7px;border-radius:17px}.forge-crest{width:51px;height:51px}.forge-crest img{width:31px;height:31px}.forge-status-orb{width:34px;height:34px}.forge-action{width:35px;height:35px;border-radius:10px}.forge-bottom{padding-inline:7px;letter-spacing:.12em}.forge-bottom span:not(.forge-bottom-line){white-space:nowrap;font-size:6px}}
             @media(prefers-reduced-motion:reduce){.forge-header,.forge-live-dot.on{animation:none}.forge-link,.forge-action,.forge-live-cta{transition:none}}
@@ -208,10 +210,6 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                         </div>
 
                         <a href="#top" className="forge-brand" aria-label="FIRAS — home">
-                            <span className="forge-crest">
-                                <img src={profileImage} alt="Firas emblem" loading="eager" />
-                                <i className={`forge-crest-mark${isLive ? ' on' : ''}`} aria-hidden="true" />
-                            </span>
                             <span className="forge-brand-copy">
                                 <strong>FIRAS</strong>
                                 <small>RISE WITH FIRE</small>
