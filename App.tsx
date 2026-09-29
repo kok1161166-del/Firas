@@ -991,7 +991,7 @@ export default function App() {
                         )}
 
                         {/* ===== COMMUNITY ===== */}
-                        <section className="pt-12 md:pt-16">
+                        <section id="community" className="pt-12 md:pt-16 scroll-mt-28">
                             <Reveal><SectionHeading no={streamInfo.isLive ? '03' : '02'} title={t.communityTitle} en="COMMUNITY HQ" /></Reveal>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-5">
                                 <Reveal delay={0}><DiscordWidget lang={lang} /></Reveal>
@@ -1007,7 +1007,7 @@ export default function App() {
 
                         {/* ===== LAST SESSION ===== */}
                         {!streamInfo.isLive && (
-                            <section className="pt-12 md:pt-16">
+                            <section id="archive" className="pt-12 md:pt-16 scroll-mt-28">
                                 <LastSessionReport lang={lang} data={lastSession} clips={clips} past={pastSessions} />
                             </section>
                         )}

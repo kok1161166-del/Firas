@@ -443,7 +443,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ lang }) => {
         )}
 
         {/* --- LEADERBOARDS --- */}
-        <div className="relative space-y-7">
+        <div id="leaderboard" className="relative space-y-7 scroll-mt-28">
 
           {/* Modern Header */}
           <div className="relative rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-2xl overflow-hidden">
@@ -529,7 +529,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ lang }) => {
         </div>
 
         {/* --- CLIPS & VODS GRID --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-7 pt-8 border-t border-white/[0.07]">
+        <div id="clips" className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-7 pt-8 border-t border-white/[0.07] scroll-mt-28">
 
           {/* CLIPS — modern reel */}
           <div className="group/sec relative rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-2xl overflow-hidden transition-colors duration-500 hover:border-white/20">
