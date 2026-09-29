@@ -41,8 +41,10 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
   const [connectionError, setConnectionError] = useState(false);
   const [statusText, setStatusText] = useState('');
   const [unread, setUnread] = useState(0);
+  const [paused, setPaused] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const stickToBottomRef = useRef(true);
+  const pausedRef = useRef(false);
 
   const t = {
     title: lang === 'en' ? 'Live Chat' : 'شات البث',
@@ -104,7 +106,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
     if (!el) return;
     const added = messages.length - prevLenRef.current;
     prevLenRef.current = messages.length;
-    if (stickToBottomRef.current || messages.length <= 5) {
+    if (!pausedRef.current && (stickToBottomRef.current || messages.length <= 5)) {
       el.scrollTop = el.scrollHeight;
       setUnread(0);
     } else if (added > 0) {
@@ -117,7 +119,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
     const el = chatContainerRef.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(() => {
-      if (stickToBottomRef.current) el.scrollTop = el.scrollHeight;
+      if (!pausedRef.current && stickToBottomRef.current) el.scrollTop = el.scrollHeight;
     });
     observer.observe(el);
     return () => observer.disconnect();
@@ -135,9 +137,23 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
   const jumpToLatest = () => {
     const el = chatContainerRef.current;
     if (!el) return;
+    pausedRef.current = false;
+    setPaused(false);
     stickToBottomRef.current = true;
     setUnread(0);
     el.scrollTop = el.scrollHeight;
+  };
+
+  const togglePaused = () => {
+    if (pausedRef.current) {
+      pausedRef.current = false;
+      setPaused(false);
+      jumpToLatest();
+    } else {
+      pausedRef.current = true;
+      setPaused(true);
+      stickToBottomRef.current = false;
+    }
   };
 
   const getBadge = (role: string) => {
@@ -232,6 +248,21 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
           {messages.length}
         </span>
 
+        {/* Pause / resume live feed */}
+        <button
+          type="button"
+          onClick={togglePaused}
+          title={paused ? (lang === 'en' ? 'Resume live chat' : 'استئناف الشات') : (lang === 'en' ? 'Pause live chat' : 'تثبيت الشات مؤقتاً')}
+          aria-pressed={paused}
+          className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all active:scale-95 ${paused ? 'bg-[#C9A24B] border-[#C9A24B] text-black shadow-[0_0_16px_rgba(201,162,75,0.6)]' : 'bg-white/[0.05] border-white/10 text-white/60 hover:text-[#D9C08A] hover:border-[#C9A24B]/50'}`}
+        >
+          {paused ? (
+            <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+          ) : (
+            <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z" /></svg>
+          )}
+        </button>
+
         {/* Retry Button */}
         {connectionError && (
           <button
@@ -299,6 +330,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
             </div>
           </div>
         ))}
+        {messages.length > 0 && <div className="h-9 shrink-0" aria-hidden="true" />}
       </div>
 
       {/* Decorative Bottom Gradient */}

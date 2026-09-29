@@ -718,6 +718,7 @@ const SupportArena: React.FC<{ lang: Language; supporters: Supporter[] }> = ({ l
 
 export default function App() {
     const [isHoveringProfile, setIsHoveringProfile] = useState(false);
+    const [theaterWide, setTheaterWide] = useState(false);
     const [lang, setLang] = useState<Language>('ar');
     const [branding] = useState({ profileImage: DEFAULT_PROFILE_IMAGE, bannerImage: PC_BACKGROUND });
 
@@ -954,8 +955,18 @@ export default function App() {
                                             <span className="w-1.5 h-1.5 rounded-full bg-[#53FC18] animate-pulse" />LIVE
                                         </span>
                                         <span className="ms-auto text-[11px] font-black text-white/45" dir="ltr">{streamInfo.viewers.toLocaleString()} {t.viewers}</span>
+                                        <a href={`https://kick.com/${CHANNEL_SLUG}/chatroom`} target="_blank" rel="noopener noreferrer" title={lang === 'en' ? 'Pop out chat' : 'فتح الشات في نافذة'} className="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/10 text-white/60 hover:text-[#D9C08A] hover:border-[#C9A24B]/50 flex items-center justify-center transition-all active:scale-95">
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                        </a>
+                                        <button type="button" onClick={() => setTheaterWide((v) => !v)} title={theaterWide ? (lang === 'en' ? 'Show chat' : 'إظهار الشات') : (lang === 'en' ? 'Theater mode' : 'وضع المسرح')} aria-pressed={theaterWide} className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all active:scale-95 ${theaterWide ? 'bg-[#C9A24B] border-[#C9A24B] text-black shadow-[0_0_16px_rgba(201,162,75,0.6)]' : 'bg-white/[0.05] border-white/10 text-white/60 hover:text-[#D9C08A] hover:border-[#C9A24B]/50'}`}>
+                                            {theaterWide ? (
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" /></svg>
+                                            ) : (
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" /></svg>
+                                            )}
+                                        </button>
                                     </div>
-                                    <div className="flex flex-col xl:flex-row gap-0">
+                                    <div className={theaterWide ? 'flex flex-col gap-0' : 'flex flex-col xl:flex-row gap-0'}>
                                         <div className="flex-1 min-w-0 p-3 md:p-4">
                                             <div className="aspect-video rounded-2xl overflow-hidden bg-black border border-[#C9A24B]/20">
                                                 <StreamPlayer lang={lang} isLive={streamInfo.isLive} viewers={streamInfo.viewers} channelSlug={CHANNEL_SLUG} poster={branding.bannerImage} />
@@ -979,11 +990,13 @@ export default function App() {
                                                 </div>
                                             </div>
                                         </div>
+                                        {!theaterWide && (
                                         <div className="w-full xl:w-[360px] shrink-0 p-3 md:p-4 xl:ps-0">
                                             <div className="h-[70svh] max-h-[600px] min-h-[420px] xl:h-full xl:max-h-none rounded-2xl overflow-hidden border border-white/10">
                                                 <ChatWidget lang={lang} isDemo={false} />
                                             </div>
                                         </div>
+                                        )}
                                     </div>
                                     </div>
                                 </div>
