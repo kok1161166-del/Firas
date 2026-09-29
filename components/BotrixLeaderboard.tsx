@@ -124,8 +124,8 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
 
   const sorted = useMemo(() => {
     if (!data) return [];
-    // Rank = points first (strongest signal), watchtime hours break ties
-    return [...data].sort((a, b) => ((b.points || 0) - (a.points || 0)) || ((b.watchtime || 0) - (a.watchtime || 0))).slice(0, 50);
+    // Rank = watchtime hours first, points break ties
+    return [...data].sort((a, b) => ((b.watchtime || 0) - (a.watchtime || 0)) || ((b.points || 0) - (a.points || 0))).slice(0, 50);
   }, [data]);
 
   // Enrich top chatters with live Kick data (followers, bio, verified, avatar)
@@ -177,12 +177,12 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
     role: roles[e.name.toLowerCase()] || null,
   })), [sorted, profiles, roles]);
 
-  const maxPoints = Math.max(1, ...rich.map(e => e.points || 0));
-  const totalPoints = rich.reduce((s, e) => s + (e.points || 0), 0);
+  const maxMinutes = Math.max(1, ...rich.map(e => e.watchtime || 0));
+  const totalMinutes = rich.reduce((s, e) => s + (e.watchtime || 0), 0);
 
   const t = {
     title: lang === 'ar' ? 'أساطير الشات' : 'Chat Legends',
-    subtitle: lang === 'ar' ? 'الترتيب حسب النقاط — الأعلى أولاً' : 'Ranked by points — highest first',
+    subtitle: lang === 'ar' ? 'الترتيب حسب ساعات المشاهدة — الأعلى أولاً' : 'Ranked by watchtime — highest first',
     empty: lang === 'ar' ? 'لا توجد بيانات حالياً' : 'No data available',
     points: lang === 'ar' ? 'نقطة' : 'PTS',
     hours: lang === 'ar' ? 'ساعة مشاهدة' : 'WATCHED',
@@ -220,7 +220,7 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
           </div>
           <div className="hidden sm:flex items-center gap-2 shrink-0">
             <span className="inline-flex items-center gap-1.5 text-[10px] font-black px-3.5 py-2 rounded-2xl bg-white/[0.05] border border-white/10 text-white/60">{rich.length} {t.legends}</span>
-            <span className="inline-flex items-center gap-1.5 text-[10px] font-black px-3.5 py-2 rounded-2xl bg-[#FFE9B8]/10 border border-[#FFE9B8]/30 text-[#FFE9B8]" dir="ltr">{formatNum(totalPoints)} {t.points}</span>
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-black px-3.5 py-2 rounded-2xl bg-[#FFE9B8]/10 border border-[#FFE9B8]/30 text-[#FFE9B8]" dir="ltr" title={formatHoursLong(totalMinutes, lang)}>{formatHours(totalMinutes)}</span>
           </div>
         </div>
 
@@ -266,9 +266,9 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
                         <span className="truncate">{e.name}</span>
                         {e.verified && <svg className="w-3.5 h-3.5 text-[#FFE9B8] shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>}
                       </p>
-                      <span className="mt-1.5 inline-flex items-center gap-1 text-[11px] sm:text-xs font-black px-2.5 py-1 rounded-xl bg-[#FFE9B8]/10 border border-[#FFE9B8]/30 text-[#FFE9B8]" dir="ltr">{formatNum(e.points)} {t.points}</span>
+                      <span className="mt-1.5 inline-flex items-center gap-1 text-[11px] sm:text-xs font-black px-2.5 py-1 rounded-xl bg-[#FFE9B8]/10 border border-[#FFE9B8]/30 text-[#FFE9B8]" dir="ltr" title={formatHoursLong(e.watchtime, lang)}>{formatHours(e.watchtime)}</span>
                       <span className="mt-1.5 flex items-center gap-1.5 text-[10px] font-bold text-white/50">
-                        <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5" dir="ltr" title={formatHoursLong(e.watchtime, lang)}><MiniIcon d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" className="w-3 h-3 text-[#FFE9B8]/80" />{formatHours(e.watchtime)}</span>
+                        <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5 text-white/60" dir="ltr">{formatNum(e.points)} {t.points}</span>
                         {e.role && <RoleBadge role={e.role} />}
                       </span>
                       <span className="mt-1 text-[9px] font-medium text-white/30" dir="auto">{t.since} {formatDate(e.followage, lang)}</span>
@@ -282,7 +282,7 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
               <div className="space-y-1.5 mt-3 max-h-[420px] md:max-h-[520px] overflow-y-auto scrollbar-hide">
                 {rich.slice(3).map((e, idx) => {
                   const rank = idx + 4;
-                  const pct = Math.max(4, Math.round(((e.points || 0) / maxPoints) * 100));
+                  const pct = Math.max(4, Math.round(((e.watchtime || 0) / maxMinutes) * 100));
                   return (
                     <div key={e.name} className="relative rounded-2xl p-2.5 sm:p-3 border border-transparent hover:border-white/10 hover:bg-white/[0.04] hover:-translate-y-0.5 hover:shadow-[0_14px_36px_-14px_rgba(0,0,0,0.8)] transition-all duration-300 animate-fade-in-up" style={{ animationDelay: `${Math.min(idx * 60, 480)}ms` }}>
                       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -299,12 +299,12 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
                             {e.role && <RoleBadge role={e.role} />}
                           </p>
                           <p className="mt-1 flex items-center gap-2 text-[10px] text-white/40 font-bold flex-wrap">
-                            <span className="inline-flex items-center gap-1 rounded-md bg-[#FFE9B8]/10 border border-[#FFE9B8]/25 px-1.5 py-0.5 text-[#FFE9B8]" dir="ltr">{formatNum(e.points)} {t.points}</span>
-                            <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5" dir="ltr" title={formatHoursLong(e.watchtime, lang)}><MiniIcon d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" className="w-3 h-3 text-[#FFE9B8]/80" />{formatHours(e.watchtime)}</span>
+                            <span className="inline-flex items-center gap-1 rounded-md bg-[#FFE9B8]/10 border border-[#FFE9B8]/25 px-1.5 py-0.5 text-[#FFE9B8]" dir="ltr" title={formatHoursLong(e.watchtime, lang)}>{formatHours(e.watchtime)}</span>
+                            <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5 text-white/60" dir="ltr">{formatNum(e.points)} {t.points}</span>
                             <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5 text-white/35" dir="auto">{t.since} {formatDate(e.followage, lang)}</span>
                           </p>
                         </div>
-                        <span className="text-[11px] font-black px-2.5 py-1.5 rounded-xl bg-[#FFE9B8]/10 border border-[#FFE9B8]/30 text-[#FFE9B8] shrink-0" dir="ltr">{formatNum(e.points)}</span>
+                        <span className="text-[11px] font-black px-2.5 py-1.5 rounded-xl bg-[#FFE9B8]/10 border border-[#FFE9B8]/30 text-[#FFE9B8] shrink-0" dir="ltr" title={formatHoursLong(e.watchtime, lang)}>{formatHours(e.watchtime)}</span>
                       </div>
                       <div className="mt-2 ms-[76px] h-1 rounded-full bg-white/[0.06] overflow-hidden" dir="ltr">
                         <div className="bar-grow h-full rounded-full bg-gradient-to-r from-[#FFE9B8] via-[#C9A24B] to-[#B388FF]" style={{ width: `${pct}%`, animationDelay: `${Math.min(idx * 60, 480)}ms` }} />
