@@ -45,10 +45,6 @@ const NAV_DEFS = [
         href: '#archive', id: 'archive', ar: 'الأرشيف', en: 'Archive',
         icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3" /><path d="M7.5 5v14M16.5 5v14M3 9.5h4.5M3 14.5h4.5M16.5 9.5H21M16.5 14.5H21" /></svg>,
     },
-    {
-        href: '#runner', id: 'runner', ar: 'لعبة فراس', en: 'Runner',
-        icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="2.5" y="7" width="19" height="11" rx="5.5" /><path d="M8 10.5v3M6.5 12h3" /><circle cx="15.5" cy="11" r="1" fill="currentColor" stroke="none" /><circle cx="17.5" cy="13.5" r="1" fill="currentColor" stroke="none" /></svg>,
-    },
 ] as const;
 
 const ArrowIcon = () => (
@@ -149,7 +145,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
         <>
             <style>{`
             .forge-header{--forge-gold:#D9B45E;--forge-bright:#F7E4A8;--forge-ink:#090805;position:fixed;top:0;left:0;right:0;z-index:60;width:100%;
-                padding:22px 22px 0;animation:forge-enter .8s cubic-bezier(.16,1,.3,1) both;transition:padding .35s ease}
+                padding:22px 22px 0;animation:forge-enter 1.1s cubic-bezier(.16,1,.3,1) both;transition:padding .35s ease}
             .forge-header.forge-compact{padding-top:12px}
             .forge-spacer{width:100%;flex:none}
             /* anchor targets must clear the fixed header */
@@ -177,7 +173,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                 background-image:linear-gradient(90deg,rgba(6,5,3,.96),rgba(20,14,7,.7) 45%,rgba(6,5,3,.96)),url('/bg-fortress.jpg');
                 background-size:cover;background-position:center 14%;background-repeat:no-repeat;
                 box-shadow:0 20px 48px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,247,214,.12);backdrop-filter:blur(20px) saturate(1.2);-webkit-backdrop-filter:blur(20px);
-                animation:forge-glow-pulse 4.5s ease-in-out infinite;
+                animation:forge-glow-pulse 6.5s ease-in-out infinite;
                 transition:min-height .35s ease,box-shadow .35s ease,border-color .35s ease,background-color .35s ease,transform .35s ease}
             .forge-header.forge-compact .forge-main{min-height:64px;border-color:rgba(247,228,168,.72);
                 background-image:linear-gradient(90deg,rgba(6,5,3,.98),rgba(20,14,7,.88) 45%,rgba(6,5,3,.98)),url('/bg-fortress.jpg')}
@@ -186,13 +182,13 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             .forge-brand{z-index:2 !important}
             .forge-main::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
                 background:linear-gradient(180deg,rgba(255,237,179,.1),transparent 36%,rgba(0,0,0,.26));mix-blend-mode:screen}
-            .forge-main::after{content:"";position:absolute;top:-1px;left:14%;right:14%;height:2px;border-radius:99px;background:linear-gradient(90deg,transparent,#F7E4A8,transparent);box-shadow:0 0 18px rgba(247,228,168,.6);animation:forge-shine-sweep 3.2s ease-in-out infinite}
+            .forge-main::after{content:"";position:absolute;top:-1px;left:14%;right:14%;height:2px;border-radius:99px;background:linear-gradient(90deg,transparent,#F7E4A8,transparent);box-shadow:0 0 18px rgba(247,228,168,.6);animation:forge-shine-sweep 5.5s ease-in-out infinite}
             /* نار متوهجة حول البار — طبقة إضافية تتحرك ببطء */
             .forge-fire-halo{position:absolute;inset:-2px;border-radius:26px 26px 18px 18px;pointer-events:none;z-index:0;overflow:hidden}
-            .forge-fire-halo::before{content:"";position:absolute;inset:-40%;background:conic-gradient(from 0deg,transparent 0deg,transparent 300deg,rgba(247,228,168,.35) 330deg,transparent 360deg);animation:forge-halo-spin 6s linear infinite;filter:blur(6px)}
+            .forge-fire-halo::before{content:"";position:absolute;inset:-40%;background:conic-gradient(from 0deg,transparent 0deg,transparent 300deg,rgba(247,228,168,.35) 330deg,transparent 360deg);animation:forge-halo-spin 14s linear infinite;filter:blur(6px)}
             .forge-fire-halo::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;background:conic-gradient(from var(--halo-a,0deg),transparent 0 65%,rgba(247,228,168,.8) 78%,rgba(217,180,94,.15) 88%,transparent 96%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:.55}
             @keyframes forge-halo-spin{to{transform:rotate(360deg)}}
-            .forge-ember{position:absolute;bottom:-4px;width:6px;height:6px;border-radius:50%;background:radial-gradient(circle,#F7E4A8,#D9B45E 60%,transparent 70%);box-shadow:0 0 12px rgba(247,228,168,.9);pointer-events:none;animation:forge-ember-drift 3.4s ease-in-out infinite}
+            .forge-ember{position:absolute;bottom:-4px;width:6px;height:6px;border-radius:50%;background:radial-gradient(circle,#F7E4A8,#D9B45E 60%,transparent 70%);box-shadow:0 0 12px rgba(247,228,168,.9);pointer-events:none;animation:forge-ember-drift 5.5s ease-in-out infinite}
             .forge-ember.e1{left:22%}.forge-ember.e2{left:50%;animation-delay:-1.2s;width:5px;height:5px}.forge-ember.e3{left:76%;animation-delay:-2.3s}
             .forge-status{position:relative;z-index:1;display:flex;align-items:center;gap:11px;min-width:0;grid-column:1;grid-row:1;justify-self:start;padding-inline-start:8px}
             .forge-status-orb{position:relative;width:40px;height:40px;display:grid;place-items:center;border-radius:13px;flex:none;
@@ -202,7 +198,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             .forge-status-label{display:block;color:rgba(247,228,168,.42);font-size:8px;font-weight:900;letter-spacing:.18em;white-space:nowrap}
             .forge-status-line{display:flex;align-items:center;gap:7px;margin-top:5px;color:#FFF5D8;font-size:12px;font-weight:900;white-space:nowrap}
             .forge-live-dot{width:7px;height:7px;border-radius:50%;background:#8B7D5B;flex:none}
-            .forge-live-dot.on{background:#53FC18;box-shadow:0 0 0 4px rgba(83,252,24,.11),0 0 14px #53FC18;animation:forge-pulse 1.7s ease-in-out infinite}
+            .forge-live-dot.on{background:#53FC18;box-shadow:0 0 0 4px rgba(83,252,24,.11),0 0 14px #53FC18;animation:forge-pulse 2.6s ease-in-out infinite}
             @keyframes forge-pulse{50%{transform:scale(1.22);opacity:.72}}
             .forge-viewers{margin-inline-start:auto;padding-inline-start:12px;border-inline-start:1px solid rgba(217,180,94,.2);color:var(--forge-gold);font-size:11px;font-weight:950;direction:ltr}
             .forge-brand{position:relative;z-index:2;display:flex;align-items:center;justify-content:flex-start;gap:12px;min-width:0;text-decoration:none;direction:ltr;
