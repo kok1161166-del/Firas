@@ -24,9 +24,24 @@ interface BotrixLeaderboardProps {
 const API_URL = '/api/kick?endpoint=' + encodeURIComponent('https://botrix.live/api/public/leaderboard?platform=kick&user=firas');
 const KICK_CH = (name: string) => '/api/kick?endpoint=' + encodeURIComponent(`https://kick.com/api/v2/channels/${name}`);
 
-const formatHours = (seconds: number) => {
-  const h = Math.floor((seconds || 0) / 3600);
-  if (h >= 1000) return `${(h / 1000).toFixed(1)}Kh`;
+// Botrix sends watchtime in MINUTES (e.g. 34485 min = 574h = 23d 22h)
+const formatHours = (minutes: number) => {
+  const totalH = Math.floor((minutes || 0) / 60);
+  const d = Math.floor(totalH / 24);
+  const h = totalH % 24;
+  if (d > 0) return `${d}d ${h}h`;
+  return `${h}h`;
+};
+
+const formatHoursLong = (minutes: number, lang: 'en' | 'ar') => {
+  const totalH = Math.floor((minutes || 0) / 60);
+  const d = Math.floor(totalH / 24);
+  const h = totalH % 24;
+  if (lang === 'ar') {
+    if (d > 0) return `${d} يوم و ${h} ساعة`;
+    return `${h} ساعة`;
+  }
+  if (d > 0) return `${d}d ${h}h`;
   return `${h}h`;
 };
 
@@ -253,7 +268,7 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
                       </p>
                       <span className="mt-1.5 inline-flex items-center gap-1 text-[11px] sm:text-xs font-black px-2.5 py-1 rounded-xl bg-[#FFE9B8]/10 border border-[#FFE9B8]/30 text-[#FFE9B8]" dir="ltr">{formatNum(e.points)} {t.points}</span>
                       <span className="mt-1.5 flex items-center gap-1.5 text-[10px] font-bold text-white/50">
-                        <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5" dir="ltr"><MiniIcon d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" className="w-3 h-3 text-[#FFE9B8]/80" />{formatHours(e.watchtime)}</span>
+                        <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5" dir="ltr" title={formatHoursLong(e.watchtime, lang)}><MiniIcon d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" className="w-3 h-3 text-[#FFE9B8]/80" />{formatHours(e.watchtime)}</span>
                         {e.role && <RoleBadge role={e.role} />}
                       </span>
                       <span className="mt-1 text-[9px] font-medium text-white/30" dir="auto">{t.since} {formatDate(e.followage, lang)}</span>
@@ -285,7 +300,7 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
                           </p>
                           <p className="mt-1 flex items-center gap-2 text-[10px] text-white/40 font-bold flex-wrap">
                             <span className="inline-flex items-center gap-1 rounded-md bg-[#FFE9B8]/10 border border-[#FFE9B8]/25 px-1.5 py-0.5 text-[#FFE9B8]" dir="ltr">{formatNum(e.points)} {t.points}</span>
-                            <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5" dir="ltr"><MiniIcon d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" className="w-3 h-3 text-[#FFE9B8]/80" />{formatHours(e.watchtime)}</span>
+                            <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5" dir="ltr" title={formatHoursLong(e.watchtime, lang)}><MiniIcon d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" className="w-3 h-3 text-[#FFE9B8]/80" />{formatHours(e.watchtime)}</span>
                             <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5 text-white/35" dir="auto">{t.since} {formatDate(e.followage, lang)}</span>
                           </p>
                         </div>
