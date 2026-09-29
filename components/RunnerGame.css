@@ -1,0 +1,75 @@
+/* Firas Runner — game-only utilities (ported from the runner project, plain CSS). */
+
+.runner-scope .font-cyber {
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+.runner-scope .font-title {
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+.runner-scope .no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.runner-scope .no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.runner-scope .animate-grid-flow {
+  animation: runner-grid-flow 2s linear infinite;
+}
+
+.runner-scope .animate-heart-pulse {
+  animation: runner-heart-pulse 1.5s ease-in-out infinite;
+}
+
+.runner-scope .animate-heart-shatter {
+  animation: runner-heart-shatter 0.5s ease-out forwards;
+}
+
+@keyframes runner-grid-flow {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 20px; }
+}
+
+@keyframes runner-heart-pulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.1); filter: brightness(1.3); }
+}
+
+@keyframes runner-heart-shatter {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; filter: blur(10px); }
+}
+
+.runner-scope .scanline {
+  width: 100%;
+  height: 100px;
+  z-index: 10;
+  background: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 255, 255, 0.05) 50%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  opacity: 0.1;
+  position: absolute;
+  bottom: 100%;
+  animation: runner-scanline 6s linear infinite;
+}
+
+@keyframes runner-scanline {
+  0% { bottom: 100%; }
+  100% { bottom: -100px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .runner-scope .animate-grid-flow,
+  .runner-scope .animate-heart-pulse,
+  .runner-scope .animate-heart-shatter,
+  .runner-scope .scanline {
+    animation: none;
+  }
+}

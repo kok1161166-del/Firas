@@ -3,11 +3,13 @@ import { KickIcon, XIcon, SnapchatIcon, DiscordIcon, TikTokIcon, WhatsAppIcon, I
 import { SocialLink, Language } from './types';
 import { StreamPlayer } from './components/StreamPlayer';
 import { SiteHeader } from './components/SiteHeader';
+import { RunnerShowcase } from './components/RunnerShowcase';
 import { ChatWidget } from './components/Chat';
 import { DiscordWidget, YoutubeWidget } from './components/CommunityWidgets';
 
 // Heavy below-fold / on-demand chunks — split out of the first paint
 const StatsSection = lazy(() => import('./components/StatsSection').then(m => ({ default: m.StatsSection })));
+const RunnerGame = lazy(() => import('./components/RunnerGame'));
 const AIChat = lazy(() => import('./components/AIChat').then(m => ({ default: m.AIChat })));
 const ModeratorsSection = lazy(() => import('./components/ModeratorsSection'));
 
@@ -113,7 +115,7 @@ const TRANSLATIONS = {
 
 // ================= DESIGN SYSTEM =================
 
-const Reveal: React.FC<{ children: React.ReactNode; delay?: number; className?: string; as?: 'div' | 'section' }> = ({ children, delay = 0, className = '' }) => {
+export const Reveal: React.FC<{ children: React.ReactNode; delay?: number; className?: string; as?: 'div' | 'section' }> = ({ children, delay = 0, className = '' }) => {
     const ref = useRef<HTMLDivElement>(null);
     useEffect(() => {
         const el = ref.current;
@@ -205,7 +207,7 @@ const ArenaBackground: React.FC = () => {
     );
 };
 
-const SectionHeading: React.FC<{ no: string; title: string; sub?: string; en?: string }> = ({ no, title, sub, en }) => (
+export const SectionHeading: React.FC<{ no: string; title: string; sub?: string; en?: string }> = ({ no, title, sub, en }) => (
     <div className="flex items-end gap-3 md:gap-4 mb-6 md:mb-9">
         <span className="font-gaming text-3xl sm:text-4xl md:text-6xl leading-none text-stroke-red select-none shrink-0" dir="ltr">{no}</span>
         <div className="flex-1 min-w-0">
@@ -723,6 +725,9 @@ export default function App() {
     const [isHoveringProfile, setIsHoveringProfile] = useState(false);
     const [theaterWide, setTheaterWide] = useState(false);
     const [lang, setLang] = useState<Language>('ar');
+    const [view, setView] = useState<'home' | 'game'>('home');
+    const openGame = () => setView('game');
+    const closeGame = () => setView('home');
     const [branding] = useState({ profileImage: DEFAULT_PROFILE_IMAGE, bannerImage: PC_BACKGROUND });
 
     const [socialStats, setSocialStats] = useState<Record<string, string>>({
@@ -1039,6 +1044,9 @@ export default function App() {
                             </section>
                         )}
 
+                        {/* ===== FIRAS RUNNER ===== */}
+                        <RunnerShowcase lang={lang} no={streamInfo.isLive ? '06' : '05'} onPlay={openGame} />
+
                         {/* ===== FOOTER ===== */}
                         <footer className="mt-16 md:mt-24 rounded-[28px] border border-white/10 bg-black/60 backdrop-blur-xl overflow-hidden relative">
                             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-transparent via-[#C9A24B]/70 to-transparent" />
@@ -1060,6 +1068,20 @@ export default function App() {
 
                     {/* AI chat button hidden per request — uncomment to restore */}
                     {/* <Suspense fallback={null}><AIChat lang={lang} /></Suspense> */}
+
+                    {/* ===== FIRAS RUNNER — full game page overlay ===== */}
+                    {view === 'game' && (
+                        <div className="fixed inset-0 z-[80] bg-black" role="dialog" aria-modal="true" aria-label="Firas Runner">
+                            <Suspense fallback={
+                                <div className="w-full h-[100dvh] flex flex-col items-center justify-center gap-4 bg-black">
+                                    <span className="w-14 h-14 rounded-full border-2 border-[#C9A24B]/25 border-t-[#F0DDAE] animate-spin" aria-hidden="true" />
+                                    <span className="text-[11px] font-black tracking-[0.3em] text-[#D9C08A]/70 uppercase" dir="ltr">LOADING RUNNER…</span>
+                                </div>
+                            }>
+                                <RunnerGame lang={lang} onExit={closeGame} />
+                            </Suspense>
+                        </div>
+                    )}
                 </>
         </div>
     );

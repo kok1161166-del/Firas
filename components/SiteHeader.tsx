@@ -45,6 +45,10 @@ const NAV_DEFS = [
         href: '#archive', id: 'archive', ar: 'الأرشيف', en: 'Archive',
         icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3" /><path d="M7.5 5v14M16.5 5v14M3 9.5h4.5M3 14.5h4.5M16.5 9.5H21M16.5 14.5H21" /></svg>,
     },
+    {
+        href: '#runner', id: 'runner', ar: 'لعبة فراس', en: 'Runner',
+        icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="2.5" y="7" width="19" height="11" rx="5.5" /><path d="M8 10.5v3M6.5 12h3" /><circle cx="15.5" cy="11" r="1" fill="currentColor" stroke="none" /><circle cx="17.5" cy="13.5" r="1" fill="currentColor" stroke="none" /></svg>,
+    },
 ] as const;
 
 const ArrowIcon = () => (
