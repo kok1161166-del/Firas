@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, Suspense, lazy } from 
 import { KickIcon, XIcon, SnapchatIcon, DiscordIcon, TikTokIcon, WhatsAppIcon, InstagramIcon, YoutubeIcon, FacebookIcon } from './components/Icons';
 import { SocialLink, Language } from './types';
 import { StreamPlayer } from './components/StreamPlayer';
+import { SiteHeader } from './components/SiteHeader';
 import { ChatWidget } from './components/Chat';
 import { DiscordWidget, YoutubeWidget } from './components/CommunityWidgets';
 
@@ -575,7 +576,7 @@ const AlertTiers: React.FC<{ title: string; note: string; lang: Language }> = ({
     const max = 1000;
     const isAr = lang === 'ar';
     return (
-        <div className="relative mt-5 md:mt-7 rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-2xl overflow-hidden">
+        <div id="store" className="relative mt-5 md:mt-7 rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-2xl overflow-hidden scroll-mt-32">
             <div className="absolute -top-24 start-1/4 w-96 h-96 rounded-full bg-[#C9A24B]/[0.10] blur-[110px] pointer-events-none" aria-hidden="true" />
             <div className="absolute -bottom-24 end-0 w-80 h-80 rounded-full bg-[#8B5CF6]/[0.10] blur-[100px] pointer-events-none" aria-hidden="true" />
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-transparent via-[#C9A24B]/70 to-transparent" aria-hidden="true" />
@@ -823,68 +824,19 @@ export default function App() {
         <div className={`grain relative min-h-screen w-full overflow-x-hidden ${lang === 'ar' ? 'font-arabic' : 'font-sans'}`}>
                 <>
                     <ArenaBackground />
+                    <div className="relative z-20">
+                        <SiteHeader
+                            lang={lang}
+                            onToggleLang={() => setLang(p => p === 'en' ? 'ar' : 'en')}
+                            profileImage={branding.profileImage}
+                            headerTitle={t.headerTitle}
+                            isLive={streamInfo.isLive}
+                            viewers={streamInfo.viewers}
+                            statusText={streamInfo.isLive ? t.status : t.statusOffline}
+                            onRefresh={() => fetchKickStatus()}
+                        />
+                    </div>
                     <div className="relative z-10 w-full max-w-[1200px] mx-auto px-3 sm:px-4 md:px-8 pb-10 overflow-clip">
-
-                        {/* ===== NAV — citadel gate bar ===== */}
-                        <header className="sticky top-2 md:top-5 z-50">
-                            <div className="absolute -top-10 inset-x-10 h-20 bg-[#C9A24B]/[0.13] blur-[60px] rounded-full pointer-events-none" aria-hidden="true" />
-                            <nav className="citadel-frame relative flex items-center justify-between gap-2 px-3 sm:px-4 md:px-5 py-2.5 rounded-[20px] overflow-hidden" aria-label="Main">
-                                <a href="#top" className="flex items-center gap-3 shrink-0 min-w-0">
-                                    <span className="relative block shrink-0">
-                                        <span className="block w-10 h-10 sm:w-11 sm:h-11 rounded-2xl overflow-hidden border border-[#D9C08A]/60 shadow-[0_0_22px_rgba(201,162,75,0.45)]">
-                                            <img src={branding.profileImage} alt="Firas logo" className="w-full h-full object-cover" />
-                                        </span>
-                                        <span className={`absolute -bottom-0.5 -end-0.5 w-3 h-3 rounded-full border-2 border-[#0B0906] ${streamInfo.isLive ? 'bg-[#53FC18] animate-pulse shadow-[0_0_10px_#53FC18]' : 'bg-[#C9A24B]/70'}`} />
-                                    </span>
-                                    <span className="leading-none min-w-0">
-                                        <span className="flex items-center gap-2 font-heading font-black text-lg tracking-tight" dir="ltr">
-                                            <span className="gold-text">FIRAS</span>
-                                            {streamInfo.isLive && <span className="text-[8px] font-black px-2 py-1 rounded-lg bg-[#53FC18] text-black tracking-[0.2em] animate-pulse">LIVE</span>}
-                                        </span>
-                                        <span className="hidden min-[400px]:block text-[8px] font-bold tracking-[0.3em] text-white/40 uppercase truncate mt-0.5">{t.headerTitle}</span>
-                                    </span>
-                                </a>
-                                <div className="hidden lg:flex items-center text-[13px] font-bold text-white/55">
-                                    {[
-                                        { href: '#socials', label: lang === 'en' ? 'Socials' : 'التواصل' },
-                                        { href: '#live', label: lang === 'en' ? 'Live' : 'البث' },
-                                        { href: '#support', label: lang === 'en' ? 'Support' : 'الدعم' },
-                                    ].map((l, i) => (
-                                        <span key={l.href} className="flex items-center">
-                                            {i > 0 && <span className="w-1 h-1 rotate-45 bg-[#C9A24B]/50 mx-1" aria-hidden="true" />}
-                                            <a href={l.href} className="px-4 py-2 rounded-xl hover:text-[#D9C08A] hover:bg-[#C9A24B]/[0.07] transition-colors">{l.label}</a>
-                                        </span>
-                                    ))}
-                                </div>
-                                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                                    <span className={`hidden sm:inline-flex items-center gap-2 text-[11px] font-black px-3.5 py-2.5 rounded-2xl border ${streamInfo.isLive ? 'border-[#53FC18]/50 bg-[#53FC18]/[0.08] text-[#53FC18]' : 'border-[#C9A24B]/30 bg-[#C9A24B]/[0.06] text-white/55'}`}>
-                                        <span className={`w-2 h-2 rounded-full shrink-0 ${streamInfo.isLive ? 'bg-[#53FC18] animate-pulse shadow-[0_0_10px_#53FC18]' : 'bg-[#C9A24B] animate-pulse shadow-[0_0_10px_#C9A24B]'}`} />
-                                        {streamInfo.isLive ? t.status : t.statusOffline}
-                                        {streamInfo.isLive && streamInfo.viewers > 0 && <span dir="ltr">• {streamInfo.viewers.toLocaleString()}</span>}
-                                    </span>
-                                    <button onClick={() => fetchKickStatus()} aria-label="Refresh"
-                                        className="btn-arena w-11 h-11 rounded-2xl bg-[#C9A24B]/[0.06] border border-[#C9A24B]/30 text-[#D9C08A]/80 hover:text-[#D9C08A] active:scale-95 flex items-center justify-center">
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                                    </button>
-                                    <button onClick={() => setLang(p => p === 'en' ? 'ar' : 'en')}
-                                        className="btn-arena btn-gold h-11 px-4 sm:px-5 rounded-2xl text-black text-xs font-black tracking-wider active:scale-95">
-                                        {lang === 'en' ? 'عربي' : 'EN'}
-                                    </button>
-                                </div>
-                            </nav>
-                            {/* mobile: fused status + breaking box */}
-                            <div className="sm:hidden mt-2 citadel-frame rounded-2xl overflow-hidden">
-                                <div className="overflow-hidden">
-                                    <div className={`h-[2px] ${streamInfo.isLive ? 'bg-gradient-to-l from-[#53FC18] via-[#53FC18]/40 to-transparent' : 'bg-gradient-to-l from-[#C9A24B] via-[#C9A24B]/40 to-transparent'}`} />
-                                    <div className="px-4 py-2.5 flex items-center justify-center gap-2">
-                                        <span className={`w-2 h-2 rounded-full shrink-0 ${streamInfo.isLive ? 'bg-[#53FC18] animate-pulse shadow-[0_0_10px_#53FC18]' : 'bg-[#C9A24B] animate-pulse shadow-[0_0_10px_#C9A24B]'}`} />
-                                        <p className={`text-[11px] font-black ${streamInfo.isLive ? 'text-[#53FC18]' : 'text-white/60'}`}>
-                                            {streamInfo.isLive ? `${t.status}${streamInfo.viewers > 0 ? ` • ${streamInfo.viewers.toLocaleString()} ${t.viewers}` : ''}` : t.statusOffline}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </header>
 
                         {/* ===== HERO — ascension in the citadel void ===== */}
                         <section id="top" className="relative pt-10 md:pt-20 pb-8 md:pb-12 overflow-clip">

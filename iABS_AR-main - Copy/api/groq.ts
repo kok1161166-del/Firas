@@ -1,5 +1,5 @@
 // ============================================================
-//  Firas AI — GROQ Backend (Vercel Serverless Function)
+//  iABS AI — GROQ Backend (Vercel Serverless Function)
 //  POST /api/groq  { messages: [{role, content}] }
 //
 //  نظام التبديل التلقائي (Failover):
