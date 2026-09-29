@@ -1180,10 +1180,10 @@ const LevelCompleteScreen: React.FC = () => {
                         className="group relative w-full py-4 md:py-5 bg-cyan-500 text-black font-black text-lg md:text-xl rounded-2xl md:rounded-3xl hover:bg-cyan-400 transition-all active:scale-95 shadow-[0_15px_30px_rgba(6,182,212,0.3)] flex items-center justify-center overflow-hidden"
                     >
                         <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" />
-                        NEXT SECTOR <ChevronRight className="ml-2 w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-2 transition-transform" />
+                        <span dir="rtl">نكست ماتش • NEXT</span> <ChevronRight className="ml-2 w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-2 transition-transform" />
                     </button>
                     
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3">
                         <button 
                             onClick={() => { audio.init(); openShop(); }}
                             className="group py-3 bg-white/5 text-white font-black text-[10px] md:text-xs rounded-2xl border border-white/10 hover:bg-white/10 hover:border-yellow-500/50 transition-all flex flex-col items-center justify-center space-y-1"
@@ -1191,21 +1191,7 @@ const LevelCompleteScreen: React.FC = () => {
                             <ShoppingCart className="w-4 h-4 text-yellow-400 group-hover:scale-110 transition-transform" />
                             <span className="uppercase tracking-widest">Upgrade</span>
                         </button>
-                        <button 
-                            onClick={() => { audio.init(); setStatus(GameStatus.LEVEL_SELECT); }}
-                            className="group py-3 bg-white/5 text-white font-black text-[10px] md:text-xs rounded-2xl border border-white/10 hover:bg-white/10 hover:border-cyan-500/50 transition-all flex flex-col items-center justify-center space-y-1"
-                        >
-                            <MapPin className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
-                            <span className="uppercase tracking-widest">Map</span>
-                        </button>
                     </div>
-
-                    <button 
-                        onClick={() => { audio.init(); setStatus(GameStatus.MENU); }}
-                        className="w-full py-4 text-white/30 hover:text-white font-black text-[10px] md:text-xs tracking-[0.4em] transition-all uppercase"
-                    >
-                        Disengage Neural_Link
-                    </button>
                 </div>
             </div>
         </div>
@@ -1223,6 +1209,7 @@ export const HUD: React.FC = () => {
   const unlockedLevels = useStore(state => state.unlockedLevels);
   const restartGame = useStore(state => state.restartGame);
   const startGame = useStore(state => state.startGame);
+  const startNextLevel = useStore(state => state.startNextLevel);
   const setStatus = useStore(state => state.setStatus);
   const gemsCollected = useStore(state => state.gemsCollected);
   const distance = useStore(state => state.distance);
@@ -1778,14 +1765,7 @@ export const HUD: React.FC = () => {
                                 className="group relative w-full py-5 md:py-6 bg-red-600 text-white font-black text-xl md:text-2xl rounded-2xl md:rounded-3xl hover:bg-red-500 transition-all active:scale-95 shadow-[0_20px_40px_rgba(220,38,38,0.3)] flex items-center justify-center overflow-hidden"
                             >
                                 <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" />
-                                RECOVER DATA <RefreshCw className="ml-2 w-6 h-6 md:w-8 md:h-8 group-hover:rotate-180 transition-transform duration-700" />
-                            </button>
-                            
-                            <button 
-                                onClick={() => { audio.init(); setStatus(GameStatus.MENU); }}
-                                className="w-full py-5 bg-white/5 text-white font-black text-sm md:text-lg rounded-2xl border border-white/10 hover:bg-white/10 transition-all active:scale-95 flex items-center justify-center"
-                            >
-                                ABORT MISSION <LogOut className="ml-2 w-4 h-4 md:w-5 md:h-5 text-white/40" />
+                                <span dir="rtl">اعادة • RETRY</span> <RefreshCw className="ml-2 w-6 h-6 md:w-8 md:h-8 group-hover:rotate-180 transition-transform duration-700" />
                             </button>
                         </>
                     )}
@@ -1864,20 +1844,11 @@ export const HUD: React.FC = () => {
                         <OnlineResultActions />
                     ) : (
                         <button 
-                          onClick={() => { audio.init(); setStatus(GameStatus.LEVEL_SELECT); }}
+                          onClick={() => { audio.init(); startNextLevel(); }}
                           className="group relative w-full py-4 md:py-5 bg-cyan-500 text-black font-black text-lg md:text-xl rounded-2xl md:rounded-3xl hover:bg-cyan-400 transition-all active:scale-95 shadow-[0_15px_30px_rgba(6,182,212,0.4)] flex items-center justify-center overflow-hidden"
                         >
                             <div className="absolute inset-0 bg-white/30 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-                            CHART NEW SECTOR <MapPin className="ml-2 w-5 h-5 md:w-6 md:h-6 group-hover:scale-110 transition-transform" />
-                        </button>
-                    )}
-                    
-                    {!isOnlineWin && (
-                        <button 
-                            onClick={() => { audio.init(); setStatus(GameStatus.MENU); }}
-                            className="w-full py-3 text-white/40 hover:text-white font-black text-[10px] md:text-xs tracking-[0.5em] transition-all uppercase"
-                        >
-                            Exit to Hub
+                            <span dir="rtl">نكست ماتش • NEXT MATCH</span> <MapPin className="ml-2 w-5 h-5 md:w-6 md:h-6 group-hover:scale-110 transition-transform" />
                         </button>
                     )}
                 </div>
