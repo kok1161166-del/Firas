@@ -9,6 +9,7 @@ import { DiscordWidget, YoutubeWidget } from './components/CommunityWidgets';
 // Heavy below-fold / on-demand chunks — split out of the first paint
 const StatsSection = lazy(() => import('./components/StatsSection').then(m => ({ default: m.StatsSection })));
 const AIChat = lazy(() => import('./components/AIChat').then(m => ({ default: m.AIChat })));
+const ModeratorsSection = lazy(() => import('./components/ModeratorsSection'));
 
 // --- Constants (preserved) ---
 const DEFAULT_PROFILE_IMAGE = "/firas-mark.webp";
@@ -78,6 +79,7 @@ const TRANSLATIONS = {
         categoriesSpent: 'Categories in this stream', highlights: 'Stream highlights',
         socialsTitle: 'Social Arena', socialsSub: 'One hub — every platform. Pick your battlefield.',
         communityTitle: 'Community HQ', supportTitle: 'Support & Donation', supportSub: 'Your support keeps the stream legendary.',
+        modsTitle: 'Moderators', modsSub: 'Guardians of the fortress — live from X.',
         tiersTitle: 'Special alert tiers',
         theaterTitle: 'Live Theater', viewers: 'watching',
         statsKick: 'Kick followers', statsPlatforms: 'Platforms', statsStatus: 'Status',
@@ -101,6 +103,7 @@ const TRANSLATIONS = {
         categoriesSpent: 'الفئات التي تم بثها', highlights: 'لقطات ممتعة من البث',
         socialsTitle: 'ساحة التواصل', socialsSub: 'كل المنصات في مكان واحد — اختر ساحتك.',
         communityTitle: 'مقر المجتمع', supportTitle: 'الدعم المادي', supportSub: 'دعمك يخلي البث أسطوري ويستمر.',
+        modsTitle: 'المشرفون', modsSub: 'حراس القلعة — مباشرة من إكس.',
         tiersTitle: 'مستويات التنبيه الخاصة',
         theaterTitle: 'مسرح البث المباشر', viewers: 'مشاهد',
         statsKick: 'متابع كيك', statsPlatforms: 'منصة', statsStatus: 'الحالة',
@@ -1016,6 +1019,12 @@ export default function App() {
                         <section id="support" className="pt-12 md:pt-16 scroll-mt-28">
                             <Reveal><SectionHeading no={streamInfo.isLive ? '04' : '03'} title={t.supportTitle} sub={t.supportSub} en="SUPPORT" /></Reveal>
                             <Reveal delay={80}><SupportArena lang={lang} supporters={[]} /></Reveal>
+                        </section>
+
+                        {/* ===== MODERATORS ===== */}
+                        <section id="moderators" className="pt-12 md:pt-16 scroll-mt-28">
+                            <Reveal><SectionHeading no={streamInfo.isLive ? '05' : '04'} title={t.modsTitle} sub={t.modsSub} en="MODERATORS" /></Reveal>
+                            <Reveal delay={80}><Suspense fallback={<div className="w-full h-64 rounded-[26px] border border-white/10 bg-white/[0.02] animate-pulse" />}><ModeratorsSection lang={lang} /></Suspense></Reveal>
                         </section>
 
                         {/* ===== LAST SESSION ===== */}
