@@ -1027,16 +1027,17 @@ export default function App() {
                             <Reveal delay={80}><Suspense fallback={<div className="w-full h-64 rounded-[26px] border border-white/10 bg-white/[0.02] animate-pulse" />}><ModeratorsSection lang={lang} /></Suspense></Reveal>
                         </section>
 
+                        {/* ===== LEADERBOARD + CLIPS (before archive) ===== */}
+                        <section className="pt-12 md:pt-16">
+                            <Reveal><Suspense fallback={<div className="w-full h-40 rounded-[26px] border border-white/10 bg-white/[0.02] animate-pulse" />}><StatsSection lang={lang} /></Suspense></Reveal>
+                        </section>
+
                         {/* ===== LAST SESSION ===== */}
                         {!streamInfo.isLive && (
                             <section id="archive" className="pt-12 md:pt-16 scroll-mt-28">
                                 <LastSessionReport lang={lang} data={lastSession} clips={clips} past={pastSessions} />
                             </section>
                         )}
-
-                        <section className="pt-12 md:pt-16">
-                            <Reveal><Suspense fallback={<div className="w-full h-40 rounded-[26px] border border-white/10 bg-white/[0.02] animate-pulse" />}><StatsSection lang={lang} /></Suspense></Reveal>
-                        </section>
 
                         {/* ===== FOOTER ===== */}
                         <footer className="mt-16 md:mt-24 rounded-[28px] border border-white/10 bg-black/60 backdrop-blur-xl overflow-hidden relative">
