@@ -6,6 +6,7 @@ interface BotrixEntry {
   xp: number;
   points: number;
   name: string;
+  followage?: { date: string } | string | null;
 }
 
 interface RichEntry extends BotrixEntry {
@@ -23,11 +24,21 @@ interface BotrixLeaderboardProps {
 const API_URL = '/api/kick?endpoint=' + encodeURIComponent('https://botrix.live/api/public/leaderboard?platform=kick&user=firas');
 const KICK_CH = (name: string) => '/api/kick?endpoint=' + encodeURIComponent(`https://kick.com/api/v2/channels/${name}`);
 
-const formatDuration = (seconds: number) => {
-  const days = Math.floor(seconds / 86400);
-  const hrs = Math.floor((seconds % 86400) / 3600);
-  if (days > 0) return `${days}d ${hrs}h`;
-  return `${hrs}h`;
+const formatHours = (seconds: number) => {
+  const h = Math.floor((seconds || 0) / 3600);
+  if (h >= 1000) return `${(h / 1000).toFixed(1)}Kh`;
+  return `${h}h`;
+};
+
+const formatDate = (followage: { date: string } | string | null | undefined, lang: 'en' | 'ar') => {
+  if (!followage) return lang === 'ar' ? 'تاريخ غير متوفر' : 'No date';
+  const raw = typeof followage === 'string' ? followage : followage.date;
+  if (!raw) return lang === 'ar' ? 'تاريخ غير متوفر' : 'No date';
+  const d = new Date(raw.replace(' ', 'T'));
+  if (isNaN(d.getTime())) return raw.slice(0, 10);
+  try {
+    return d.toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch { return raw.slice(0, 10); }
 };
 
 const formatNum = (n: number) => {
@@ -98,7 +109,8 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
 
   const sorted = useMemo(() => {
     if (!data) return [];
-    return [...data].sort((a, b) => (b.watchtime || 0) - (a.watchtime || 0)).slice(0, 50);
+    // Rank = points first (strongest signal), watchtime hours break ties
+    return [...data].sort((a, b) => ((b.points || 0) - (a.points || 0)) || ((b.watchtime || 0) - (a.watchtime || 0))).slice(0, 50);
   }, [data]);
 
   // Enrich top chatters with live Kick data (followers, bio, verified, avatar)
@@ -150,17 +162,16 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
     role: roles[e.name.toLowerCase()] || null,
   })), [sorted, profiles, roles]);
 
-  const maxWatch = Math.max(1, ...rich.map(e => e.watchtime || 0));
-  const totalWatch = rich.reduce((s, e) => s + (e.watchtime || 0), 0);
+  const maxPoints = Math.max(1, ...rich.map(e => e.points || 0));
+  const totalPoints = rich.reduce((s, e) => s + (e.points || 0), 0);
 
   const t = {
     title: lang === 'ar' ? 'أساطير الشات' : 'Chat Legends',
-    subtitle: lang === 'ar' ? 'الأكثر تفاعلاً في جميع البثوث' : 'Most active across all streams',
+    subtitle: lang === 'ar' ? 'الترتيب حسب النقاط — الأعلى أولاً' : 'Ranked by points — highest first',
     empty: lang === 'ar' ? 'لا توجد بيانات حالياً' : 'No data available',
-    level: lang === 'ar' ? 'المستوى' : 'Level',
-    watchtime: lang === 'ar' ? 'مشاهدة' : 'Watched',
-    xp: 'XP',
     points: lang === 'ar' ? 'نقطة' : 'PTS',
+    hours: lang === 'ar' ? 'ساعة مشاهدة' : 'WATCHED',
+    since: lang === 'ar' ? 'يتابع منذ' : 'Following since',
     followers: lang === 'ar' ? 'متابع' : 'Followers',
     legends: lang === 'ar' ? 'أسطورة' : 'Legends',
   };
@@ -194,7 +205,7 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
           </div>
           <div className="hidden sm:flex items-center gap-2 shrink-0">
             <span className="inline-flex items-center gap-1.5 text-[10px] font-black px-3.5 py-2 rounded-2xl bg-white/[0.05] border border-white/10 text-white/60">{rich.length} {t.legends}</span>
-            <span className="inline-flex items-center gap-1.5 text-[10px] font-black px-3.5 py-2 rounded-2xl bg-[#FFE9B8]/10 border border-[#FFE9B8]/30 text-[#FFE9B8]" dir="ltr">{formatDuration(totalWatch)}</span>
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-black px-3.5 py-2 rounded-2xl bg-[#FFE9B8]/10 border border-[#FFE9B8]/30 text-[#FFE9B8]" dir="ltr">{formatNum(totalPoints)} {t.points}</span>
           </div>
         </div>
 
@@ -240,11 +251,12 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
                         <span className="truncate">{e.name}</span>
                         {e.verified && <svg className="w-3.5 h-3.5 text-[#FFE9B8] shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>}
                       </p>
-                      <span className="mt-1.5 flex items-center gap-1.5">
+                      <span className="mt-1.5 inline-flex items-center gap-1 text-[11px] sm:text-xs font-black px-2.5 py-1 rounded-xl bg-[#FFE9B8]/10 border border-[#FFE9B8]/30 text-[#FFE9B8]" dir="ltr">{formatNum(e.points)} {t.points}</span>
+                      <span className="mt-1.5 flex items-center gap-1.5 text-[10px] font-bold text-white/50">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5" dir="ltr"><MiniIcon d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" className="w-3 h-3 text-[#FFE9B8]/80" />{formatHours(e.watchtime)}</span>
                         {e.role && <RoleBadge role={e.role} />}
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-white/[0.06] border border-white/10 text-white/60" dir="ltr">Lv.{e.level}</span>
                       </span>
-                      <span className="mt-1.5 text-[10px] font-bold text-white/40" dir="ltr">{formatDuration(e.watchtime)}</span>
+                      <span className="mt-1 text-[9px] font-medium text-white/30" dir="auto">{t.since} {formatDate(e.followage, lang)}</span>
                     </div>
                   );
                 })}
@@ -255,7 +267,7 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
               <div className="space-y-1.5 mt-3 max-h-[420px] md:max-h-[520px] overflow-y-auto scrollbar-hide">
                 {rich.slice(3).map((e, idx) => {
                   const rank = idx + 4;
-                  const pct = Math.max(4, Math.round(((e.watchtime || 0) / maxWatch) * 100));
+                  const pct = Math.max(4, Math.round(((e.points || 0) / maxPoints) * 100));
                   return (
                     <div key={e.name} className="relative rounded-2xl p-2.5 sm:p-3 border border-transparent hover:border-white/10 hover:bg-white/[0.04] hover:-translate-y-0.5 hover:shadow-[0_14px_36px_-14px_rgba(0,0,0,0.8)] transition-all duration-300 animate-fade-in-up" style={{ animationDelay: `${Math.min(idx * 60, 480)}ms` }}>
                       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -271,15 +283,13 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
                             {e.verified && <svg className="w-3.5 h-3.5 text-[#FFE9B8] shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>}
                             {e.role && <RoleBadge role={e.role} />}
                           </p>
-                          <p className="mt-1 flex items-center gap-2 text-[10px] text-white/40 font-bold">
-                            <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5" dir="ltr"><MiniIcon d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" className="w-3 h-3 text-[#FFE9B8]/80" />{formatDuration(e.watchtime)}</span>
-                            <span className="rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5" dir="ltr">Lv.{e.level}</span>
-                            <span className="hidden md:inline rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5" dir="ltr">{formatNum(e.xp)} XP</span>
-                            {e.followers != null && <span className="hidden sm:inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5" dir="ltr"><MiniIcon d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" className="w-3 h-3 text-white/30" />{formatNum(e.followers)}</span>}
+                          <p className="mt-1 flex items-center gap-2 text-[10px] text-white/40 font-bold flex-wrap">
+                            <span className="inline-flex items-center gap-1 rounded-md bg-[#FFE9B8]/10 border border-[#FFE9B8]/25 px-1.5 py-0.5 text-[#FFE9B8]" dir="ltr">{formatNum(e.points)} {t.points}</span>
+                            <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5" dir="ltr"><MiniIcon d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" className="w-3 h-3 text-[#FFE9B8]/80" />{formatHours(e.watchtime)}</span>
+                            <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5 text-white/35" dir="auto">{t.since} {formatDate(e.followage, lang)}</span>
                           </p>
-                          {e.bio && <p className="hidden md:block text-[10px] text-white/25 truncate mt-1" dir="auto">{e.bio}</p>}
                         </div>
-                        <span className="text-[11px] font-black px-2.5 py-1.5 rounded-xl bg-white/[0.05] border border-white/10 text-white/60 shrink-0" dir="ltr">{formatDuration(e.watchtime)}</span>
+                        <span className="text-[11px] font-black px-2.5 py-1.5 rounded-xl bg-[#FFE9B8]/10 border border-[#FFE9B8]/30 text-[#FFE9B8] shrink-0" dir="ltr">{formatNum(e.points)}</span>
                       </div>
                       <div className="mt-2 ms-[76px] h-1 rounded-full bg-white/[0.06] overflow-hidden" dir="ltr">
                         <div className="bar-grow h-full rounded-full bg-gradient-to-r from-[#FFE9B8] via-[#C9A24B] to-[#B388FF]" style={{ width: `${pct}%`, animationDelay: `${Math.min(idx * 60, 480)}ms` }} />
