@@ -145,8 +145,8 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
         <>
             <style>{`
             .forge-header{--forge-gold:#D9B45E;--forge-bright:#F7E4A8;--forge-ink:#090805;position:fixed;top:0;left:0;right:0;z-index:60;width:100%;
-                padding:22px 22px 0;animation:forge-enter .8s cubic-bezier(.16,1,.3,1) both;transition:padding .35s ease}
-            .forge-header.forge-compact{padding-top:12px}
+                padding:10px 22px 0;animation:forge-enter .8s cubic-bezier(.16,1,.3,1) both;transition:padding .35s ease}
+            .forge-header.forge-compact{padding-top:6px}
             .forge-spacer{width:100%;flex:none}
             /* anchor targets must clear the fixed header */
             section[id]{scroll-margin-top:185px}
@@ -261,8 +261,8 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             .forge-header a:focus-visible,.forge-header button:focus-visible{outline:2px solid #F7E4A8;outline-offset:3px}
             @media(max-width:1350px){.forge-link svg{display:none}.forge-link{padding-inline:6px}}
             @media(max-width:1180px){.forge-main{grid-template-columns:auto minmax(0,1fr) auto auto;gap:12px}.forge-link{padding-inline:5px;font-size:10.5px;gap:4px}.forge-live-cta{padding-inline:10px}.forge-brand{min-width:0;padding-inline-end:12px}.forge-brand-copy strong{font-size:20px}}
-            @media(max-width:940px){.forge-header{padding:14px 12px 0}.forge-header.forge-compact{padding-top:10px}.forge-topline{display:none}.forge-main{grid-template-columns:1fr auto 1fr;min-height:68px;padding:8px 9px;border-radius:19px;animation:none}.forge-fire-halo,.forge-ember{display:none}.forge-status{grid-column:1;grid-row:1;justify-self:start}.forge-status-copy,.forge-viewers,.forge-nav,.forge-live-cta{display:none}.forge-status-orb{width:38px;height:38px}.forge-brand{grid-column:2;grid-row:1;justify-self:center;min-width:0;padding:0;margin:0;border:none}.forge-brand-copy{display:none}.forge-brand-logo{width:39px;height:39px}.forge-right{display:none}.forge-actions{grid-column:3;grid-row:1;justify-self:end;gap:6px}.forge-bottom{height:17px;font-size:7px}}
-            @media(max-width:520px){.forge-header{padding-inline:8px;padding-top:12px}.forge-main{min-height:61px;padding:7px;border-radius:17px}.forge-brand-logo{width:35px;height:35px}.forge-status-orb{width:34px;height:34px}.forge-action{width:35px;height:35px;border-radius:10px}.forge-bottom{padding-inline:7px;letter-spacing:.12em}.forge-bottom span:not(.forge-bottom-line){white-space:nowrap;font-size:6px}}
+            @media(max-width:940px){.forge-header{padding:10px 12px 0}.forge-header.forge-compact{padding-top:6px}.forge-topline{display:none}.forge-main{grid-template-columns:1fr auto 1fr;min-height:68px;padding:8px 9px;border-radius:19px;animation:none}.forge-fire-halo,.forge-ember{display:none}.forge-status{grid-column:1;grid-row:1;justify-self:start}.forge-status-copy,.forge-viewers,.forge-nav,.forge-live-cta{display:none}.forge-status-orb{width:38px;height:38px}.forge-brand{grid-column:2;grid-row:1;justify-self:center;min-width:0;padding:0;margin:0;border:none}.forge-brand-copy{display:none}.forge-brand-logo{width:39px;height:39px}.forge-right{display:none}.forge-actions{grid-column:3;grid-row:1;justify-self:end;gap:6px}.forge-bottom{height:17px;font-size:7px}}
+            @media(max-width:520px){.forge-header{padding-inline:8px;padding-top:8px}.forge-main{min-height:61px;padding:7px;border-radius:17px}.forge-brand-logo{width:35px;height:35px}.forge-status-orb{width:34px;height:34px}.forge-action{width:35px;height:35px;border-radius:10px}.forge-bottom{padding-inline:7px;letter-spacing:.12em}.forge-bottom span:not(.forge-bottom-line){white-space:nowrap;font-size:6px}}
             @media(max-width:940px){section[id],#leaderboard{scroll-margin-top:140px}.forge-menu.open .forge-menu-inner{max-height:calc(100dvh - 140px)}}
             @media(prefers-reduced-motion:reduce){.forge-header,.forge-live-dot.on,.forge-main,.forge-main::after,.forge-fire-halo::before{animation:none}.forge-link,.forge-action,.forge-live-cta,.forge-brand-logo{transition:none}.forge-fire-halo,.forge-ember{display:none}}
             `}</style>
