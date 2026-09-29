@@ -1057,7 +1057,8 @@ export default function App() {
                         </footer>
                     </div>
 
-                    <Suspense fallback={null}><AIChat lang={lang} /></Suspense>
+                    {/* AI chat button hidden per request — uncomment to restore */}
+                    {/* <Suspense fallback={null}><AIChat lang={lang} /></Suspense> */}
                 </>
         </div>
     );
