@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { Language, ChatMessage } from '../types';
 import { chatService } from '../services/chatService';
 
@@ -52,14 +52,23 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
     retry: lang === 'en' ? 'Retry' : 'إعادة المحاولة'
   };
 
+  const MAX_MESSAGES = 100;
+  const TRIM_TO = 20;
+
   useEffect(() => {
-    // 1. Listen for new messages
+    // 1. Batch rapid messages: fast chat renders once per 200ms, not per message
+    const queue: ChatMessage[] = [];
     const unbindMessage = chatService.onMessage((msg) => {
-      setMessages(prev => {
-        const newArr = [...prev, msg];
-        return newArr.slice(-75);
-      });
+      queue.push(msg);
     });
+    const flushTimer = setInterval(() => {
+      if (queue.length === 0) return;
+      const batch = queue.splice(0, queue.length);
+      setMessages((prev) => {
+        const merged = [...prev, ...batch];
+        return merged.length >= MAX_MESSAGES ? merged.slice(-TRIM_TO) : merged.slice(-MAX_MESSAGES);
+      });
+    }, 200);
 
     // 2. Listen for deleted messages
     const unbindDelete = chatService.onDeleteMessage((msgId) => {
@@ -78,6 +87,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
 
     // 5. Cleanup
     return () => {
+      clearInterval(flushTimer);
       unbindMessage();
       unbindDelete();
       unbindStatus();
@@ -85,16 +95,20 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
     };
   }, []);
 
-  // Pin-to-bottom logic: instant (smooth scroll lags in fast chat and makes
-  // messages look like they fly upward). Respects users reading history.
-  useEffect(() => {
+  // Pin-to-bottom in the layout phase (before paint) so fast chat never
+  // flickers up/down. The view stays put; messages flow upward. Respects
+  // users reading history.
+  const prevLenRef = useRef(0);
+  useLayoutEffect(() => {
     const el = chatContainerRef.current;
     if (!el) return;
+    const added = messages.length - prevLenRef.current;
+    prevLenRef.current = messages.length;
     if (stickToBottomRef.current || messages.length <= 5) {
       el.scrollTop = el.scrollHeight;
       setUnread(0);
-    } else {
-      setUnread((n) => Math.min(n + 1, 99));
+    } else if (added > 0) {
+      setUnread((n) => Math.min(n + added, 99));
     }
   }, [messages]);
 
@@ -183,6 +197,9 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
         .kick-chat-scroll::-webkit-scrollbar{width:6px}
         .kick-chat-scroll::-webkit-scrollbar-track{background:transparent}
         .kick-chat-scroll::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(217,180,94,.6),rgba(217,180,94,.18));border-radius:99px}
+        @keyframes kick-msg-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+        .kick-msg{animation:kick-msg-in .22s ease}
+        @media (prefers-reduced-motion:reduce){.kick-msg{animation:none}}
       `}</style>
     <div className="flex flex-col h-full w-full bg-[#0b0e0f]/80 backdrop-blur-2xl rounded-3xl overflow-hidden border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative ring-1 ring-white/5 isolate group">
       {/* Gold top accent */}
@@ -247,7 +264,15 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
         )}
 
         {messages.map((msg) => (
-          <div key={msg.id} className="group flex items-start gap-2.5 py-1.5 px-3 rounded-xl hover:bg-[#C9A24B]/[0.06] transition-colors duration-200 border border-transparent hover:border-[#C9A24B]/20">
+          <div key={msg.id} className="kick-msg group flex items-start gap-2.5 py-1.5 px-3 rounded-xl hover:bg-[#C9A24B]/[0.06] transition-colors duration-200 border border-transparent hover:border-[#C9A24B]/20">
+
+            {/* Avatar */}
+            <span className="relative mt-0.5 w-6 h-6 rounded-full overflow-hidden shrink-0 bg-gradient-to-b from-[#C9A24B]/40 to-[#C9A24B]/10 border border-white/10 flex items-center justify-center text-[10px] font-black text-[#D9C08A]" aria-hidden="true">
+              {(msg.user.username || '?').charAt(0).toUpperCase()}
+              {msg.user.avatar ? (
+                <img src={msg.user.avatar} alt="" loading="lazy" draggable={false} className="absolute inset-0 w-full h-full object-cover" onError={(event) => { (event.target as HTMLImageElement).style.display = 'none'; }} />
+              ) : null}
+            </span>
 
             {/* Badge Area */}
             {(msg.role === 'owner' || msg.role === 'moderator' || msg.role === 'vip') && (
@@ -257,7 +282,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
             )}
 
             {/* Message Content */}
-            <div className="flex flex-wrap items-baseline gap-x-2 text-[13px] md:text-sm leading-relaxed break-words w-full min-w-0 [overflow-wrap:anywhere]">
+            <div className="flex flex-wrap items-baseline gap-x-2 text-sm leading-relaxed break-words w-full min-w-0 [overflow-wrap:anywhere]">
 
               {/* Username */}
               <span

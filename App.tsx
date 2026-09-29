@@ -980,7 +980,7 @@ export default function App() {
                                             </div>
                                         </div>
                                         <div className="w-full xl:w-[360px] shrink-0 p-3 md:p-4 xl:ps-0">
-                                            <div className="h-[480px] xl:h-full min-h-[480px] rounded-2xl overflow-hidden border border-white/10">
+                                            <div className="h-[70svh] max-h-[600px] min-h-[420px] xl:h-full xl:max-h-none rounded-2xl overflow-hidden border border-white/10">
                                                 <ChatWidget lang={lang} isDemo={false} />
                                             </div>
                                         </div>
