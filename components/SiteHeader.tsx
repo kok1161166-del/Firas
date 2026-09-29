@@ -12,7 +12,7 @@ interface SiteHeaderProps {
     onRefresh: () => void;
 }
 
-/* Every real section on the page — no search, just direct navigation */
+/* The header mirrors the supplied banner: emblem, search, links, wordmark, account. */
 const NAV_DEFS = [
     {
         href: '#top', id: 'top', ar: 'الرئيسية', en: 'Home',
@@ -36,12 +36,6 @@ const NAV_DEFS = [
     },
 ] as const;
 
-/**
- * FIRAS top bar — "Aurora Dock" edition (fresh rebuild).
- * - No search: every page section is one tap away.
- * - Segmented-control nav with sliding gold active pill.
- * - Slim floating dock, gradient hairline, aurora glow, live-first brand.
- */
 export const SiteHeader: React.FC<SiteHeaderProps> = ({
     lang, onToggleLang, profileImage, headerTitle, isLive, viewers, statusText, onRefresh,
 }) => {
@@ -63,7 +57,6 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
         return () => window.removeEventListener('hashchange', read);
     }, []);
 
-    /* Active section spy across all five sections */
     useEffect(() => {
         const els = NAV_DEFS
             .map((n) => document.getElementById(n.id))
@@ -77,13 +70,12 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
         return () => obs.disconnect();
     }, [isLive]);
 
-    /* Escape closes the mobile menu */
     useEffect(() => {
         if (!open) return;
         const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
         document.addEventListener('keydown', onKey);
         return () => document.removeEventListener('keydown', onKey);
-    }, [open ]);
+    }, [open]);
 
     const isAr = lang === 'ar';
     const activeHash = hash === '' ? '#top' : hash;
@@ -101,95 +93,71 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
         <>
             <style>{`
             .dock{--gold:#C9A24B;--gold-lt:#F4D98A;--gold-dk:#8A6A3A}
-            .dock-shell{position:sticky;top:10px;z-index:60;width:min(1280px,calc(100% - 14px));margin:10px auto 0;
-                animation:dock-in .6s cubic-bezier(.16,1,.3,1) both}
-            @keyframes dock-in{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
-            /* gradient hairline wrapper */
-            .dock-frame{border-radius:22px;padding:1px;
-                background:linear-gradient(120deg,rgba(201,162,75,.55),rgba(201,162,75,.08) 25%,rgba(255,255,255,.14) 50%,rgba(201,162,75,.08) 75%,rgba(201,162,75,.55));
-                box-shadow:0 24px 60px rgba(0,0,0,.55),0 0 32px -12px rgba(201,162,75,.35)}
-            .dock-bar{position:relative;border-radius:21px;overflow:hidden;
-                background:linear-gradient(180deg,rgba(26,20,10,.9),rgba(9,6,3,.92));
-                backdrop-filter:blur(22px) saturate(1.25);-webkit-backdrop-filter:blur(22px) saturate(1.25)}
-            /* aurora wash + top light line */
+            .dock-shell{position:sticky;top:10px;z-index:60;width:min(1240px,70vw);margin:10px auto 0;
+                animation:dock-in .65s cubic-bezier(.16,1,.3,1) both}
+            @keyframes dock-in{from{opacity:0;transform:translateY(-14px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+            .dock-frame{border-radius:18px;padding:1px;
+                background:linear-gradient(105deg,rgba(201,162,75,.72),rgba(201,162,75,.12) 23%,rgba(255,255,255,.18) 52%,rgba(201,162,75,.12) 77%,rgba(201,162,75,.72));
+                box-shadow:0 20px 55px rgba(0,0,0,.62),0 0 38px -14px rgba(201,162,75,.6)}
+            .dock-bar{position:relative;border-radius:17px;overflow:hidden;
+                background:linear-gradient(180deg,rgba(19,15,10,.96),rgba(6,5,4,.94));
+                backdrop-filter:blur(24px) saturate(1.3);-webkit-backdrop-filter:blur(24px) saturate(1.3)}
             .dock-aurora{position:absolute;inset:0;pointer-events:none;
-                background:radial-gradient(420px 120px at 12% -20%,rgba(244,217,138,.14),transparent 65%),
-                           radial-gradient(420px 130px at 88% -25%,rgba(83,252,24,.06),transparent 65%)}
-            .dock-bar::before{content:"";position:absolute;top:0;left:8%;right:8%;height:1px;border-radius:99px;
-                background:linear-gradient(90deg,transparent,rgba(255,246,216,.85),transparent);pointer-events:none}
-            .dock-row{display:flex;align-items:center;gap:10px;min-height:68px;padding:8px 10px;transition:min-height .25s ease}
-            .dock-shell.is-compact .dock-row{min-height:58px}
-            @media(min-width:768px){.dock-row{padding:8px 16px;gap:12px}}
-            /* brand */
-            .dock-brand{display:flex;align-items:center;gap:11px;text-decoration:none;min-width:0;flex:none}
-            .dock-emblem{position:relative;width:46px;height:46px;flex:none;border-radius:15px;overflow:visible;
-                border:1px solid rgba(244,217,138,.5);background:#0a0806;
-                box-shadow:0 10px 26px -10px rgba(201,162,75,.7),inset 0 1px 0 rgba(255,255,255,.12);
+                background:radial-gradient(300px 90px at 3% -40%,rgba(244,217,138,.2),transparent 70%),
+                           radial-gradient(340px 110px at 82% -50%,rgba(201,162,75,.1),transparent 72%)}
+            .dock-bar::before{content:"";position:absolute;top:0;left:7%;right:7%;height:1px;border-radius:99px;
+                background:linear-gradient(90deg,transparent,rgba(255,246,216,.9),transparent);pointer-events:none}
+            .dock-row{position:relative;display:flex;align-items:center;gap:8px;min-height:58px;padding:6px 7px;direction:ltr}
+            .dock-shell.is-compact .dock-row{min-height:52px}
+            @media(min-width:768px){.dock-row{padding:6px 9px;gap:10px}}
+            .dock-mark{position:relative;width:43px;height:43px;flex:none;display:block;border-radius:13px;overflow:visible;
+                border:1px solid rgba(244,217,138,.62);background:#080706;
+                box-shadow:0 8px 22px -9px rgba(201,162,75,.9),inset 0 1px 0 rgba(255,255,255,.16);
                 transition:transform .22s ease,box-shadow .22s ease}
-            .dock-shell.is-compact .dock-emblem{width:40px;height:40px}
-            .dock-brand:hover .dock-emblem{transform:translateY(-1px);box-shadow:0 14px 30px -10px rgba(201,162,75,.85),inset 0 1px 0 rgba(255,255,255,.12)}
-            .dock-emblem img{width:100%;height:100%;object-fit:cover;border-radius:14px;display:block}
-            .dock-dot{position:absolute;bottom:-4px;inset-inline-end:-4px;width:15px;height:15px;border-radius:99px;
+            .dock-shell.is-compact .dock-mark{width:39px;height:39px}
+            .dock-mark:hover{transform:translateY(-1px);box-shadow:0 13px 28px -9px rgba(201,162,75,.95),inset 0 1px 0 rgba(255,255,255,.16)}
+            .dock-mark img{width:100%;height:100%;object-fit:cover;border-radius:12px;display:block}
+            .dock-dot{position:absolute;bottom:-4px;right:-4px;width:13px;height:13px;border-radius:99px;
                 border:3px solid #100c07;background:#8a7a55;z-index:2}
             .dock-dot.on{background:#53FC18;box-shadow:0 0 0 3px rgba(83,252,24,.18),0 0 12px #53FC18;animation:dock-pulse 1.8s ease-in-out infinite}
             @keyframes dock-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
-            .dock-word{display:flex;flex-direction:column;line-height:1.1;min-width:0}
-            .dock-word b{font-size:20px;font-weight:900;letter-spacing:.12em;color:#FFF6DE;
-                text-shadow:0 2px 12px rgba(201,162,75,.35)}
-            .dock-shell.is-compact .dock-word b{font-size:17px}
-            .dock-live{display:inline-flex;align-items:center;gap:6px;margin-top:4px;font-size:10px;font-weight:800;white-space:nowrap}
-            .dock-live i{width:6px;height:6px;border-radius:99px;background:#8a7a55;flex:none}
-            .dock-live.on{color:#53FC18}.dock-live.on i{background:#53FC18;box-shadow:0 0 8px #53FC18;animation:dock-pulse 1.6s ease-in-out infinite}
-            .dock-live.off{color:rgba(217,192,138,.8)}
-            /* segmented nav — the modern core */
+            .dock-search{height:36px;flex:0 1 190px;display:flex;align-items:center;gap:7px;min-width:72px;padding:0 8px;
+                border:1px solid rgba(201,162,75,.32);border-radius:999px;background:rgba(2,2,2,.42);color:rgba(255,246,216,.48);
+                box-shadow:inset 0 1px 7px rgba(0,0,0,.48);font-size:10px;font-weight:700;white-space:nowrap;transition:border-color .2s ease,box-shadow .2s ease}
+            .dock-search:focus-within{border-color:rgba(244,217,138,.72);box-shadow:0 0 20px -8px rgba(244,217,138,.75),inset 0 1px 7px rgba(0,0,0,.48)}
+            .dock-search-icon{display:inline-flex;align-items:center;justify-content:center;color:#D9C08A;flex:none}
+            .dock-search-text{overflow:hidden;text-overflow:ellipsis;flex:1}
+            .dock-globe{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;border:0;border-left:1px solid rgba(201,162,75,.22);
+                padding-left:6px;background:transparent;color:#D9C08A;cursor:pointer;flex:none;transition:color .2s ease,transform .2s ease}
+            .dock-globe:hover{color:#FFF4D2;transform:rotate(12deg)}
             .dock-nav{flex:1;min-width:0;display:none;align-items:center;justify-content:center}
-            @media(min-width:1024px){.dock-nav{display:flex}}
-            .dock-seg{display:flex;align-items:center;gap:2px;padding:4px;border-radius:99px;max-width:100%;
-                background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);
-                box-shadow:inset 0 2px 10px rgba(0,0,0,.5)}
-            .dock-link{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:99px;
-                font-size:13px;font-weight:800;color:rgba(255,255,255,.6);text-decoration:none;white-space:nowrap;
-                transition:color .2s ease,background .2s ease,transform .2s ease}
-            .dock-link:hover{color:#FFF3D6;background:rgba(255,255,255,.05)}
+            @media(min-width:900px){.dock-nav{display:flex}}
+            .dock-seg{display:flex;align-items:center;justify-content:center;gap:3px;max-width:100%}
+            .dock-link{position:relative;display:inline-flex;align-items:center;gap:5px;padding:11px 12px 10px;
+                font-size:11.5px;font-weight:800;color:rgba(255,255,255,.66);text-decoration:none;white-space:nowrap;
+                transition:color .2s ease,transform .2s ease}
+            .dock-link::after{content:"";position:absolute;left:50%;bottom:2px;width:0;height:2px;border-radius:99px;background:linear-gradient(90deg,#8A6A3A,#F4D98A,#8A6A3A);
+                box-shadow:0 0 10px rgba(244,217,138,.85);transform:translateX(-50%);transition:width .25s ease}
+            .dock-link:hover{color:#FFF3D6;transform:translateY(-1px)}
             .dock-link:active{transform:scale(.96)}
-            .dock-link.is-active{color:#0B0906;background:linear-gradient(180deg,#F8EDD2,#E6C477 45%,#C9A24B);
-                box-shadow:0 6px 18px -6px rgba(201,162,75,.8),inset 0 1px 0 rgba(255,255,255,.6)}
-            @media(min-width:1024px) and (max-width:1279px){.dock-link{padding:8px 11px;font-size:12px;gap:5px}}
-            /* actions */
-            .dock-actions{flex:none;display:flex;align-items:center;gap:8px;margin-inline-start:auto}
-            .dock-iconbtn{width:44px;height:44px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:14px;
-                background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.75);
-                cursor:pointer;transition:all .2s ease}
-            .dock-iconbtn:hover{color:#F4D98A;border-color:rgba(244,217,138,.5);background:rgba(201,162,75,.1);transform:translateY(-1px)}
-            .dock-iconbtn:active{transform:scale(.95)}
-            .dock-lang{height:44px;padding:0 14px;border-radius:14px;display:none;align-items:center;gap:7px;
-                background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#F0DDAE;
-                font-size:12.5px;font-weight:800;cursor:pointer;transition:all .2s ease;white-space:nowrap;font-family:inherit}
-            @media(min-width:1024px){.dock-lang{display:inline-flex}}
-            .dock-lang:hover{border-color:rgba(244,217,138,.55);background:rgba(201,162,75,.12);transform:translateY(-1px)}
-            .dock-cta{display:none;align-items:center;gap:8px;height:44px;padding:0 18px;border-radius:14px;text-decoration:none;
-                background:linear-gradient(180deg,#F8EDD2 0%,#E6C477 45%,#C9A24B 80%);color:#0B0906;font-size:13px;font-weight:900;
-                box-shadow:0 10px 26px -8px rgba(201,162,75,.7),inset 0 1px 0 rgba(255,255,255,.6);
-                transition:filter .2s ease,transform .2s ease;white-space:nowrap}
-            @media(min-width:768px){.dock-cta{display:inline-flex}}
-            .dock-cta:hover{filter:brightness(1.06);transform:translateY(-1px)}
-            .dock-cta:active{transform:scale(.97)}
-            .dock-cta .play{width:22px;height:22px;border-radius:99px;background:#0B0906;color:#F4D98A;
-                display:inline-flex;align-items:center;justify-content:center;flex:none}
-            .dock-burger{display:inline-flex}
-            @media(min-width:1024px){.dock-burger{display:none}}
-            /* scrollable section strip (tablet + mobile): all sections, no menu needed */
-            .dock-strip{display:flex;gap:6px;overflow-x:auto;padding:0 10px 10px;scrollbar-width:none;
-                mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent);
-                -webkit-mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent)}
-            .dock-strip::-webkit-scrollbar{display:none}
-            @media(min-width:1024px){.dock-strip{display:none}}
-            .dock-chip{flex:none;display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:99px;
-                font-size:12.5px;font-weight:800;color:rgba(255,255,255,.62);text-decoration:none;white-space:nowrap;
-                background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);transition:all .2s ease}
-            .dock-chip.is-active{color:#0B0906;background:linear-gradient(180deg,#F8EDD2,#E6C477 50%,#C9A24B);border-color:transparent;
-                box-shadow:0 6px 16px -6px rgba(201,162,75,.8)}
-            /* mobile menu panel */
+            .dock-link.is-active{color:#F4D98A;text-shadow:0 0 16px rgba(244,217,138,.35)}
+            .dock-link.is-active::after{width:23px}
+            .dock-link svg{opacity:.62;transition:opacity .2s ease}
+            .dock-link.is-active svg,.dock-link:hover svg{opacity:1}
+            @media(min-width:900px) and (max-width:1199px){.dock-link{padding-inline:7px;font-size:10px;gap:3px}.dock-link svg{display:none}}
+            .dock-brand{display:flex;align-items:center;justify-content:center;flex:none;min-width:92px;text-decoration:none;text-align:center}
+            .dock-word{display:flex;flex-direction:column;line-height:.95;min-width:0}
+            .dock-word b{font-size:17px;font-weight:950;letter-spacing:.1em;color:#FFF6DE;text-shadow:0 2px 14px rgba(201,162,75,.42)}
+            .dock-word small{margin-top:4px;font-size:5px;letter-spacing:.28em;font-weight:900;color:#D9C08A;white-space:nowrap}
+            .dock-actions{flex:none;display:flex;align-items:center;gap:7px}
+            .dock-profile{width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;gap:3px;border-radius:999px;
+                background:rgba(255,255,255,.04);border:1px solid rgba(244,217,138,.58);color:#F2D58D;cursor:pointer;
+                box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 6px 18px -10px rgba(201,162,75,.95);transition:all .2s ease}
+            .dock-shell.is-compact .dock-profile{width:36px;height:36px}
+            .dock-profile:hover,.dock-profile[aria-expanded="true"]{color:#FFF4D2;background:rgba(201,162,75,.14);border-color:#F4D98A;transform:translateY(-1px)}
+            .dock-profile-chevron{opacity:.58}
+            @media(max-width:899px){.dock-brand{margin-inline-start:auto}.dock-word b{font-size:15px}.dock-word small{font-size:4px}.dock-profile{width:38px;height:38px}}
+            @media(max-width:520px){.dock-shell{width:calc(100% - 16px);margin-top:8px}.dock-row{gap:6px}.dock-mark{width:39px;height:39px}.dock-search{flex:1;max-width:none}.dock-search-text{font-size:9px}.dock-brand{min-width:62px}.dock-word b{font-size:13px;letter-spacing:.07em}.dock-word small{letter-spacing:.18em}}
             .dock-menu{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .32s cubic-bezier(.16,1,.3,1),opacity .25s,margin .3s}
             .dock-menu.open{grid-template-rows:1fr;opacity:1;margin-top:8px}
             .dock-menu-in{overflow:hidden}
@@ -200,13 +168,14 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             .dock-mhead img{width:44px;height:44px;border-radius:13px;object-fit:cover;border:1px solid rgba(201,162,75,.45)}
             .dock-mhead b{display:block;font-size:14px;letter-spacing:.12em;color:#fff}
             .dock-mhead small{display:block;font-size:11px;color:rgba(255,255,255,.45);margin-top:3px}
+            .dock-mhead em{display:block;font-size:10px;color:rgba(244,217,138,.68);font-style:normal;margin-top:4px}
             .dock-mrow{display:flex;align-items:center;gap:12px;width:100%;min-height:50px;padding:12px 15px;font-size:14px;font-weight:800;
                 color:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.03);
                 text-align:start;text-decoration:none;cursor:pointer;font-family:inherit;transition:all .2s ease}
             .dock-mrow:hover,.dock-mrow.is-active{color:#F4D98A;border-color:rgba(244,217,138,.45);background:rgba(201,162,75,.09)}
             .dock-mrow.gold{color:#0B0906;background:linear-gradient(180deg,#F8EDD2,#E6C477 50%,#C9A24B);border-color:transparent;font-weight:900}
             a:focus-visible,button:focus-visible{outline:2px solid #E6C477;outline-offset:2px;border-radius:10px}
-            @media(prefers-reduced-motion:reduce){.dock-shell,.dock-menu{animation:none;transition:none}.dock-dot.on,.dock-live.on i{animation:none}}
+            @media(prefers-reduced-motion:reduce){.dock-shell,.dock-menu{animation:none;transition:none}.dock-dot.on{animation:none}}
             `}</style>
 
             <header className={`dock dock-shell${compact ? ' is-compact' : ''}`}>
@@ -214,22 +183,21 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                     <div className="dock-bar">
                         <span className="dock-aurora" aria-hidden="true" />
                         <div className="dock-row">
-                            {/* Brand + live */}
-                            <a href="#top" className="dock-brand" aria-label="FIRAS — home">
-                                <span className="dock-emblem">
-                                    <img src={profileImage} alt="Firas emblem" loading="eager" />
-                                    <span className={`dock-dot${isLive ? ' on' : ''}`} aria-hidden="true" />
-                                </span>
-                                <span className="dock-word" dir="ltr">
-                                    <b>FIRAS</b>
-                                    <span className={`dock-live${isLive ? ' on' : ' off'}`} role="status" aria-live="polite">
-                                        <i aria-hidden="true" />
-                                        <span>{isLive ? `${statusText}${viewersLabel ? ` • ${viewersLabel}` : ''}` : statusText}</span>
-                                    </span>
-                                </span>
+                            <a href="#top" className="dock-mark" aria-label="FIRAS — home">
+                                <img src={profileImage} alt="Firas emblem" loading="eager" />
+                                <span className={`dock-dot${isLive ? ' on' : ''}`} aria-hidden="true" />
                             </a>
 
-                            {/* Full sections — segmented control */}
+                            <div className="dock-search" dir={isAr ? 'rtl' : 'ltr'} role="search" aria-label={isAr ? 'بحث في الموقع' : 'Search the site'}>
+                                <span className="dock-search-icon" aria-hidden="true">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4 4" /></svg>
+                                </span>
+                                <span className="dock-search-text">{isAr ? 'ابحث في الموقع' : 'Search the site'}</span>
+                                <button type="button" className="dock-globe" onClick={onToggleLang} aria-label={isAr ? 'Switch to English' : 'التبديل إلى العربية'}>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-6.4-3.8-9S9.5 5.6 12 3z" /></svg>
+                                </button>
+                            </div>
+
                             <nav className="dock-nav" aria-label="Primary" dir={isAr ? 'rtl' : 'ltr'}>
                                 <div className="dock-seg" role="list">
                                     {NAV_DEFS.map((n) => (
@@ -246,52 +214,23 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                                 </div>
                             </nav>
 
-                            {/* Actions */}
+                            <a href="#top" className="dock-brand" aria-label="FIRAS — home">
+                                <span className="dock-word" dir="ltr">
+                                    <b>FIRAS</b>
+                                    <small>RISE WITH FIRE</small>
+                                </span>
+                            </a>
+
                             <div className="dock-actions">
-                                <button type="button" className="dock-lang" onClick={onToggleLang} aria-label={isAr ? 'Switch to English' : 'التبديل إلى العربية'}>
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3z" /></svg>
-                                    <span>{isAr ? 'EN' : 'عربي'}</span>
-                                </button>
-
-                                <button type="button" className="dock-iconbtn hidden xl:inline-flex" onClick={onRefresh} title={isAr ? 'تحديث الحالة' : 'Refresh status'} aria-label={isAr ? 'تحديث الحالة' : 'Refresh status'}>
-                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                                </button>
-
-                                <a href="https://kick.com/firas" target="_blank" rel="noopener noreferrer" className="dock-cta">
-                                    <span className="play" aria-hidden="true">
-                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
-                                    </span>
-                                    {isAr ? 'شاهد البث' : 'Watch Live'}
-                                </a>
-
-                                <button type="button" className="dock-iconbtn dock-burger" onClick={() => setOpen((v) => !v)} aria-label={isAr ? 'القائمة' : 'Menu'} aria-expanded={open}>
-                                    {open ? (
-                                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-                                    ) : (
-                                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10" /></svg>
-                                    )}
+                                <button type="button" className="dock-profile" onClick={() => setOpen((v) => !v)} aria-label={isAr ? 'فتح القائمة' : 'Open menu'} aria-expanded={open}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.2" /><path d="M5.5 19c.7-3.1 2.9-4.8 6.5-4.8s5.8 1.7 6.5 4.8" /></svg>
+                                    <svg className="dock-profile-chevron" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
                                 </button>
                             </div>
                         </div>
-
-                        {/* Scrollable sections strip — tablet & mobile */}
-                        <nav className="dock-strip" aria-label={isAr ? 'الأقسام' : 'Sections'} dir={isAr ? 'rtl' : 'ltr'}>
-                            {NAV_DEFS.map((n) => (
-                                <a
-                                    key={n.href}
-                                    href={n.href}
-                                    aria-current={activeHash === n.href ? 'page' : undefined}
-                                    className={`dock-chip${activeHash === n.href ? ' is-active' : ''}`}
-                                >
-                                    {n.icon}
-                                    <span>{isAr ? n.ar : n.en}</span>
-                                </a>
-                            ))}
-                        </nav>
                     </div>
                 </div>
 
-                {/* Mobile menu panel — all sections + actions */}
                 <div className={`dock-menu${open ? ' open' : ''}`}>
                     <div className="dock-menu-in">
                         <div className="dock-panel">
@@ -301,6 +240,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                                     <span>
                                         <b dir="ltr">FIRAS</b>
                                         <small dir="auto">{headerTitle}</small>
+                                        <em dir="auto">{isLive ? `${statusText}${viewersLabel ? ` • ${viewersLabel}` : ''}` : statusText}</em>
                                     </span>
                                 </div>
                                 {NAV_DEFS.map((n) => (
