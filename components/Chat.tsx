@@ -40,7 +40,9 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState(false);
   const [statusText, setStatusText] = useState('');
+  const [unread, setUnread] = useState(0);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const stickToBottomRef = useRef(true);
 
   const t = {
     title: lang === 'en' ? 'Live Chat' : 'شات البث',
@@ -83,20 +85,46 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
     };
   }, []);
 
-  // Auto-scroll logic
+  // Pin-to-bottom logic: instant (smooth scroll lags in fast chat and makes
+  // messages look like they fly upward). Respects users reading history.
   useEffect(() => {
-    if (chatContainerRef.current) {
-      const { scrollHeight, clientHeight, scrollTop } = chatContainerRef.current;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
-
-      if (isNearBottom || messages.length <= 5) {
-        chatContainerRef.current.scrollTo({
-          top: scrollHeight,
-          behavior: 'smooth'
-        });
-      }
+    const el = chatContainerRef.current;
+    if (!el) return;
+    if (stickToBottomRef.current || messages.length <= 5) {
+      el.scrollTop = el.scrollHeight;
+      setUnread(0);
+    } else {
+      setUnread((n) => Math.min(n + 1, 99));
     }
   }, [messages]);
+
+  // Stay pinned when content height changes after paint (emotes loading, fonts)
+  useEffect(() => {
+    const el = chatContainerRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => {
+      if (stickToBottomRef.current) el.scrollTop = el.scrollHeight;
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const handleScroll = () => {
+    const el = chatContainerRef.current;
+    if (!el) return;
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const stuck = distance < 60;
+    stickToBottomRef.current = stuck;
+    if (stuck) setUnread(0);
+  };
+
+  const jumpToLatest = () => {
+    const el = chatContainerRef.current;
+    if (!el) return;
+    stickToBottomRef.current = true;
+    setUnread(0);
+    el.scrollTop = el.scrollHeight;
+  };
 
   const getBadge = (role: string) => {
     switch (role) {
@@ -133,6 +161,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
           alt={emoteName}
           title={emoteName}
           className="inline-block w-8 h-8 md:w-10 md:h-10 mx-0.5 align-middle object-contain hover:scale-125 transition-transform"
+          onError={(event) => { (event.target as HTMLImageElement).style.display = 'none'; }}
         />
       );
 
@@ -148,7 +177,16 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
   };
 
   return (
+    <>
+      <style>{`
+        .kick-chat-scroll{scrollbar-width:thin;scrollbar-color:rgba(201,162,75,.5) transparent;overscroll-behavior:contain}
+        .kick-chat-scroll::-webkit-scrollbar{width:6px}
+        .kick-chat-scroll::-webkit-scrollbar-track{background:transparent}
+        .kick-chat-scroll::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(217,180,94,.6),rgba(217,180,94,.18));border-radius:99px}
+      `}</style>
     <div className="flex flex-col h-full w-full bg-[#0b0e0f]/80 backdrop-blur-2xl rounded-3xl overflow-hidden border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative ring-1 ring-white/5 isolate group">
+      {/* Gold top accent */}
+      <span className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-l from-transparent via-[#C9A24B]/80 to-transparent z-20 pointer-events-none" aria-hidden="true" />
 
       {/* Decorative Glow */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-kick/5 rounded-full blur-3xl -z-10 group-hover:bg-kick/10 transition-colors duration-500"></div>
@@ -172,6 +210,11 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
           </div>
         </div>
 
+        {/* Message count */}
+        <span className="ms-auto inline-flex items-center text-[10px] font-black px-2.5 py-1 rounded-full bg-[#C9A24B]/10 border border-[#C9A24B]/30 text-[#D9C08A]" dir="ltr">
+          {messages.length}
+        </span>
+
         {/* Retry Button */}
         {connectionError && (
           <button
@@ -190,12 +233,21 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
       {/* --- Chat List --- */}
       <div
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-1.5 scrollbar-hide bg-gradient-to-b from-[#0b0e0f]/50 to-transparent"
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto overflow-x-hidden p-4 pt-5 space-y-1.5 kick-chat-scroll bg-gradient-to-b from-[#0b0e0f]/50 to-transparent relative"
       >
-        <div className="sticky top-0 h-8 bg-gradient-to-b from-[#0b0e0f] to-transparent z-10 -mt-4 pointer-events-none"></div>
+        {messages.length === 0 && (
+          <div className="h-full min-h-[220px] flex flex-col items-center justify-center gap-3 text-center px-6">
+            <span className="w-12 h-12 rounded-2xl bg-[#C9A24B]/10 border border-[#C9A24B]/30 flex items-center justify-center text-[#D9C08A]">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+            </span>
+            <p className="text-sm font-black text-white/70">{lang === 'en' ? 'No messages yet' : 'لا توجد رسائل بعد'}</p>
+            <p className="text-[11px] text-white/35 font-medium">{lang === 'en' ? 'Be the first to greet the fortress' : 'كن أول من يرحب بالقلعة'}</p>
+          </div>
+        )}
 
         {messages.map((msg) => (
-          <div key={msg.id} className="group flex items-start gap-2.5 py-1.5 px-3 rounded-xl hover:bg-white/5 transition-all duration-200 animate-fade-in-up border border-transparent hover:border-white/5">
+          <div key={msg.id} className="group flex items-start gap-2.5 py-1.5 px-3 rounded-xl hover:bg-[#C9A24B]/[0.06] transition-colors duration-200 border border-transparent hover:border-[#C9A24B]/20">
 
             {/* Badge Area */}
             {(msg.role === 'owner' || msg.role === 'moderator' || msg.role === 'vip') && (
@@ -205,7 +257,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
             )}
 
             {/* Message Content */}
-            <div className="flex flex-wrap items-baseline gap-x-2 text-[13px] md:text-sm leading-relaxed break-words w-full">
+            <div className="flex flex-wrap items-baseline gap-x-2 text-[13px] md:text-sm leading-relaxed break-words w-full min-w-0 [overflow-wrap:anywhere]">
 
               {/* Username */}
               <span
@@ -226,6 +278,22 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
 
       {/* Decorative Bottom Gradient */}
       <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#0b0e0f] to-transparent pointer-events-none z-10"></div>
+      {/* Decorative Top Fade (no layout impact) */}
+      <div className="absolute top-14 left-0 right-0 h-8 bg-gradient-to-b from-[#0b0e0f] to-transparent pointer-events-none z-10"></div>
+
+      {/* Jump to latest */}
+      {unread > 0 && (
+        <button
+          type="button"
+          onClick={jumpToLatest}
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 inline-flex items-center gap-1.5 text-[11px] font-black px-4 py-2 rounded-full bg-gradient-to-b from-[#FFE9B8] via-[#C9A24B] to-[#8A6A3A] text-black shadow-[0_8px_24px_rgba(201,162,75,0.5)] hover:brightness-110 active:scale-95 transition-all"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+          <span dir="ltr">{unread}</span>
+          <span>{lang === 'en' ? 'new' : 'جديدة'}</span>
+        </button>
+      )}
     </div>
+    </>
   );
 };
