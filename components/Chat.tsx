@@ -284,6 +284,11 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
         onScroll={handleScroll}
         className="flex-1 overflow-y-auto overflow-x-hidden p-4 pt-5 space-y-1.5 kick-chat-scroll bg-gradient-to-b from-[#0b0e0f]/50 to-transparent relative"
       >
+        {/* Bottom-anchor: messages stack from the bottom like real stream chat.
+            The auto margin absorbs empty space; it collapses to zero when full
+            so old messages exit upward and scrolling stays intact. */}
+        {messages.length > 0 && <div className="mt-auto shrink-0" aria-hidden="true" />}
+
         {messages.length === 0 && (
           <div className="h-full min-h-[220px] flex flex-col items-center justify-center gap-3 text-center px-6">
             <span className="w-12 h-12 rounded-2xl bg-[#C9A24B]/10 border border-[#C9A24B]/30 flex items-center justify-center text-[#D9C08A]">
