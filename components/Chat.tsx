@@ -217,7 +217,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
         .kick-msg{animation:kick-msg-in .22s ease}
         @media (prefers-reduced-motion:reduce){.kick-msg{animation:none}}
       `}</style>
-    <div className="flex flex-col h-full min-h-0 w-full bg-[#0b0e0f]/80 backdrop-blur-2xl rounded-3xl overflow-hidden border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative ring-1 ring-white/5 isolate group">
+    <div className="flex flex-col h-full max-h-full min-h-0 w-full bg-[#0b0e0f]/80 backdrop-blur-2xl rounded-3xl overflow-hidden border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative ring-1 ring-white/5 isolate group">
       {/* Gold top accent */}
       <span className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-l from-transparent via-[#C9A24B]/80 to-transparent z-20 pointer-events-none" aria-hidden="true" />
 
@@ -243,18 +243,13 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
           </div>
         </div>
 
-        {/* Message count */}
-        <span className="ms-auto inline-flex items-center text-[10px] font-black px-2.5 py-1 rounded-full bg-[#C9A24B]/10 border border-[#C9A24B]/30 text-[#D9C08A]" dir="ltr">
-          {messages.length}
-        </span>
-
         {/* Pause / resume live feed */}
         <button
           type="button"
           onClick={togglePaused}
           title={paused ? (lang === 'en' ? 'Resume live chat' : 'استئناف الشات') : (lang === 'en' ? 'Pause live chat' : 'تثبيت الشات مؤقتاً')}
           aria-pressed={paused}
-          className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all active:scale-95 ${paused ? 'bg-[#C9A24B] border-[#C9A24B] text-black shadow-[0_0_16px_rgba(201,162,75,0.6)]' : 'bg-white/[0.05] border-white/10 text-white/60 hover:text-[#D9C08A] hover:border-[#C9A24B]/50'}`}
+          className={`ms-auto w-8 h-8 rounded-lg border flex items-center justify-center transition-all active:scale-95 ${paused ? 'bg-[#C9A24B] border-[#C9A24B] text-black shadow-[0_0_16px_rgba(201,162,75,0.6)]' : 'bg-white/[0.05] border-white/10 text-white/60 hover:text-[#D9C08A] hover:border-[#C9A24B]/50'}`}
         >
           {paused ? (
             <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
@@ -282,7 +277,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
       <div
         ref={chatContainerRef}
         onScroll={handleScroll}
-        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 pt-5 space-y-1.5 kick-chat-scroll bg-gradient-to-b from-[#0b0e0f]/50 to-transparent relative"
+        className="flex-1 flex flex-col min-h-0 max-h-full overflow-y-auto overflow-x-hidden p-4 pt-5 space-y-1.5 kick-chat-scroll bg-gradient-to-b from-[#0b0e0f]/50 to-transparent relative"
       >
         {/* Bottom-anchor: messages stack from the bottom like real stream chat.
             The auto margin absorbs empty space; it collapses to zero when full
@@ -300,7 +295,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
         )}
 
         {messages.map((msg) => (
-          <div key={msg.id} className="kick-msg group flex items-start gap-2.5 py-1.5 px-3 rounded-xl hover:bg-[#C9A24B]/[0.06] transition-colors duration-200 border border-transparent hover:border-[#C9A24B]/20">
+          <div key={msg.id} className="kick-msg group flex items-start gap-2.5 py-1.5 px-3 rounded-xl hover:bg-[#C9A24B]/[0.06] transition-colors duration-200 border border-transparent hover:border-[#C9A24B]/20 shrink-0">
 
             {/* Avatar */}
             <span className="relative mt-0.5 w-6 h-6 rounded-full overflow-hidden shrink-0 bg-gradient-to-b from-[#C9A24B]/40 to-[#C9A24B]/10 border border-white/10 flex items-center justify-center text-[10px] font-black text-[#D9C08A]" aria-hidden="true">
@@ -335,7 +330,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang, isDemo }) => {
             </div>
           </div>
         ))}
-        {messages.length > 0 && <div className="h-9 shrink-0" aria-hidden="true" />}
+        {messages.length > 0 && <div className="h-3 shrink-0" aria-hidden="true" />}
       </div>
 
       {/* Decorative Bottom Gradient */}
