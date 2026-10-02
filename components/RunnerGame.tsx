@@ -114,19 +114,19 @@ export const RunnerGame: React.FC<RunnerGameProps> = ({ lang, onExit }) => {
             </Canvas>
             <HUD />
 
-            {/* Back to the hub — strong gold */}
-            <div className="absolute top-4 left-4 z-[300] animate-fade-in">
+            {/* Back to the hub — parked top-right so the in-game left rail stays clear */}
+            <div className="absolute top-4 right-4 z-[300] animate-fade-in">
                 <span className="absolute -inset-1.5 rounded-[20px] bg-gradient-to-b from-[#F0DDAE] to-[#8A6A3A] opacity-50 blur-lg" aria-hidden="true" />
                 <button
                     type="button"
                     onClick={onExit}
-                    className="btn-arena group relative inline-flex items-center gap-2.5 overflow-hidden rounded-2xl border border-[#FFF3D6]/70 bg-gradient-to-b from-[#FFF3D6] via-[#E3BD64] to-[#8A6A3A] px-6 py-3.5 text-sm font-black text-black shadow-[0_14px_44px_-8px_rgba(201,162,75,0.8)] hover:brightness-110 active:scale-95"
+                    className="btn-arena group relative inline-flex items-center gap-2.5 overflow-hidden rounded-2xl border border-[#FFF3D6]/70 bg-gradient-to-b from-[#FFF3D6] via-[#E3BD64] to-[#8A6A3A] px-5 py-3 sm:px-6 sm:py-3.5 text-xs sm:text-sm font-black text-black shadow-[0_14px_44px_-8px_rgba(201,162,75,0.8)] hover:brightness-110 active:scale-95"
                 >
-                    <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <span className="pointer-events-none absolute inset-y-0 w-1/2 -skew-x-12 bg-white/50 blur-md -right-[60%] transition-all duration-700 group-hover:right-[130%]" aria-hidden="true" />
+                    <span dir={isAr ? 'rtl' : 'ltr'}>{isAr ? 'عودة للقلعة' : 'Back to Hub'}</span>
+                    <svg className="w-5 h-5 shrink-0 rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d="M19 12H5M11 18l-6-6 6-6" />
                     </svg>
-                    <span dir={isAr ? 'rtl' : 'ltr'}>{isAr ? 'عودة للقلعة' : 'Back to Hub'}</span>
-                    <span className="pointer-events-none absolute inset-y-0 w-1/2 -skew-x-12 bg-white/50 blur-md -left-[60%] transition-all duration-700 group-hover:left-[130%]" aria-hidden="true" />
                 </button>
             </div>
         </div>

@@ -13,11 +13,6 @@ import { LevelManager } from './components/World/LevelManager';
 import { Effects } from './components/World/Effects';
 import { HUD } from './components/UI/HUD';
 import { useStore } from './store';
-import { MultiplayerSync } from './components/System/MultiplayerSync';
-import { GameStatus } from './types';
-
-import { AuthSync } from './components/System/AuthSync';
-import { RouterSync } from './components/System/RouterSync';
 
 // Dynamic Camera Controller
 const CameraController = () => {
@@ -65,10 +60,7 @@ function Scene() {
 
 function App() {
   return (
-    <div className="relative w-full h-screen bg-black overflow-hidden select-none">
-      <AuthSync />
-      <RouterSync />
-      <MultiplayerSync />
+    <div className="relative w-full h-screen bg-[#0B0906] overflow-hidden select-none">
       <Canvas
         shadows
         dpr={[1, 1.5]} 

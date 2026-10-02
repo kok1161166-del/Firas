@@ -106,43 +106,43 @@ interface LeaderboardCardProps {
 
 const LeaderboardCard: React.FC<LeaderboardCardProps> = ({ title, subtitle, data, icon, accentColor, isMain, lang, t, delay, emptyLabel, className }) => {
 
-  // Modern glass config — vibrant but harmonious with gold identity
+  // Unified brown config — like the logo, calm for eyes
   const config = {
     yellow: {
-      border: 'border-[#FFD76A]/25',
-      text: 'text-[#FFD76A]',
-      bgIcon: 'bg-[#FFD76A]/10',
-      gradient: 'from-[#FFE9B8] to-[#C9A24B]',
-      subText: 'text-[#FFE9B8]/50',
-      glowColor: '255,215,106',
-      barBright: '#FFE9B8',
-      barDeep: '#C9A24B',
-      medalBg: 'linear-gradient(160deg,#FFE9B8,#C9A24B 55%,#8A6A3A)',
-      orb: 'bg-[#FFD76A]/15'
+      border: 'border-[#C9A24B]/25',
+      text: 'text-[#D9C08A]',
+      bgIcon: 'bg-[#C9A24B]/10',
+      gradient: 'from-[#F0DDAE] to-[#8A6A3A]',
+      subText: 'text-[#D9C08A]/50',
+      glowColor: '201,162,75',
+      barBright: '#E8D5A8',
+      barDeep: '#8A6A3A',
+      medalBg: 'linear-gradient(160deg,#F0DDAE,#C9A24B 55%,#8A6A3A)',
+      orb: 'bg-[#C9A24B]/10'
     },
     rose: {
-      border: 'border-[#B388FF]/25',
-      text: 'text-[#C9B8FF]',
-      bgIcon: 'bg-[#B388FF]/10',
-      gradient: 'from-[#D9C8FF] to-[#8B5CF6]',
-      subText: 'text-[#C9B8FF]/50',
-      glowColor: '179,136,255',
-      barBright: '#D9C8FF',
-      barDeep: '#8B5CF6',
-      medalBg: 'linear-gradient(160deg,#D9C8FF,#8B5CF6 60%,#4C1D95)',
-      orb: 'bg-[#B388FF]/15'
+      border: 'border-[#C9A24B]/25',
+      text: 'text-[#D9C08A]',
+      bgIcon: 'bg-[#C9A24B]/10',
+      gradient: 'from-[#E8D5A8] to-[#8A6A3A]',
+      subText: 'text-[#D9C08A]/50',
+      glowColor: '201,162,75',
+      barBright: '#D9C08A',
+      barDeep: '#8A6A3A',
+      medalBg: 'linear-gradient(160deg,#E8D5A8,#A8823F 60%,#5C4A2A)',
+      orb: 'bg-[#C9A24B]/10'
     },
     cyan: {
-      border: 'border-[#6FF2C4]/25',
-      text: 'text-[#8CFFD9]',
-      bgIcon: 'bg-[#6FF2C4]/10',
-      gradient: 'from-[#B8FFE9] to-[#14B8A6]',
-      subText: 'text-[#8CFFD9]/50',
-      glowColor: '111,242,196',
-      barBright: '#B8FFE9',
-      barDeep: '#14B8A6',
-      medalBg: 'linear-gradient(160deg,#B8FFE9,#14B8A6 60%,#0F766E)',
-      orb: 'bg-[#6FF2C4]/15'
+      border: 'border-[#C9A24B]/25',
+      text: 'text-[#D9C08A]',
+      bgIcon: 'bg-[#C9A24B]/10',
+      gradient: 'from-[#E8D5A8] to-[#8A6A3A]',
+      subText: 'text-[#D9C08A]/50',
+      glowColor: '201,162,75',
+      barBright: '#F0DDAE',
+      barDeep: '#8A6A3A',
+      medalBg: 'linear-gradient(160deg,#D9C08A,#8A6A3A 60%,#3A2E1A)',
+      orb: 'bg-[#C9A24B]/10'
     }
   }[accentColor];
 
@@ -379,27 +379,25 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ lang }) => {
               <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-l from-transparent via-[#C9A24B]/70 to-transparent" />
               <div className="relative p-5 sm:p-8 flex flex-col lg:flex-row items-center gap-6 lg:gap-10 [transform-style:preserve-3d]">
 
-                {/* 3D K emblem + live followers */}
+                {/* brown K emblem (logo colors) + followers + subscribe */}
                 <div className="flex items-center justify-center sm:justify-start gap-4 sm:gap-5 shrink-0 w-full sm:w-auto">
-                  <div className="relative w-[72px] h-[72px] sm:w-24 sm:h-24 shrink-0 [transform:translateZ(36px)]">
-                    <KickIcon className="absolute inset-0 m-auto w-9 h-9 sm:w-12 sm:h-12 translate-x-[6px] translate-y-[7px] text-[#123f0c]" aria-hidden="true" />
-                    <KickIcon className="absolute inset-0 m-auto w-9 h-9 sm:w-12 sm:h-12 translate-x-[3px] translate-y-[3px] text-[#1e6b12]" aria-hidden="true" />
-                    <div className="absolute inset-0 rounded-[22px] sm:rounded-[24px] bg-gradient-to-b from-[#8dff6a] via-[#53FC18] to-[#2b9e1c] border border-[#c6ffab]/60 shadow-[0_0_44px_rgba(83,252,24,0.55),inset_0_2px_0_rgba(255,255,255,0.5)] flex items-center justify-center transition-transform duration-500 group-hover:scale-105 group-hover:rotate-3">
+                  <div className="relative w-[72px] h-[72px] sm:w-24 sm:h-24 shrink-0">
+                    <div className="absolute inset-0 rounded-[22px] sm:rounded-[24px] bg-gradient-to-b from-[#F0DDAE] via-[#C9A24B] to-[#8A6A3A] border border-[#D9C08A]/60 shadow-[0_0_30px_rgba(201,162,75,0.35),inset_0_1px_0_rgba(255,255,255,0.5)] flex items-center justify-center transition-transform duration-500 group-hover:scale-105">
                       <KickIcon className="w-9 h-9 sm:w-12 sm:h-12 text-black" />
                     </div>
-                    <span className="absolute -bottom-2 inset-x-6 h-3 rounded-full bg-[#53FC18]/50 blur-md" aria-hidden="true" />
+                    <span className="absolute -bottom-2 inset-x-6 h-3 rounded-full bg-[#C9A24B]/40 blur-md" aria-hidden="true" />
                   </div>
-                  <div className="min-w-0 text-center sm:text-start [transform:translateZ(18px)]">
+                  <div className="min-w-0 text-center sm:text-start">
                     <p className="inline-flex items-center gap-1.5 text-[10px] font-black tracking-[0.25em] text-[#D9C08A] uppercase">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#C9A24B] animate-pulse shadow-[0_0_8px_#C9A24B]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#C9A24B]" />
                       {t.followers} • KICK
                     </p>
                     <p className="text-4xl sm:text-5xl font-black text-white tracking-tighter leading-none mt-1 drop-shadow-lg">
                       <KickCount value={channelInfo.followers_count} />
                     </p>
-                    <a href="https://kick.com/firas" target="_blank" rel="noopener noreferrer"
-                      className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] font-black px-5 py-2.5 rounded-full border border-[#C9A24B]/60 text-[#D9C08A] hover:bg-[#C9A24B] hover:text-black hover:shadow-[0_0_24px_rgba(201,162,75,0.6)] active:scale-95 transition-all duration-300">
-                      {lang === 'en' ? 'FOLLOW' : 'تابع الآن'}
+                    <a href="https://kick.com/firas/subscribe" target="_blank" rel="noopener noreferrer"
+                      className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] font-black px-6 py-2.5 rounded-full bg-gradient-to-b from-[#F0DDAE] via-[#C9A24B] to-[#8A6A3A] text-black shadow-[0_12px_30px_-10px_rgba(201,162,75,0.6)] hover:brightness-110 active:scale-95 transition-all duration-300">
+                      {lang === 'en' ? 'SUBSCRIBE' : 'اشترك الآن'}
                       <svg className={`w-3.5 h-3.5 ${lang === 'ar' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                     </a>
                   </div>
@@ -415,7 +413,8 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ lang }) => {
                       </div>
                       <div className="flex flex-wrap justify-center lg:justify-end gap-2 sm:gap-3.5">
                         {[...channelInfo.subscriber_badges].sort((a, b) => a.months - b.months).map((badge, i) => (
-                          <div key={badge.id} className="flex flex-col items-center basis-[calc(25%-6px)] sm:basis-auto opacity-0 animate-fade-in-up" style={{ animationDelay: `${i * 90}ms` }}>
+                          <a key={badge.id} href="https://kick.com/firas/subscribe" target="_blank" rel="noopener noreferrer" title={lang === 'en' ? 'Subscribe to unlock this badge' : 'اشترك للحصول على هذه الشارة'}
+                            className="flex flex-col items-center basis-[calc(25%-6px)] sm:basis-auto opacity-0 animate-fade-in-up" style={{ animationDelay: `${i * 90}ms` }}>
                             <div className="group/badge relative w-14 h-14 sm:w-[68px] sm:h-[68px] rounded-2xl bg-gradient-to-b from-white/[0.08] to-white/[0.02] border border-white/10 p-2 transition-all duration-300 hover:-translate-y-1.5 hover:border-[#C9A24B]/60 hover:shadow-[0_14px_30px_-8px_rgba(201,162,75,0.55)]">
                               <div className="absolute inset-x-3 top-0 h-px bg-gradient-to-l from-transparent via-white/40 to-transparent" />
                               <img
@@ -428,7 +427,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ lang }) => {
                             </div>
                             <span className="mt-1.5 text-[9px] sm:text-[10px] font-black text-white/50 tracking-wider" dir="ltr">{badge.months}M</span>
                             <span className="w-8 h-[3px] rounded-full bg-black/60 border-b border-white/10 mt-1" aria-hidden="true" />
-                          </div>
+                          </a>
                         ))}
                       </div>
                     </>
@@ -611,14 +610,14 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ lang }) => {
           </div>
 
           {/* VIDEOS — modern archive */}
-          <div className="group/sec relative rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-2xl overflow-hidden transition-colors duration-500 hover:border-white/20">
-            <div className="absolute -top-24 start-0 w-80 h-80 rounded-full bg-[#6FF2C4]/[0.08] blur-[100px] pointer-events-none" aria-hidden="true" />
+          <div className="group/sec relative rounded-[28px] border border-white/10 bg-white/[0.03] overflow-hidden transition-colors duration-500 hover:border-white/20">
+            <div className="absolute -top-24 start-0 w-80 h-80 rounded-full bg-[#C9A24B]/[0.07] blur-[100px] pointer-events-none" aria-hidden="true" />
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-transparent via-white/40 to-transparent" aria-hidden="true" />
             <div className="relative p-4 sm:p-5">
             <div className="flex items-center gap-3">
               <div className="relative shrink-0">
-                <div className="absolute -inset-1.5 bg-[#6FF2C4]/30 blur-xl opacity-40 rounded-2xl" aria-hidden="true" />
-                <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-b from-[#B8FFE9] via-[#14B8A6] to-[#0F766E] border border-white/25 shadow-[0_12px_32px_-8px_rgba(20,184,166,0.55)] flex items-center justify-center transition-transform duration-500 hover:rotate-6 hover:scale-110">
+                <div className="absolute -inset-1.5 bg-[#C9A24B]/25 blur-xl opacity-30 rounded-2xl" aria-hidden="true" />
+                <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-b from-[#F0DDAE] via-[#C9A24B] to-[#8A6A3A] border border-white/25 shadow-[0_12px_32px_-8px_rgba(201,162,75,0.5)] flex items-center justify-center transition-transform duration-500 hover:scale-105">
                   <svg className="w-5 h-5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </div>
               </div>
@@ -627,7 +626,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ lang }) => {
                 <p className="text-[10px] font-black text-white/35 uppercase tracking-[0.24em] mt-1.5" dir="ltr">{videos?.length || 0} VODS • ARCHIVE</p>
               </div>
               <a href="https://kick.com/firas/videos" target="_blank" rel="noopener noreferrer"
-                className="shrink-0 inline-flex items-center gap-1.5 text-[11px] font-black px-4 py-2.5 rounded-2xl bg-white/[0.05] border border-white/10 text-white/60 hover:text-black hover:bg-[#B8FFE9] hover:border-[#B8FFE9] hover:shadow-[0_0_24px_rgba(111,242,196,0.5)] active:scale-95 transition-all duration-300">
+                className="shrink-0 inline-flex items-center gap-1.5 text-[11px] font-black px-4 py-2.5 rounded-2xl bg-white/[0.05] border border-white/10 text-white/60 hover:text-black hover:bg-[#D9C08A] hover:border-[#D9C08A] active:scale-95 transition-all duration-300">
                 {lang === 'en' ? 'VIEW ALL' : 'عرض الكل'}
                 <svg className={`w-3.5 h-3.5 ${lang === 'ar' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
               </a>
@@ -646,7 +645,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ lang }) => {
                           href={`https://kick.com/firas/videos/${videoUUID}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="group flex gap-3 p-2.5 rounded-3xl bg-black/40 border border-white/[0.07] hover:border-[#B8FFE9]/50 hover:bg-white/[0.05] hover:-translate-y-1 hover:shadow-[0_20px_50px_-16px_rgba(111,242,196,0.35)] active:scale-[0.99] transition-all duration-300 cursor-pointer"
+                          className="group flex gap-3 p-2.5 rounded-3xl bg-black/40 border border-white/[0.07] hover:border-[#C9A24B]/50 hover:bg-white/[0.05] hover:-translate-y-1 active:scale-[0.99] transition-all duration-300 cursor-pointer"
                         >
                           <div className="relative w-32 sm:w-44 aspect-video rounded-2xl overflow-hidden shrink-0 bg-black border border-white/10 group-hover:border-white/25 transition-colors duration-300">
                             <img
@@ -664,11 +663,11 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ lang }) => {
                                 <svg className="w-4 h-4 text-white translate-x-[1px] rtl:-translate-x-[1px]" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
                               </div>
                             </div>
-                            {dur > 0 && <span className="absolute bottom-1.5 end-1.5 text-[9px] font-black px-2 py-1 rounded-lg bg-black/80 backdrop-blur border border-white/20 text-white" dir="ltr">{fmtDur(dur)}</span>}
-                            <span className="absolute top-1.5 start-1.5 text-[8px] font-black px-2 py-1 rounded-lg bg-[#B8FFE9] text-black" dir="ltr">VOD</span>
+                            {dur > 0 && <span className="absolute bottom-1.5 end-1.5 text-[9px] font-black px-2 py-1 rounded-lg bg-black/80 border border-white/20 text-white" dir="ltr">{fmtDur(dur)}</span>}
+                            <span className="absolute top-1.5 start-1.5 text-[8px] font-black px-2 py-1 rounded-lg bg-[#C9A24B] text-black" dir="ltr">VOD</span>
                           </div>
                           <div className="min-w-0 flex-1 flex flex-col justify-center gap-1.5 py-1">
-                            <h4 className="text-[13px] sm:text-sm font-black text-white leading-snug line-clamp-2 group-hover:text-[#B8FFE9] transition-colors">
+                            <h4 className="text-[13px] sm:text-sm font-black text-white leading-snug line-clamp-2 group-hover:text-[#D9C08A] transition-colors">
                               {video.session_title || video.title || 'Past Stream'}
                             </h4>
                             <div className="flex items-center gap-2 text-[10px] sm:text-[11px] text-white/45 font-bold">
@@ -679,7 +678,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ lang }) => {
                               </span>
                             </div>
                           </div>
-                          <span className="self-center shrink-0 w-10 h-10 rounded-2xl bg-white/[0.05] border border-white/10 hidden sm:flex items-center justify-center text-white/40 group-hover:text-black group-hover:bg-[#B8FFE9] group-hover:border-[#B8FFE9] group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-all duration-300">
+                          <span className="self-center shrink-0 w-10 h-10 rounded-2xl bg-white/[0.05] border border-white/10 hidden sm:flex items-center justify-center text-white/40 group-hover:text-black group-hover:bg-[#D9C08A] group-hover:border-[#D9C08A] group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-all duration-300">
                             <svg className={`w-4 h-4 ${lang === 'ar' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
                           </span>
                         </a>

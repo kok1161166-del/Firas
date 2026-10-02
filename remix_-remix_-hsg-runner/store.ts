@@ -6,8 +6,8 @@
 
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { GameStatus, RUN_SPEED_BASE } from './types';
+import { persist, type PersistStorage, type StorageValue } from 'zustand/middleware';
+import { GameStatus } from './types';
 import { supabase } from './supabase';
 import { Session } from '@supabase/supabase-js';
 
@@ -41,8 +41,13 @@ interface GameState {
   syncProfileToSupabase: (updates: Partial<UserProfile>) => Promise<void>;
   
   status: GameStatus;
+  /** Lifetime total for the endless run — this is the number that gets shared. */
   score: number;
+  /** Yield of the current tier only (reset on every milestone). */
   levelScore: number;
+  /** Frozen snapshot of the tier that was just cleared (used by the milestone card). */
+  tierScore: number;
+  tierLetters: number;
   lives: number;
   maxLives: number;
   speed: number;
@@ -51,8 +56,19 @@ interface GameState {
   unlockedLevels: number;
   laneCount: number;
   gemsCollected: number;
+  /** Lifetime letters across every tier — this is what the server bounds. */
+  totalLetters: number;
+  /** Non-blocking celebration shown for a moment after each tier clears. */
+  milestoneFlash: { id: number; level: number; score: number; letters: number } | null;
+  dismissMilestone: () => void;
+  /** Total distance ever covered — never resets, the endless counter. */
   distance: number;
+  /** Distance at which the current tier started (for the tier progress ring). */
+  tierStart: number;
+  /** Absolute distance of the next milestone. */
   targetDistance: number;
+  /** Wall-clock seconds the current life lasted — used for score verification. */
+  runSeconds: number;
   mapId: number;
   
   // Inventory / Abilities
@@ -82,6 +98,12 @@ interface GameState {
   heartPowerLevel: number;
   currentLifeHits: number;
 
+  // Verified (server-accepted) best run — the only number allowed to be shared.
+  bestScore: number;
+  bestDistance: number;
+  bestCode: string;
+  setBest: (score: number, distance: number, code: string) => void;
+
   // Actions
   startGame: (level?: number) => void;
   startNextLevel: () => void;
@@ -94,18 +116,14 @@ interface GameState {
   setDistance: (dist: number) => void;
   setTargetDistance: (dist: number) => void;
   setMapId: (id: number) => void;
+  tickRunTimer: (seconds: number) => void;
   
-  // Shop / Abilities
-  buyItem: (type: 'DOUBLE_JUMP' | 'MAX_LIFE' | 'HEAL' | 'IMMORTAL' | 'MAGNET' | 'SHIELD' | 'DASH' | 'TIME_WARP' | 'MULTIPLIER' | 'LASER' | 'CHARACTER' | 'COLOR' | 'ACCESSORY' | 'HEART_POWER', cost: number, itemId?: string) => boolean;
   selectCharacter: (id: string) => void;
   selectColor: (id: string) => void;
   selectAccessory: (id: string | null) => void;
-  completeLevel: () => void;
-  openShop: () => void;
-  closeShop: () => void;
+  completeLevel: (exactDistance?: number) => void;
   activateImmortality: () => void;
   activateDash: () => void;
-  preShopStatus: GameStatus | null;
   effectsEnabled: boolean;
   soundEnabled: boolean;
   toggleEffects: () => void;
@@ -135,7 +153,76 @@ interface GameState {
   resetOnlineState: () => void;
 }
 
-const MAX_LEVEL = 9999; // Practically infinite
+const MAX_LEVEL = 999999; // Practically infinite — the runner has no ceiling
+
+/**
+ * Milestone length in light-years. It grows with the tier so an endless run
+ * keeps rewarding the player while the difficulty curve keeps biting.
+ */
+export const milestoneLength = (level: number) => 1100 + Math.min(level - 1, 40) * 220;
+
+/** Run start speed — the endless ramp lives in LevelManager. */
+const RUN_SPEED_START = 34;
+
+/**
+ * Debounced localStorage adapter.
+ *
+ * zustand's `persist` serialises and writes on *every* state change. The
+ * runner pushes fresh distance numbers several times a second, so the raw
+ * adapter produced a steady stream of synchronous writes that showed up as
+ * periodic stalls on long runs. Writes are now coalesced and flushed when the
+ * tab goes away.
+ */
+const createDebouncedStorage = (): PersistStorage<unknown> => {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let pending: { key: string; value: string } | null = null;
+
+  const flush = () => {
+    if (timer) { clearTimeout(timer); timer = null; }
+    if (pending) {
+      try { localStorage.setItem(pending.key, pending.value); } catch { /* quota / private mode */ }
+      pending = null;
+    }
+  };
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('pagehide', flush);
+    window.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
+  }
+
+  return {
+    getItem: (name: string) => {
+      try {
+        const raw = localStorage.getItem(name);
+        return raw ? (JSON.parse(raw) as StorageValue<unknown>) : null;
+      } catch {
+        return null;
+      }
+    },
+    setItem: (name: string, value: StorageValue<unknown>) => {
+      pending = { key: name, value: JSON.stringify(value) };
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(flush, 600);
+    },
+    removeItem: (name: string) => {
+      pending = null;
+      try { localStorage.removeItem(name); } catch { /* noop */ }
+    },
+  };
+};
+
+/**
+ * Profile writes are coalesced. Collecting a gem used to fire a Supabase
+ * update per pickup; now at most one write every few seconds happens.
+ */
+let profileSyncTimer: ReturnType<typeof setTimeout> | null = null;
+const queueProfileSync = (updates: Partial<UserProfile>) => {
+  if (profileSyncTimer) return;
+  profileSyncTimer = setTimeout(() => {
+    profileSyncTimer = null;
+    useStore.getState().syncProfileToSupabase(updates).catch(() => {});
+  }, 5000);
+};
 
 export const useStore = create<GameState>()(
   persist(
@@ -147,7 +234,6 @@ export const useStore = create<GameState>()(
           if (profile) {
               set({ 
                   userProfile: profile,
-                  score: profile.points,
                   level: profile.current_level,
                   unlockedLevels: Math.max(get().unlockedLevels, profile.current_level),
                   mapId: profile.current_map
@@ -167,18 +253,26 @@ export const useStore = create<GameState>()(
       status: GameStatus.LANDING,
   score: 0,
   levelScore: 0,
-  lives: 3,
-  maxLives: 3,
+  tierScore: 0,
+  tierLetters: 0,
+  lives: 5,
+  maxLives: 5,
   speed: 0,
   collectedLetters: [],
   level: 1,
   unlockedLevels: 1,
   laneCount: 3,
   gemsCollected: 0,
+  totalLetters: 0,
+  milestoneFlash: null,
+  dismissMilestone: () => set({ milestoneFlash: null }),
   distance: 0,
-  targetDistance: 1000,
+  tierStart: 0,
+  targetDistance: milestoneLength(1),
+  runSeconds: 0,
   mapId: 1,
   setMapId: (id) => set({ mapId: id }),
+  tickRunTimer: (seconds) => set({ runSeconds: seconds }),
   
   hasDoubleJump: false,
   hasImmortality: false,
@@ -190,7 +284,6 @@ export const useStore = create<GameState>()(
   hasTimeWarp: false,
   hasMultiplier: false,
   hasLaser: false,
-  preShopStatus: null,
   effectsEnabled: true,
   soundEnabled: true,
   unlockedCharacters: ['default'],
@@ -202,28 +295,46 @@ export const useStore = create<GameState>()(
   heartPowerLevel: 1,
   currentLifeHits: 1,
 
+  bestScore: 0,
+  bestDistance: 0,
+  bestCode: '',
+  setBest: (best, bestDist, code) => set((s) => ({
+    bestScore: Math.max(s.bestScore, Math.round(best) || 0),
+    bestDistance: Math.max(s.bestDistance, Math.round(bestDist) || 0),
+    bestCode: Math.max(s.bestScore, best) > s.bestScore || !s.bestCode ? code : s.bestCode,
+  })),
+
   startGame: (level = 1) => {
     const { maxLives, hasDoubleJump, hasImmortality, selectedCharacter } = get();
     
     // Character Stat Multipliers
     let speedMult = 1.0;
-    if (selectedCharacter === 'char_neon') speedMult = 1.15;
-    if (selectedCharacter === 'char_gold') speedMult = 0.9;
-    if (selectedCharacter === 'char_void') speedMult = 1.05;
+    if (selectedCharacter === 'char_neon') speedMult = 1.05;
+    if (selectedCharacter === 'char_gold') speedMult = 0.95;
+    if (selectedCharacter === 'char_void') speedMult = 1.0;
 
     set({ 
       status: GameStatus.PLAYING, 
-      score: get().score,
+      // A run's score is per-run. Restarting must not be farmable, so this
+      // resets here; milestones (startNextLevel) keep it, because an endless
+      // run accumulates across tiers.
+      score: 0,
       levelScore: 0,
+      tierScore: 0,
+      tierLetters: 0,
       lives: maxLives, 
       maxLives: maxLives,
-      speed: (RUN_SPEED_BASE + 5 + Math.min(level * 0.5, 25)) * speedMult,
+      speed: RUN_SPEED_START * speedMult,
       collectedLetters: [],
       level: level,
-      laneCount: Math.min(3 + Math.floor(level / 10), 9),
+      laneCount: 3,
       gemsCollected: 0,
+      totalLetters: 0,
+      milestoneFlash: null,
       distance: 0,
-      targetDistance: 800 + (level * 200),
+      tierStart: 0,
+      targetDistance: milestoneLength(level),
+      runSeconds: 0,
       hasDoubleJump: hasDoubleJump,
       hasImmortality: hasImmortality,
       isImmortalityActive: false,
@@ -243,48 +354,31 @@ export const useStore = create<GameState>()(
   },
 
   startNextLevel: () => {
-    const nextLevel = get().level + 1;
-    get().startGame(nextLevel);
+    // Endless: a milestone never ends the run, it hands over a harder tier
+    // Endless: a milestone never ends the run, it hands over a harder tier
+    // while the run's score and distance keep climbing.
+    const nextLevel = Math.min(MAX_LEVEL, get().level + 1);
+    const total = get().score;
+    const tierStart = Math.floor(get().distance);
+    const { maxLives, heartPowerLevel } = get();
+
+    set({
+      status: GameStatus.PLAYING,
+      level: nextLevel,
+      levelScore: 0,
+      collectedLetters: [],
+      tierStart,
+      targetDistance: tierStart + milestoneLength(nextLevel),
+      // Lives top back up between tiers, the run only really ends on death.
+      lives: maxLives,
+      currentLifeHits: heartPowerLevel,
+      gemsCollected: 0,
+      score: total,
+    });
   },
 
   restartGame: () => {
-    const { level, maxLives, hasDoubleJump, hasImmortality, selectedCharacter } = get();
-    
-    // Character Stat Multipliers
-    let speedMult = 1.0;
-    if (selectedCharacter === 'char_neon') speedMult = 1.15;
-    if (selectedCharacter === 'char_gold') speedMult = 0.9;
-    if (selectedCharacter === 'char_void') speedMult = 1.05;
-
-    set({ 
-      status: GameStatus.PLAYING, 
-      score: get().score, 
-      levelScore: 0,
-      lives: maxLives, 
-      maxLives: maxLives,
-      speed: (RUN_SPEED_BASE + 5 + Math.min(level * 0.5, 25)) * speedMult,
-      collectedLetters: [],
-      level: level,
-      laneCount: Math.min(3 + Math.floor(level / 10), 9),
-      gemsCollected: 0,
-      distance: 0,
-      targetDistance: 800 + (level * 200),
-      hasDoubleJump: hasDoubleJump,
-      hasImmortality: hasImmortality,
-      isImmortalityActive: false,
-      hasMagnet: get().hasMagnet,
-      hasShield: get().hasShield,
-      hasDash: get().hasDash,
-      isDashActive: false,
-      hasTimeWarp: get().hasTimeWarp,
-      hasMultiplier: get().hasMultiplier,
-      hasLaser: get().hasLaser,
-      // Clear online state if restarting single player
-      roomId: null,
-      roomCode: null,
-      onlinePlayers: [],
-      currentLifeHits: get().heartPowerLevel
-    });
+    get().startGame(1);
   },
 
   takeDamage: () => {
@@ -318,7 +412,7 @@ export const useStore = create<GameState>()(
   addScore: (amount) => {
       const newScore = get().score + amount;
       set((state) => ({ score: newScore, levelScore: state.levelScore + amount }));
-      get().syncProfileToSupabase({ points: newScore });
+      queueProfileSync({ points: newScore });
   },
   
   collectGem: (value) => {
@@ -330,7 +424,7 @@ export const useStore = create<GameState>()(
         levelScore: state.levelScore + actualValue,
         gemsCollected: state.gemsCollected + 1 
       }));
-      get().syncProfileToSupabase({ points: newScore });
+      queueProfileSync({ points: newScore });
   },
 
   setDistance: (dist) => set((state) => {
@@ -345,136 +439,56 @@ export const useStore = create<GameState>()(
   setTargetDistance: (dist) => set({ targetDistance: dist }),
 
   collectLetter: (index) => {
-    const { collectedLetters, level, speed, unlockedLevels } = get();
+    const { collectedLetters, score, levelScore } = get();
     
     if (!collectedLetters.includes(index)) {
+      // Each letter is worth 1000 and also nudges the endless speed ramp.
+      // The permanent speed boost is intentionally gone: speed is derived
+      // from distance in LevelManager so the ramp stays monotonic.
       const newLetters = [...collectedLetters, index];
-      const speedIncrease = RUN_SPEED_BASE * 0.10;
-      const nextSpeed = speed + speedIncrease;
+      const totalLetters = get().totalLetters + 1;
 
       set({ 
         collectedLetters: newLetters,
-        speed: nextSpeed,
-        score: get().score + 1000,
-        levelScore: get().levelScore + 1000
+        totalLetters,
+        score: score + 1000,
+        levelScore: levelScore + 1000
       });
+      queueProfileSync({ points: score + 1000 });
     }
   },
 
-  completeLevel: () => {
-      const currentLevel = get().level;
-      const currentUnlocked = get().unlockedLevels;
+  /**
+   * A tier milestone was reached.
+   *
+   * The run keeps playing: no pause, no modal, no "you finished" screen — a
+   * celebration banner slides over the action and the next tier starts
+   * immediately, wider and faster. An endless runner that stops to celebrate
+   * reads as a game that kicked you out, which is exactly what we removed.
+   */
+  completeLevel: (exactDistance?: number) => {
+      const { level, unlockedLevels, levelScore, collectedLetters } = get();
+      const reached = Math.floor(
+        typeof exactDistance === 'number' && Number.isFinite(exactDistance)
+          ? exactDistance
+          : get().distance,
+      );
+      const nextLevel = Math.min(MAX_LEVEL, level + 1);
+
+      get().startNextLevel();
       set({
-          status: GameStatus.LEVEL_COMPLETE,
-          collectedLetters: [],
-          unlockedLevels: Math.max(currentUnlocked, currentLevel + 1)
+        tierScore: levelScore,
+        tierLetters: collectedLetters.length,
+        unlockedLevels: Math.max(unlockedLevels, nextLevel),
+        tierStart: reached,
+        targetDistance: reached + milestoneLength(nextLevel),
+        milestoneFlash: {
+          id: nextLevel,
+          level: nextLevel,
+          score: levelScore,
+          letters: collectedLetters.length,
+        },
       });
-  },
-
-  openShop: () => set({ preShopStatus: get().status, status: GameStatus.SHOP }),
-  
-  closeShop: () => set({ status: get().preShopStatus || GameStatus.LEVEL_SELECT, preShopStatus: null }),
-
-  buyItem: (type, cost, itemId) => {
-      const { score, maxLives, lives, unlockedCharacters } = get();
-      
-      if (score >= cost) {
-          set({ score: score - cost });
-          
-          if (type === 'UPGRADE') {
-              switch (itemId) {
-                  case 'DOUBLE_JUMP':
-                      set({ hasDoubleJump: true });
-                      break;
-                  case 'MAX_LIFE':
-                      set({ maxLives: maxLives + 1, lives: lives + 1 });
-                      break;
-                  case 'HEAL':
-                      set({ lives: Math.min(lives + 1, maxLives) });
-                      break;
-                  case 'IMMORTAL':
-                      set({ hasImmortality: true });
-                      break;
-                  case 'MAGNET':
-                      set({ hasMagnet: true });
-                      break;
-                  case 'SHIELD':
-                      set({ hasShield: true });
-                      break;
-                  case 'DASH':
-                      set({ hasDash: true });
-                      break;
-                  case 'TIME_WARP':
-                      set({ hasTimeWarp: true });
-                      break;
-                  case 'MULTIPLIER':
-                      set({ hasMultiplier: true });
-                      break;
-                  case 'LASER':
-                      set({ hasLaser: true });
-                      break;
-                  case 'HEART_POWER':
-                      set({ heartPowerLevel: Math.min(get().heartPowerLevel + 1, 6) });
-                      break;
-              }
-              // Sync purchase
-              if (itemId || type) {
-                  const { session } = get();
-                  if (session?.user) {
-                      supabase.from('inventory').insert({
-                          user_id: session.user.id,
-                          item_id: itemId || type,
-                          item_type: 'UPGRADE'
-                      }).then();
-                  }
-              }
-          } else if (type === 'CHARACTER') {
-              if (itemId && !unlockedCharacters.includes(itemId)) {
-                  set({ unlockedCharacters: [...unlockedCharacters, itemId], selectedCharacter: itemId });
-                  // Sync purchase
-                  const { session } = get();
-                  if (session?.user) {
-                      supabase.from('inventory').insert({
-                          user_id: session.user.id,
-                          item_id: itemId,
-                          item_type: 'CHARACTER'
-                      }).then();
-                  }
-              }
-          } else if (type === 'COLOR') {
-              const { unlockedColors } = get();
-              if (itemId && !unlockedColors.includes(itemId)) {
-                  set({ unlockedColors: [...unlockedColors, itemId], selectedColor: itemId });
-                  const { session } = get();
-                  if (session?.user) {
-                      supabase.from('inventory').insert({
-                          user_id: session.user.id,
-                          item_id: itemId,
-                          item_type: 'COLOR'
-                      }).then();
-                  }
-              }
-          } else if (type === 'ACCESSORY') {
-              const { unlockedAccessories } = get();
-              if (itemId && !unlockedAccessories.includes(itemId)) {
-                  set({ unlockedAccessories: [...unlockedAccessories, itemId], selectedAccessory: itemId });
-                  const { session } = get();
-                  if (session?.user) {
-                      supabase.from('inventory').insert({
-                          user_id: session.user.id,
-                          item_id: itemId,
-                          item_type: 'ACCESSORY'
-                      }).then();
-                  }
-              }
-          }
-          
-          // Sync points
-          get().syncProfileToSupabase({ points: score - cost });
-          
-          return true;
-      }
-      return false;
   },
 
   selectCharacter: (id: string) => {
@@ -523,7 +537,7 @@ export const useStore = create<GameState>()(
 
   pauseGame: () => {
     if (get().status === GameStatus.PLAYING) {
-      set({ preShopStatus: GameStatus.PLAYING, status: GameStatus.PAUSED });
+      set({ status: GameStatus.PAUSED });
     }
   },
 
@@ -533,21 +547,7 @@ export const useStore = create<GameState>()(
     }
   },
 
-  setStatus: (status) => {
-    const protectedStatuses = [
-      GameStatus.SHOP, 
-      GameStatus.LEVEL_SELECT, 
-      GameStatus.LOBBY, 
-      GameStatus.ONLINE, 
-      GameStatus.PROFILE, 
-      GameStatus.MENU
-    ];
-    if (protectedStatuses.includes(status) && !get().session) {
-      set({ status: GameStatus.AUTH }); // Redirect to AUTH to encourage login
-    } else {
-      set({ status });
-    }
-  },
+  setStatus: (status) => set({ status }),
 
   // Multiplayer Implementation
   localUserId: null,
@@ -599,7 +599,7 @@ export const useStore = create<GameState>()(
       levelScore: 0,
       lives: maxLives, 
       maxLives: maxLives,
-      speed: (RUN_SPEED_BASE + 8) * speedMult, // Start slightly slower for "easy" beginning
+      speed: (RUN_SPEED_START - 4) * speedMult, // Start slightly slower for "easy" beginning
       collectedLetters: [],
       level: 1,
       laneCount: 3, 
@@ -638,11 +638,11 @@ export const useStore = create<GameState>()(
     }),
     {
       name: 'hsg-run-storage',
+      storage: createDebouncedStorage(),
+      version: 2,
       partialize: (state) => ({
-        score: state.score,
         maxLives: state.maxLives,
         unlockedLevels: state.unlockedLevels,
-        gemsCollected: state.gemsCollected,
         hasDoubleJump: state.hasDoubleJump,
         hasImmortality: state.hasImmortality,
         hasMagnet: state.hasMagnet,
@@ -651,17 +651,25 @@ export const useStore = create<GameState>()(
         hasTimeWarp: state.hasTimeWarp,
         hasMultiplier: state.hasMultiplier,
         hasLaser: state.hasLaser,
-        unlockedCharacters: state.unlockedCharacters,
         selectedCharacter: state.selectedCharacter,
-        unlockedColors: state.unlockedColors,
         selectedColor: state.selectedColor,
-        unlockedAccessories: state.unlockedAccessories,
         selectedAccessory: state.selectedAccessory,
         heartPowerLevel: state.heartPowerLevel,
-        currentLifeHits: state.currentLifeHits,
         effectsEnabled: state.effectsEnabled,
         soundEnabled: state.soundEnabled,
+        bestScore: state.bestScore,
+        bestDistance: state.bestDistance,
+        bestCode: state.bestCode,
       }),
+      migrate: (persisted: any) => {
+        // v1 kept `score` / `gemsCollected` locally. Those are the two fields
+        // that made score tampering trivial, so they are intentionally dropped
+        // instead of migrated — only server-verified values survive a reset.
+        if (!persisted || typeof persisted !== 'object') return persisted;
+        const { score, gemsCollected, levelScore, currentLifeHits, ...rest } = persisted;
+        void score; void gemsCollected; void levelScore; void currentLifeHits;
+        return { ...rest, bestScore: Number(persisted.bestScore) || 0, bestDistance: Number(persisted.bestDistance) || 0, bestCode: '' };
+      },
     }
   )
 );

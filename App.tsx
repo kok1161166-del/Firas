@@ -6,6 +6,7 @@ import { SiteHeader } from './components/SiteHeader';
 import { RunnerShowcase } from './components/RunnerShowcase';
 import { ChatWidget } from './components/Chat';
 import { DiscordWidget, YoutubeWidget } from './components/CommunityWidgets';
+import { SearchOverlay } from './components/SearchOverlay';
 
 // Heavy below-fold / on-demand chunks — split out of the first paint
 const StatsSection = lazy(() => import('./components/StatsSection').then(m => ({ default: m.StatsSection })));
@@ -29,14 +30,14 @@ const createSocialLink = (key: string, value: string, followerCount?: string, sp
         .replace(/^@/, '')
         .replace(/\/$/, '');
     switch (key) {
-        case 'twitter': return { name: 'X', url: value.startsWith('http') ? value : `https://x.com/${handle}`, icon: <XIcon className="w-7 h-7" />, color: '', username: `@${handle}`, hex: '#FFFFFF', followerCount, specialDetail };
-        case 'instagram': return { name: 'Instagram', url: value.startsWith('http') ? value : `https://instagram.com/${handle}`, icon: <InstagramIcon className="w-7 h-7" />, color: '', username: `@${handle}`, hex: '#E1306C', followerCount, specialDetail };
-        case 'youtube': return { name: 'YouTube', url: value.startsWith('http') ? value : `https://youtube.com/@${handle}`, icon: <YoutubeIcon className="w-7 h-7" />, color: '', username: 'Channel', hex: '#FF0000', followerCount, specialDetail };
-        case 'discord': return { name: 'Discord', url: value.startsWith('http') ? value : `https://discord.gg/${handle}`, icon: <DiscordIcon className="w-7 h-7" />, color: '', username: 'Community', hex: '#5865F2', followerCount, specialDetail };
-        case 'tiktok': return { name: 'TikTok', url: value.startsWith('http') ? value : `https://tiktok.com/@${handle}`, icon: <TikTokIcon className="w-7 h-7" />, color: '', username: `@${handle}`, hex: '#FE2C55', followerCount, specialDetail };
-        case 'facebook': return { name: 'Facebook', url: value.startsWith('http') ? value : `https://facebook.com/${handle}`, icon: <FacebookIcon className="w-7 h-7" />, color: '', username: 'Page', hex: '#1877F2', followerCount, specialDetail };
-        case 'snapchat': return { name: 'Snapchat', url: value.startsWith('http') ? value : `https://snapchat.com/add/${handle}`, icon: <SnapchatIcon className="w-7 h-7" />, color: '', username: 'firasq', hex: '#FFFC00', followerCount, specialDetail };
-        case 'whatsapp': return { name: 'WhatsApp', url: value, icon: <WhatsAppIcon className="w-7 h-7" />, color: '', username: 'T • F • M • X - Live', hex: '#25D366', followerCount, specialDetail };
+        case 'twitter': return { name: 'X', url: value.startsWith('http') ? value : `https://x.com/${handle}`, icon: <XIcon className="w-7 h-7" />, color: '', username: `@${handle}`, hex: '#D9C08A', followerCount, specialDetail };
+        case 'instagram': return { name: 'Instagram', url: value.startsWith('http') ? value : `https://instagram.com/${handle}`, icon: <InstagramIcon className="w-7 h-7" />, color: '', username: `@${handle}`, hex: '#D9C08A', followerCount, specialDetail };
+        case 'youtube': return { name: 'YouTube', url: value.startsWith('http') ? value : `https://youtube.com/@${handle}`, icon: <YoutubeIcon className="w-7 h-7" />, color: '', username: 'Channel', hex: '#D9C08A', followerCount, specialDetail };
+        case 'discord': return { name: 'Discord', url: value.startsWith('http') ? value : `https://discord.gg/${handle}`, icon: <DiscordIcon className="w-7 h-7" />, color: '', username: 'Community', hex: '#D9C08A', followerCount, specialDetail };
+        case 'tiktok': return { name: 'TikTok', url: value.startsWith('http') ? value : `https://tiktok.com/@${handle}`, icon: <TikTokIcon className="w-7 h-7" />, color: '', username: `@${handle}`, hex: '#D9C08A', followerCount, specialDetail };
+        case 'facebook': return { name: 'Facebook', url: value.startsWith('http') ? value : `https://facebook.com/${handle}`, icon: <FacebookIcon className="w-7 h-7" />, color: '', username: 'Page', hex: '#D9C08A', followerCount, specialDetail };
+        case 'snapchat': return { name: 'Snapchat', url: value.startsWith('http') ? value : `https://snapchat.com/add/${handle}`, icon: <SnapchatIcon className="w-7 h-7" />, color: '', username: 'firasq', hex: '#D9C08A', followerCount, specialDetail };
+        case 'whatsapp': return { name: 'WhatsApp', url: value, icon: <WhatsAppIcon className="w-7 h-7" />, color: '', username: 'T • F • X - Live', hex: '#D9C08A', followerCount, specialDetail };
         default: return null;
     }
 };
@@ -47,29 +48,29 @@ const KICK_SOCIAL: SocialLink = {
     icon: <KickIcon className="w-8 h-8" />,
     color: '',
     username: 'Firas',
-    hex: '#53FC18',
+    hex: '#C9A24B',
     followerCount: '121.1K',
-    specialDetail: 'البث الأساسي والتفاعل المباشر'
+    specialDetail: 'البث الأساسي'
 };
 
 // Static 5-platform roster — built synchronously so all cards render on first
 // paint even before live follower counts arrive (no empty grid gaps).
 const buildDefaultSocials = (stats: Record<string, string>): SocialLink[] => ([
     { ...KICK_SOCIAL, followerCount: stats['KICK'] || KICK_SOCIAL.followerCount },
-    createSocialLink('tiktok', 'https://www.tiktok.com/@vfiras3', stats['TikTok'], 'أقوى المقاطع والتحديات'),
-    createSocialLink('twitter', 'https://x.com/vfiras3', stats['X'], 'أخبار وتحديثات سريعة'),
-    createSocialLink('discord', 'https://discord.gg/tmfx', stats['Discord'], 'أكبر تجمع للأساطير'),
-    createSocialLink('whatsapp', 'https://whatsapp.com/channel/0029VadcjLc4Y9lnhHoOAw0a', stats['WhatsApp'], 'تواصل مباشر وتنبيهات البث'),
+    createSocialLink('tiktok', 'https://www.tiktok.com/@vfiras3', stats['TikTok'], 'المقاطع'),
+    createSocialLink('twitter', 'https://x.com/vfiras3', stats['X'], 'الأخبار'),
+    createSocialLink('discord', 'https://discord.gg/tmfx', stats['Discord'], 'المجتمع'),
+    createSocialLink('whatsapp', 'https://whatsapp.com/channel/0029VadcjLc4Y9lnhHoOAw0a', stats['WhatsApp'], 'تنبيهات البث'),
 ].filter(Boolean) as SocialLink[]);
 
 const TRANSLATIONS = {
     en: {
         status: 'LIVE NOW', statusOffline: 'OFFLINE',
         headerTitle: 'FIRAS STREAM HUB',
-        eyebrow: 'Rise with fire & consistency',
         nameAr: 'Firas',
-        bio: 'Firas broadcasts here — epic streams, challenges and community nights. Welcome to the fortress, follow the fire and stay legendary.',
-        tags: ['Epic Streams', 'Challenges', 'Community Nights'],
+        bio: '',
+        rolePre: 'Streamer & content creator for',
+        roleTeam: 'LEVEL ONE',
         defaultStreamTitle: 'CHECK OUT THE VODS | FOLLOW NOW',
         defaultCategory: 'Offline',
         footer: '© 2026 Firas. All Rights Reserved.',
@@ -79,9 +80,9 @@ const TRANSLATIONS = {
         shareTitle: 'Firas Stream Hub', shareText: 'Check out Firas live on Kick!',         copied: 'Link copied!',
         lastSessionReport: 'Last session report', ago: 'Ago', duration: 'Duration',
         categoriesSpent: 'Categories in this stream', highlights: 'Stream highlights',
-        socialsTitle: 'Social Arena', socialsSub: 'One hub — every platform. Pick your battlefield.',
-        communityTitle: 'Community HQ', supportTitle: 'Support & Donation', supportSub: 'Your support keeps the stream legendary.',
-        modsTitle: 'Moderators', modsSub: 'Guardians of the fortress — live from X.',
+        socialsTitle: 'Social Arena', socialsSub: 'One hub — every platform.',
+        communityTitle: 'Community HQ', supportTitle: 'Support & Donation',
+        modsTitle: 'Moderators',
         tiersTitle: 'Special alert tiers',
         theaterTitle: 'Live Theater', viewers: 'watching',
         statsKick: 'Kick followers', statsPlatforms: 'Platforms', statsStatus: 'Status',
@@ -90,10 +91,10 @@ const TRANSLATIONS = {
     ar: {
         status: 'بث مباشر الآن', statusOffline: 'غير متصل حالياً',
         headerTitle: 'مركز FIRAS للبث المباشر',
-        eyebrow: 'اصعد مع النار — قوة واستمرارية',
         nameAr: 'فراس',
-        bio: 'فراس يبث هنا — بثوث ملحمية وتحديات وسهرات مجتمع. حياك الله في القلعة، تابع النار وخلك أسطوري.',
-        tags: ['بثوث ملحمية', 'تحديات', 'سهرات مجتمع'],
+        bio: '',
+        rolePre: 'ستريمر وصانع محتوى في',
+        roleTeam: 'فريق لفل ون',
         defaultStreamTitle: 'تابع البثوث السابقة | تابعني الآن',
         defaultCategory: 'غير متصل',
         footer: '© 2026 Firas. جميع الحقوق محفوظة.',
@@ -103,9 +104,9 @@ const TRANSLATIONS = {
         shareTitle: 'مركز بث Firas', shareText: 'تابع بث Firas المباشر على كيك!',         copied: 'تم نسخ الرابط!',
         lastSessionReport: 'تقرير الجلسة الأخيرة', ago: 'منذ', duration: 'المدة',
         categoriesSpent: 'الفئات التي تم بثها', highlights: 'لقطات ممتعة من البث',
-        socialsTitle: 'ساحة التواصل', socialsSub: 'كل المنصات في مكان واحد — اختر ساحتك.',
-        communityTitle: 'مقر المجتمع', supportTitle: 'الدعم المادي', supportSub: 'دعمك يخلي البث أسطوري ويستمر.',
-        modsTitle: 'المشرفون', modsSub: 'حراس القلعة — مباشرة من إكس.',
+        socialsTitle: 'ساحة التواصل', socialsSub: 'كل المنصات في مكان واحد.',
+        communityTitle: 'مقر المجتمع', supportTitle: 'الدعم',
+        modsTitle: 'المشرفون',
         tiersTitle: 'مستويات التنبيه الخاصة',
         theaterTitle: 'مسرح البث المباشر', viewers: 'مشاهد',
         statsKick: 'متابع كيك', statsPlatforms: 'منصة', statsStatus: 'الحالة',
@@ -138,9 +139,9 @@ const ArenaBackground: React.FC = () => {
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
-        let raf = 0; let w = 0; let h = 0;
-        const DPR = Math.min(window.devicePixelRatio || 1, 1.5);
-        // Ember citadel: rising gold embers with flicker + slow drifting ash
+        let raf = 0; let w = 0; let h = 0; let running = true;
+        const DPR = 1;
+        // Calm brown embers — few, slow, no glow (smooth on mobile)
         type P = { x: number; y: number; r: number; vy: number; vx: number; sway: number; phase: number; a: number; ember: boolean };
         let parts: P[] = [];
         const resize = () => {
@@ -148,7 +149,8 @@ const ArenaBackground: React.FC = () => {
             canvas.width = w * DPR; canvas.height = h * DPR;
             canvas.style.width = `${w}px`; canvas.style.height = `${h}px`;
             ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-            const n = Math.min(64, Math.floor(w / 24));
+            const isMobile = w < 768;
+            const n = Math.min(isMobile ? 18 : 30, Math.floor(w / 48));
             parts = Array.from({ length: n }, () => ({
                 x: Math.random() * w, y: Math.random() * h,
                 r: 0.7 + Math.random() * 2.4,
@@ -159,47 +161,42 @@ const ArenaBackground: React.FC = () => {
         };
         resize();
         window.addEventListener('resize', resize);
+        const onVis = () => {
+            const hidden = document.hidden;
+            if (hidden && running) { running = false; cancelAnimationFrame(raf); }
+            else if (!hidden && !running) { running = true; raf = requestAnimationFrame(tick); }
+        };
+        document.addEventListener('visibilitychange', onVis);
         let t = 0;
         const tick = () => {
+            if (!running) return;
             t += 0.016;
             ctx.clearRect(0, 0, w, h);
             for (const p of parts) {
-                p.y += p.vy;
-                p.x += p.vx + Math.sin(t * p.sway + p.phase) * 0.25;
+                p.y += p.vy * 0.7;
+                p.x += p.vx + Math.sin(t * p.sway + p.phase) * 0.15;
                 if (p.y < -10) { p.y = h + 10; p.x = Math.random() * w; }
                 if (p.x < -10) p.x = w + 10; if (p.x > w + 10) p.x = -10;
-                const flick = p.ember ? (0.72 + 0.28 * Math.sin(t * 5 + p.phase)) : 1;
-                const alpha = Math.max(0, Math.min(1, p.a * flick));
+                const alpha = Math.max(0, Math.min(1, p.a * 0.7));
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                if (p.ember) {
-                    ctx.fillStyle = `rgba(217,180,100,${alpha})`;
-                    ctx.shadowBlur = 14;
-                    ctx.shadowColor = 'rgba(201,162,75,0.9)';
-                } else {
-                    ctx.fillStyle = `rgba(235,225,205,${alpha * 0.5})`;
-                    ctx.shadowBlur = 0;
-                }
+                ctx.fillStyle = p.ember ? `rgba(201,162,75,${alpha})` : `rgba(235,225,205,${alpha * 0.35})`;
                 ctx.fill();
-                ctx.shadowBlur = 0;
             }
             raf = requestAnimationFrame(tick);
         };
         raf = requestAnimationFrame(tick);
-        return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); };
+        return () => { running = false; cancelAnimationFrame(raf); window.removeEventListener('resize', resize); document.removeEventListener('visibilitychange', onVis); };
     }, []);
     return (
         <div className="fixed inset-0 z-0 bg-[#0B0906] overflow-hidden" aria-hidden="true">
             {/* the citadel artwork — hero of the whole design */}
             <div className="absolute inset-0 fortress_bg" />
             <div className="absolute inset-0 fortress_overlay" />
-            {/* god-ray beams through the clouds */}
-            <div className="beam left-[8%] hidden md:block" />
-            <div className="beam left-[16%] opacity-60 hidden md:block" style={{ animationDelay: '-4s', width: 70 }} />
-            {/* sky glow top-left where the light breaks + gold aura right at the wall */}
-            <div className="absolute -top-32 -left-32 w-[46vw] h-[46vw] max-w-[560px] max-h-[560px] rounded-full bg-[#E8D5A8]/[0.13] blur-[130px] animate-aurora" />
-            <div className="absolute top-[8%] right-[-8%] w-[34vw] h-[34vw] max-w-[440px] max-h-[440px] rounded-full bg-[#C9A24B]/[0.16] blur-[120px] animate-aurora" style={{ animationDelay: '-8s' }} />
-            <canvas ref={canvasRef} className="absolute inset-0 opacity-90" />
+            {/* calm static aura — no beams, no infinite motion */}
+            <div className="absolute -top-32 -left-32 w-[46vw] h-[46vw] max-w-[560px] max-h-[560px] rounded-full bg-[#C9A24B]/[0.07] blur-[130px]" />
+            <div className="absolute top-[8%] right-[-8%] w-[34vw] h-[34vw] max-w-[440px] max-h-[440px] rounded-full bg-[#8A6A3A]/[0.08] blur-[120px]" />
+            <canvas ref={canvasRef} className="absolute inset-0 opacity-70" />
             {/* readability vignette: dark void in the middle, deep ink at content depth */}
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_62%_44%_at_50%_30%,transparent_30%,rgba(11,9,6,0.5)_100%)]" />
             <div className="absolute inset-x-0 bottom-0 h-[36%] bg-gradient-to-t from-[#0B0906] via-[#0B0906]/70 to-transparent" />
@@ -220,25 +217,6 @@ export const SectionHeading: React.FC<{ no: string; title: string; sub?: string;
         </div>
     </div>
 );
-
-const Marquee: React.FC<{ lang: Language }> = ({ lang }) => {
-    const items = lang === 'ar'
-        ? ['بثوث ملحمية', 'قلعة فراس', 'مجتمع الأساطير', 'تفاعل لا يتوقف', 'جوائز ودروبس', 'تحديات نارية', 'سهرات مجتمع']
-        : ['EPIC STREAMS', 'RISE WITH FIRE', 'LEGENDS COMMUNITY', 'NONSTOP HYPE', 'DROPS & REWARDS', 'FIRE CHALLENGES', 'COMMUNITY NIGHTS'];
-    const row = [...items, ...items];
-    return (
-        <div className="relative -mx-3 sm:-mx-4 md:-mx-8 overflow-hidden border-y border-[#C9A24B]/20 bg-black/60 backdrop-blur-md marquee-mask" dir="ltr" aria-hidden="true">
-            <div className="flex w-max animate-marquee gap-0 py-2.5 md:py-3">
-                {row.map((t, i) => (
-                    <span key={i} className="flex items-center gap-6 px-6 whitespace-nowrap text-[12px] md:text-sm font-black tracking-[0.25em] text-white/60">
-                        <span className={i % 2 ? 'text-white/60' : 'text-[#D9C08A]'}>{t}</span>
-                        <span className="w-1.5 h-1.5 rotate-45 bg-[#C9A24B]/70 inline-block" />
-                    </span>
-                ))}
-            </div>
-        </div>
-    );
-};
 
 // --- Count-up number (rAF, reduced-motion safe) ---
 const CountUp: React.FC<{ value: number; duration?: number }> = ({ value, duration = 1300 }) => {
@@ -321,7 +299,7 @@ const LastSessionReport: React.FC<{ lang: Language; data: any; clips: any[]; pas
                                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                 {fullDate} • {timeAgo(data.created_at)}
                             </span>
-                            <span className={`text-[10px] font-black px-3 py-1.5 rounded-full border tracking-widest ${isSubOnly ? 'bg-amber-400/10 border-amber-400/40 text-amber-300' : 'bg-[#53FC18]/10 border-[#53FC18]/40 text-[#53FC18]'}`}>
+                            <span className={`text-[10px] font-black px-3 py-1.5 rounded-full border tracking-widest ${isSubOnly ? 'bg-amber-400/10 border-amber-400/40 text-amber-300' : 'bg-[#C9A24B]/10 border-[#C9A24B]/40 text-[#D9C08A]'}`}>
                                 {isSubOnly ? t.subOnly : 'PUBLIC'}
                             </span>
                         </span>
@@ -424,7 +402,7 @@ const LastSessionReport: React.FC<{ lang: Language; data: any; clips: any[]; pas
                     {clips && clips.length > 0 && (
                         <div className="mt-8 md:mt-10 pt-7 border-t border-white/[0.07] animate-fade-in-up" style={{ animationDelay: '680ms' }}>
                             <div className="flex items-center gap-2.5 mb-5">
-                                <span className="w-2 h-2 rounded-full bg-neon shadow-[0_0_10px_#53FC18]" />
+                                <span className="w-2 h-2 rounded-full bg-[#C9A24B] shadow-[0_0_10px_rgba(201,162,75,0.8)]" />
                                 <span className="text-[11px] font-black tracking-[0.25em] text-white/40 uppercase">{t.highlights}</span>
                             </div>
                             <div className="grid grid-cols-3 gap-2 md:gap-4">
@@ -455,110 +433,149 @@ const LastSessionReport: React.FC<{ lang: Language; data: any; clips: any[]; pas
     );
 };
 
-// --- Platform identity gradients (same palette, richer expression) ---
+// --- Unified brown identity (like the logo) — one calm wash for every platform ---
+const UNIFIED_ICON = '#D9C08A';
+const UNIFIED_WASH = 'linear-gradient(135deg, rgba(201,162,75,0.14), rgba(201,162,75,0.04) 55%, transparent)';
 const BRAND_GRADIENTS: Record<string, string> = {
-    KICK: 'linear-gradient(135deg, rgba(83,252,24,0.28), rgba(83,252,24,0.05) 55%, transparent)',
-    Snapchat: 'linear-gradient(135deg, rgba(255,252,0,0.20), rgba(255,140,0,0.07) 55%, transparent)',
-    Instagram: 'linear-gradient(135deg, rgba(225,48,108,0.28), rgba(129,52,175,0.14) 50%, rgba(255,170,60,0.08))',
-    TikTok: 'linear-gradient(135deg, rgba(254,44,85,0.24), rgba(37,244,238,0.12) 60%, transparent)',
-    X: 'linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.02) 60%, transparent)',
-    WhatsApp: 'linear-gradient(135deg, rgba(37,211,102,0.26), rgba(37,211,102,0.05) 55%, transparent)',
-    Discord: 'linear-gradient(135deg, rgba(88,101,242,0.30), rgba(88,101,242,0.07) 55%, transparent)',
-    YouTube: 'linear-gradient(135deg, rgba(255,0,0,0.26), rgba(255,0,0,0.05) 55%, transparent)',
+    KICK: UNIFIED_WASH,
+    Snapchat: UNIFIED_WASH,
+    Instagram: UNIFIED_WASH,
+    TikTok: UNIFIED_WASH,
+    X: UNIFIED_WASH,
+    WhatsApp: UNIFIED_WASH,
+    Discord: UNIFIED_WASH,
+    YouTube: UNIFIED_WASH,
 };
 
-// --- Social Card — premium edition (ported from iABS design, Firas gold identity) ---
+// --- Social Card — brown luxury edition (logo colors, calm + beautiful) ---
 const SocialCard: React.FC<{ social: SocialLink; index: number; featured?: boolean; lang: Language }> = ({ social, index, featured = false, lang }) => {
     const [hover, setHover] = useState(false);
     const [launching, setLaunching] = useState(false);
-    const [pressed, setPressed] = useState(false);
-    const brand = social.hex || '#ffffff';
-    const bright = social.name === 'Snapchat' || social.name === 'KICK';
     const go = (e: React.MouseEvent) => {
         e.preventDefault();
         if (launching) return;
         setLaunching(true);
-        window.setTimeout(() => { window.location.href = social.url; }, 420);
+        window.setTimeout(() => { window.location.href = social.url; }, 350);
     };
     const active = hover || launching;
+    const followLabel = lang === 'ar' ? 'تابع' : 'Visit';
     const card = (
-        <div className={`card-sheen relative h-full rounded-[22px] border bg-[#0b0b0b]/92 backdrop-blur-xl overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-active:translate-y-0 group-active:scale-[0.985] ${launching ? 'glitch-active' : ''} ${pressed ? 'scale-[0.985]' : ''}`}
-            style={{ borderColor: launching ? brand : active ? `${brand}99` : 'rgba(255,255,255,0.09)', boxShadow: active ? `0 18px 44px -16px ${brand}66, inset 0 1px 0 rgba(255,255,255,0.08)` : '0 10px 28px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
-            {/* brand wash */}
-            <div className="absolute inset-0 pointer-events-none transition-opacity duration-500" style={{ background: BRAND_GRADIENTS[social.name] || `linear-gradient(135deg, ${brand}22, transparent 60%)`, opacity: active ? 1 : 0.75 }} />
-            {/* giant watermark icon */}
-            <div className="absolute -end-3 -bottom-5 opacity-[0.07] group-hover:opacity-[0.13] transition-opacity duration-500 pointer-events-none scale-[2.6] origin-bottom" style={{ color: brand }}>
-                {social.icon}
-            </div>
-            {/* top energy line */}
-            <span className="absolute top-0 start-6 end-6 h-[2.5px] rounded-full transition-all duration-500" style={{ background: `linear-gradient(90deg, transparent, ${brand}, transparent)`, opacity: active ? 1 : 0.3, boxShadow: active ? `0 0 18px ${brand}` : 'none' }} />
-            {launching && <span className="absolute bottom-0 start-0 h-1 animate-charge z-30" style={{ width: '100%', backgroundColor: brand, boxShadow: `0 0 12px ${brand}` }} />}
-            <div className={`relative p-4 sm:p-5 flex items-center gap-3.5 sm:gap-4 ${featured ? 'min-h-[128px]' : 'min-h-[104px]'}`}>
-                {/* icon medallion */}
-                <div className={`${featured ? 'w-[68px] h-[68px]' : 'w-[60px] h-[60px]'} rounded-[18px] flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-[1.06] group-hover:-rotate-3`}
-                    style={{
-                        color: active && bright ? '#000' : brand,
-                        background: active && bright ? brand : `linear-gradient(160deg, ${brand}2e, rgba(255,255,255,0.04))`,
-                        border: `1.5px solid ${active ? brand : 'rgba(255,255,255,0.13)'}`,
-                        boxShadow: active ? `0 0 26px ${brand}55, inset 0 1px 0 rgba(255,255,255,0.25)` : `inset 0 1px 0 rgba(255,255,255,0.08)`
-                    }}>
-                    {launching
-                        ? <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                        : social.icon}
+        <div
+            className="relative h-full rounded-[24px] overflow-hidden transition-transform duration-300 ease-out group-hover:-translate-y-1.5 group-active:translate-y-0 group-active:scale-[0.99] border"
+            style={{
+                background: 'linear-gradient(165deg, #17100A 0%, #0E0A06 45%, #0B0805 100%)',
+                borderColor: active ? 'rgba(217,192,138,0.65)' : featured ? 'rgba(201,162,75,0.4)' : 'rgba(255,255,255,0.09)',
+                boxShadow: active
+                    ? '0 22px 50px -20px rgba(201,162,75,0.4), inset 0 1px 0 rgba(240,221,174,0.22)'
+                    : '0 12px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)',
+            }}
+        >
+            {/* warm wash + faint dot texture */}
+            <div className="absolute inset-0 pointer-events-none" style={{ background: UNIFIED_WASH, opacity: active ? 0.9 : 0.55 }} />
+            <div
+                className="absolute inset-0 pointer-events-none opacity-[0.5]"
+                style={{ backgroundImage: 'radial-gradient(rgba(217,192,138,0.13) 1px, transparent 1px)', backgroundSize: '18px 18px' }}
+            />
+            {/* top gold hairline */}
+            <span
+                className="absolute top-0 start-8 end-8 h-[2px] rounded-full transition-opacity duration-300"
+                style={{ background: 'linear-gradient(90deg, transparent, #D9C08A, transparent)', opacity: active || featured ? 1 : 0.4 }}
+            />
+            {/* hover-only sheen sweep (no infinite animation = smooth) */}
+            <span className="absolute inset-y-0 -left-2/3 w-2/3 rotate-12 bg-gradient-to-r from-transparent via-white/[0.09] to-transparent -translate-x-[120%] group-hover:translate-x-[320%] transition-transform duration-[900ms] ease-out pointer-events-none" />
+            {featured && <span className="absolute inset-y-3 start-0 w-[3px] rounded-full bg-gradient-to-b from-[#F0DDAE] via-[#C9A24B] to-[#8A6A3A]" />}
+            {launching && <span className="absolute bottom-0 start-0 h-[3px] animate-charge z-30" style={{ width: '100%', background: 'linear-gradient(90deg, #8A6A3A, #D9C08A)' }} />}
+
+            <div className={`relative p-4 sm:p-5 flex items-center gap-3.5 sm:gap-4 ${featured ? 'min-h-[136px]' : 'min-h-[108px]'}`}>
+                {/* icon medallion — engraved gold */}
+                <div className="relative shrink-0">
+                    <div
+                        className={`${featured ? 'w-[70px] h-[70px]' : 'w-[62px] h-[62px]'} rounded-[20px] flex items-center justify-center transition-all duration-300 group-hover:scale-[1.06] group-hover:-rotate-3`}
+                        style={{
+                            color: active ? '#0B0906' : UNIFIED_ICON,
+                            background: active
+                                ? 'linear-gradient(180deg, #FFF3D6 0%, #E8D5A8 35%, #C9A24B 75%, #8A6A3A 100%)'
+                                : 'linear-gradient(165deg, rgba(201,162,75,0.22), rgba(201,162,75,0.06) 60%, rgba(0,0,0,0.35))',
+                            border: `1.5px solid ${active ? '#F0DDAE' : 'rgba(217,192,138,0.35)'}`,
+                            boxShadow: active
+                                ? '0 10px 26px -8px rgba(201,162,75,0.65), inset 0 1px 0 rgba(255,255,255,0.6)'
+                                : 'inset 0 1px 0 rgba(240,221,174,0.18), 0 8px 20px rgba(0,0,0,0.45)',
+                        }}
+                    >
+                        {launching
+                            ? <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                            : social.icon}
+                        {/* tiny sparkle dot */}
+                        <span className="absolute -top-1 -end-1 w-3.5 h-3.5 rounded-full bg-[#0B0906] border border-[#C9A24B]/60 flex items-center justify-center">
+                            <span className="w-1 h-1 rounded-full bg-[#D9C08A]" />
+                        </span>
+                    </div>
                 </div>
+
                 {/* texts */}
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: launching ? brand : active ? brand : 'rgba(255,255,255,0.48)' }}>
-                            {launching ? 'LAUNCHING…' : social.name}
+                        <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-[#D9C08A]/90">
+                            <span className="w-1 h-1 rotate-45 bg-[#C9A24B] inline-block" />
+                            {launching ? 'OPENING…' : social.name}
                         </span>
                         {featured && (
-                            <span className="inline-flex items-center gap-1 text-[9px] font-black px-2 py-[3px] rounded-full bg-[#53FC18]/15 border border-[#53FC18]/45 text-[#53FC18] tracking-[0.14em]">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#53FC18] animate-pulse" />MAIN STAGE
+                            <span className="inline-flex items-center gap-1 text-[9px] font-black px-2.5 py-[4px] rounded-full text-black tracking-[0.14em]" style={{ background: 'linear-gradient(180deg, #F0DDAE, #C9A24B)' }}>
+                                ★ {lang === 'ar' ? 'الأساسية' : 'MAIN'}
                             </span>
                         )}
                     </div>
-                    <p className={`font-black text-white truncate leading-tight mt-0.5 ${featured ? 'text-[22px] sm:text-2xl' : 'text-[17px]'}`} dir="ltr">{social.username}</p>
-                    <div className="flex items-center gap-1.5 mt-1">
+                    <p className={`font-black text-white truncate leading-tight mt-1 ${featured ? 'text-[23px] sm:text-[26px]' : 'text-[17px] sm:text-lg'}`} dir="ltr" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.6)' }}>
+                        {social.username}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1.5 min-w-0">
                         {social.followerCount && (
-                            <span className={`inline-flex items-center gap-1 text-[11px] font-black text-white/85 ${social.name === 'Snapchat' ? 'blur-[3px] select-none' : ''}`} dir="ltr">
-                                <svg className="w-3 h-3 text-white/40" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg>
+                            <span className="inline-flex items-center gap-1.5 text-[11px] font-black text-[#F0DDAE] rounded-full bg-black/45 border border-[#C9A24B]/30 px-2.5 py-1" dir="ltr">
+                                <svg className="w-3 h-3 text-[#D9C08A]" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg>
                                 {social.followerCount}
                             </span>
                         )}
-                        {social.specialDetail && <span className="text-[11px] text-white/40 font-medium truncate">{social.specialDetail}</span>}
+                        {social.specialDetail && <span className="text-[11px] text-white/45 font-bold truncate">{social.specialDetail}</span>}
                     </div>
                 </div>
-                {/* CTA */}
-                <span className={`shrink-0 flex items-center justify-center rounded-full font-black transition-all duration-300 ${featured ? 'w-12 h-12' : 'w-11 h-11'}`}
-                    style={{
-                        background: active ? brand : 'rgba(255,255,255,0.07)',
-                        color: active ? (bright ? '#000' : '#fff') : '#fff',
-                        border: `1.5px solid ${active ? brand : 'rgba(255,255,255,0.14)'}`,
-                        boxShadow: active ? `0 0 20px ${brand}66` : 'none'
-                    }}>
-                    <svg className="w-5 h-5 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+
+                {/* CTA — pill arrow */}
+                <span className="shrink-0 flex flex-col items-center gap-1.5">
+                    <span
+                        className={`flex items-center justify-center rounded-full transition-all duration-300 ${featured ? 'w-12 h-12' : 'w-11 h-11'} ${active ? '-translate-x-0.5 rtl:translate-x-0.5' : ''}`}
+                        style={{
+                            background: active ? 'linear-gradient(180deg, #FFF3D6, #C9A24B)' : 'rgba(201,162,75,0.1)',
+                            color: active ? '#0B0906' : '#F0DDAE',
+                            border: `1.5px solid ${active ? '#F0DDAE' : 'rgba(217,192,138,0.35)'}`,
+                            boxShadow: active ? '0 8px 22px -6px rgba(201,162,75,0.7)' : 'none',
+                        }}
+                    >
+                        <svg className="w-5 h-5 rtl:rotate-180 transition-transform duration-300 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                    </span>
+                    <span className={`text-[9px] font-black tracking-[0.18em] transition-colors duration-300 ${active ? 'text-[#F0DDAE]' : 'text-white/30'}`}>
+                        {followLabel}
+                    </span>
                 </span>
             </div>
-            {/* bottom fill line */}
-            <span className="absolute bottom-0 start-0 h-[2px] transition-all duration-500" style={{ width: active ? '100%' : '0%', background: brand, boxShadow: `0 0 10px ${brand}` }} />
+            {/* bottom progress hairline */}
+            <span className="absolute bottom-0 start-8 end-8 h-[2px] rounded-full overflow-hidden bg-white/[0.06]">
+                <span className="block h-full rounded-full transition-all duration-500" style={{ width: active ? '100%' : featured ? '45%' : '22%', background: 'linear-gradient(90deg, #8A6A3A, #D9C08A)' }} />
+            </span>
         </div>
     );
     return (
-        <a href={social.url} onClick={go} onMouseEnter={() => setHover(true)} onMouseLeave={() => { setHover(false); setPressed(false); }}
-            onTouchStart={() => setPressed(true)} onTouchEnd={() => setPressed(false)}
+        <a href={social.url} onClick={go} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
             style={{ animationDelay: `${Math.min(index * 60, 400)}ms` }}
-            className={`group relative block animate-fade-in-up select-none rounded-[22px] ${launching ? 'z-40' : ''}`}
+            className={`group relative block animate-fade-in-up select-none rounded-[24px] ${launching ? 'z-40' : ''} ${featured ? 'sm:col-span-2' : ''}`}
             title={`${social.name} - Firas Official`} aria-label={lang === 'ar' ? `تابع Firas على ${social.name}` : `Visit Firas on ${social.name}`}>
             {featured ? (
-                <div className="rounded-[24px] p-[1.5px] bg-gradient-to-l from-[#53FC18] via-[#53FC18]/25 to-[#C9A24B]/70 shadow-[0_0_35px_rgba(83,252,24,0.15)]">
-                    <div className="rounded-[22.5px] bg-[#0b0b0b]">{card}</div>
+                <div className="rounded-[26px] p-[1.5px] transition-shadow duration-300" style={{ background: 'linear-gradient(120deg, #F0DDAE 0%, #C9A24B 30%, rgba(201,162,75,0.15) 55%, #C9A24B 75%, #8A6A3A 100%)', boxShadow: hover ? '0 24px 60px -22px rgba(201,162,75,0.5)' : '0 16px 40px -22px rgba(201,162,75,0.3)' }}>
+                    <div className="rounded-[24.5px] bg-[#0b0b0b]">{card}</div>
                 </div>
             ) : (
-                <>
-                    <div className="absolute -inset-0.5 rounded-[24px] opacity-0 group-hover:opacity-100 group-active:opacity-60 transition-opacity duration-500 blur-xl pointer-events-none" style={{ background: `linear-gradient(135deg, ${brand}44, transparent 65%)` }} />
+                <div className="rounded-[26px] p-px transition-all duration-300" style={{ background: hover ? 'linear-gradient(120deg, rgba(217,192,138,0.5), rgba(217,192,138,0.08))' : 'transparent' }}>
                     {card}
-                </>
+                </div>
             )}
         </a>
     );
@@ -567,60 +584,56 @@ const SocialCard: React.FC<{ social: SocialLink; index: number; featured?: boole
 // ============ SUPPORT — modern glass system (no leaderboard, removed per request) ============
 type Supporter = { id: number; name: string; amount: number; currency: string; message?: string; source: string; created_at: string };
 
-// Special alert tiers — modern interactive cards with perks
+// Special alert tiers — static prestige cards (display only, no interaction)
 const TIERS = [
-    { amount: 50, label: '50$', c: '#FFE9B8', glow: 'rgba(255,233,184,0.45)', name: 'BRONZE', nameAr: 'برونزي', perk: 'تنبيه برونزي أنيق يظهر اسمك في الشات', perkEn: 'Sleek bronze on-screen alert', icon: '✦' },
-    { amount: 100, label: '100$', c: '#D9C08A', glow: 'rgba(217,192,138,0.5)', name: 'SILVER', nameAr: 'فضي', perk: 'تنبيه فضي + شكر صوتي مباشر من فراس', perkEn: 'Silver alert + live shoutout', icon: '⬣' },
-    { amount: 200, label: '200$', c: '#C9A24B', glow: 'rgba(201,162,75,0.6)', name: 'GOLD', nameAr: 'ذهبي', perk: 'تنبيه ذهبي سينمائي + صوت مخصص باسمك', perkEn: 'Cinematic gold alert + custom sound', icon: '◈', popular: true },
-    { amount: 500, label: '500$', c: '#B388FF', glow: 'rgba(179,136,255,0.55)', name: 'DIAMOND', nameAr: 'ماسي', perk: 'عرض اسمك بحجم الشاشة + مقطع شكر خاص', perkEn: 'Fullscreen takeover + clip', icon: '⬥' },
-    { amount: 1000, label: '1000$', c: '#FF8A5C', glow: 'rgba(255,138,92,0.55)', name: 'RUBY', nameAr: 'أسطوري', perk: 'دخول قاعة الخلود + فيديو تكريم خاص', perkEn: 'Hall of fame + tribute video', icon: '❖' },
+    { amount: 50, label: '50$', c: '#E8D5A8', glow: 'rgba(232,213,168,0.35)', name: 'BRONZE', nameAr: 'برونزي', icon: '✦' },
+    { amount: 100, label: '100$', c: '#D9C08A', glow: 'rgba(217,192,138,0.4)', name: 'SILVER', nameAr: 'فضي', icon: '⬣' },
+    { amount: 200, label: '200$', c: '#C9A24B', glow: 'rgba(201,162,75,0.45)', name: 'GOLD', nameAr: 'ذهبي', icon: '◈', popular: true },
+    { amount: 500, label: '500$', c: '#A8823F', glow: 'rgba(168,130,63,0.45)', name: 'DIAMOND', nameAr: 'ماسي', icon: '⬥' },
+    { amount: 1000, label: '1000$', c: '#8A6A3A', glow: 'rgba(138,106,58,0.5)', name: 'RUBY', nameAr: 'أسطوري', icon: '❖' },
 ];
 
 const AlertTiers: React.FC<{ title: string; note: string; lang: Language }> = ({ title, note, lang }) => {
-    const [active, setActive] = useState(2);
     const max = 1000;
     const isAr = lang === 'ar';
     return (
-        <div id="store" className="relative mt-5 md:mt-7 rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-2xl overflow-hidden scroll-mt-32">
-            <div className="absolute -top-24 start-1/4 w-96 h-96 rounded-full bg-[#C9A24B]/[0.10] blur-[110px] pointer-events-none" aria-hidden="true" />
-            <div className="absolute -bottom-24 end-0 w-80 h-80 rounded-full bg-[#8B5CF6]/[0.10] blur-[100px] pointer-events-none" aria-hidden="true" />
+        <div id="store" className="relative mt-5 md:mt-7 rounded-[28px] border border-white/10 bg-white/[0.03] overflow-hidden scroll-mt-32">
+            <div className="absolute -top-24 start-1/4 w-96 h-96 rounded-full bg-[#C9A24B]/[0.08] blur-[110px] pointer-events-none" aria-hidden="true" />
+            <div className="absolute -bottom-24 end-0 w-80 h-80 rounded-full bg-[#8A6A3A]/[0.10] blur-[100px] pointer-events-none" aria-hidden="true" />
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-transparent via-[#C9A24B]/70 to-transparent" aria-hidden="true" />
             <div className="relative p-5 sm:p-7 md:p-8">
-                <div className="flex items-center justify-center gap-2.5 mb-1">
+                <div className="flex items-center justify-center gap-2.5 mb-5 md:mb-6">
+                    <span className="h-px w-8 sm:w-14 bg-gradient-to-l from-transparent to-[#C9A24B]/70" aria-hidden="true" />
                     <span className="w-1.5 h-1.5 rotate-45 bg-[#C9A24B] inline-block" aria-hidden="true" />
                     <p className="text-[11px] md:text-xs font-black text-white/60 tracking-[0.32em] uppercase">{title}</p>
                     <span className="w-1.5 h-1.5 rotate-45 bg-[#C9A24B] inline-block" aria-hidden="true" />
+                    <span className="h-px w-8 sm:w-14 bg-gradient-to-r from-transparent to-[#C9A24B]/70" aria-hidden="true" />
                 </div>
-                <p className="text-center text-[12px] text-white/40 font-medium mb-6">{isAr ? 'اضغط على أي مستوى لتشوف ميزته' : 'Tap any tier to preview its perk'}</p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3" role="list">
-                    {TIERS.map((tr, i) => {
-                        const on = active === i;
+                    {TIERS.map((tr) => {
                         const pct = Math.max(8, Math.round((tr.amount / max) * 100));
                         return (
-                            <button key={tr.label} role="listitem" onClick={() => setActive(i)}
-                                className={`group relative text-start rounded-3xl border p-4 sm:p-5 overflow-hidden transition-all duration-500 active:scale-[0.97] ${on ? 'border-white/25 bg-white/[0.07] -translate-y-1.5 shadow-[0_24px_60px_-16px_rgba(0,0,0,0.7)]' : 'border-white/10 bg-white/[0.02] hover:border-white/25 hover:bg-white/[0.05] hover:-translate-y-1'}`}>
-                                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                            <div key={tr.label} role="listitem"
+                                className={`group relative text-start rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.015] p-4 sm:p-5 overflow-hidden transition-all duration-500 hover:-translate-y-1.5 hover:border-white/25 hover:shadow-[0_24px_60px_-18px_rgba(0,0,0,0.85)] ${tr.popular ? 'border-[#C9A24B]/40 -translate-y-1' : ''}`}>
+                                <div className="absolute inset-0 opacity-70 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
                                     style={{ background: `radial-gradient(220px circle at 50% 0%, ${tr.glow}, transparent 70%)` }} aria-hidden="true" />
                                 {tr.popular && (
                                     <span className="absolute top-3 end-3 text-[8px] font-black tracking-[0.18em] px-2 py-1 rounded-full bg-[#C9A24B] text-black shadow-[0_0_18px_rgba(201,162,75,0.7)]">HOT</span>
                                 )}
                                 <span className="relative w-10 h-10 rounded-2xl flex items-center justify-center text-lg font-black border border-white/15 bg-white/[0.06] transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6"
-                                    style={{ color: tr.c, boxShadow: on ? `0 0 24px ${tr.glow}` : 'none' }}>{tr.icon}</span>
+                                    style={{ color: tr.c, boxShadow: `0 0 24px ${tr.glow}` }}>{tr.icon}</span>
                                 <p className="relative text-2xl sm:text-[26px] font-black text-white tracking-tight mt-3" dir="ltr">{tr.label}</p>
                                 <p className="relative text-[10px] font-black tracking-[0.22em] mt-1" style={{ color: tr.c }} dir="ltr">{tr.name}</p>
                                 <p className="relative text-[11px] font-bold text-white/45 mt-0.5">{isAr ? tr.nameAr : tr.name}</p>
                                 <div className="relative mt-3 h-1.5 rounded-full bg-white/[0.07] overflow-hidden" dir="ltr">
-                                    <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${tr.c}, ${tr.c}88)`, boxShadow: `0 0 12px ${tr.glow}` }} />
+                                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${tr.c}, ${tr.c}88)`, boxShadow: `0 0 12px ${tr.glow}` }} />
                                 </div>
-                                <div className={`relative grid transition-all duration-500 overflow-hidden ${on ? 'grid-rows-[1fr] opacity-100 mt-3' : 'grid-rows-[0fr] opacity-0'}`}>
-                                    <p className="overflow-hidden text-[11px] leading-relaxed font-medium text-white/70">{isAr ? tr.perk : tr.perkEn}</p>
-                                </div>
-                                <span className="absolute bottom-0 start-0 h-[2px] transition-all duration-500" style={{ width: on ? '100%' : '0%', background: tr.c, boxShadow: `0 0 12px ${tr.c}` }} aria-hidden="true" />
-                            </button>
+                                <span className="absolute bottom-0 start-0 h-[2px] w-0 group-hover:w-full transition-all duration-500" style={{ background: tr.c, boxShadow: `0 0 12px ${tr.c}` }} aria-hidden="true" />
+                            </div>
                         );
                     })}
                 </div>
-                <p className="text-center text-[10px] text-white/30 mt-5 font-medium">{note}</p>
+                <p className="text-center text-[10px] text-white/30 mt-6 font-medium tracking-wide">{note}</p>
             </div>
         </div>
     );
@@ -645,7 +658,7 @@ const DonateGate: React.FC<{
         <a href={url} onClick={go} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
             className="group relative block rounded-[28px] transition-transform duration-500 hover:-translate-y-1.5 active:translate-y-0 active:scale-[0.99]" aria-label={`${title} donation`}>
             <div className="absolute -inset-2 rounded-[32px] blur-3xl pointer-events-none transition-opacity duration-700" style={{ background: `linear-gradient(150deg, ${color}40, ${color2 ? color2 + '33' : 'transparent'} 60%, transparent)`, opacity: hover ? 1 : 0.5 }} aria-hidden="true" />
-            <div className="card-sheen relative rounded-[28px] border border-white/10 bg-white/[0.04] backdrop-blur-2xl overflow-hidden transition-all duration-500 group-hover:border-white/25 group-hover:bg-white/[0.06] group-hover:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)]">
+            <div className="relative rounded-[28px] border border-white/10 bg-[#100C07]/95 overflow-hidden transition-all duration-500 group-hover:border-[#C9A24B]/40 group-hover:shadow-[0_20px_50px_-20px_rgba(0,0,0,0.8)]">
                 <div className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(420px circle at 85% -10%, ${color}26, transparent 65%), radial-gradient(320px circle at 0% 110%, ${color2 || color}1f, transparent 60%)` }} aria-hidden="true" />
                 <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-transparent via-white/40 to-transparent" aria-hidden="true" />
                 <span className="absolute top-4 end-4 inline-flex items-center gap-1.5 text-[9px] font-black tracking-[0.2em] px-2.5 py-1.5 rounded-full bg-black/50 border border-white/15 text-white/60 backdrop-blur">
@@ -663,12 +676,12 @@ const DonateGate: React.FC<{
                         </span>
                         <div className="min-w-0 flex-1">
                             <p className="text-[10px] font-black tracking-[0.3em] uppercase" style={{ color }}>{label}</p>
-                            <h3 className="font-black text-white tracking-tight leading-none text-[30px] sm:text-4xl mt-1" dir="ltr">{title}</h3>
+                            <h3 className="font-black text-white tracking-tight leading-none text-[24px] sm:text-4xl mt-1 break-words" dir="ltr">{title}</h3>
                             <p className="text-[12px] text-white/50 font-medium mt-1.5 leading-relaxed">{sub}</p>
                         </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 mt-4">
-                        {[(lang === 'en' ? 'Instant alert' : 'تنبيه فوري'), (lang === 'en' ? 'On-screen name' : 'اسمك على الشاشة'), (lang === 'en' ? 'Chat shoutout' : 'شكر في الشات')].map((f) => (
+                        {[(lang === 'en' ? 'Instant alert' : 'تنبيه فوري'), (lang === 'en' ? 'On-screen name' : 'اسمك على الشاشة')].map((f) => (
                             <span key={f} className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1.5 rounded-full bg-white/[0.05] border border-white/10 text-white/60">
                                 <svg className="w-3 h-3" style={{ color }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                                 {f}
@@ -703,20 +716,20 @@ const SupportArena: React.FC<{ lang: Language; supporters: Supporter[] }> = ({ l
         <div className="w-full">
             {/* gates — modern glass duo */}
             <div className="relative">
-                <div className="absolute -top-10 right-0 w-64 h-64 rounded-full bg-[#6FF2C4]/15 blur-[90px] animate-aurora pointer-events-none" aria-hidden="true" />
-                <div className="absolute -bottom-10 left-0 w-72 h-72 rounded-full bg-[#8B5CF6]/20 blur-[100px] animate-aurora pointer-events-none" style={{ animationDelay: '-7s' }} aria-hidden="true" />
+                <div className="absolute -top-10 right-0 w-64 h-64 rounded-full bg-[#C9A24B]/10 blur-[90px] pointer-events-none" aria-hidden="true" />
+                <div className="absolute -bottom-10 left-0 w-72 h-72 rounded-full bg-[#8A6A3A]/15 blur-[100px] pointer-events-none" aria-hidden="true" />
                 <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-5" dir="rtl">
-                    <DonateGate lang={lang} title="STREAMLABS" url="https://streamlabs.com/vfiras0" color="#6FF2C4" markImg="/streamlabs-mark.png"
-                        label={lang === 'en' ? 'STREAMLABS' : 'ستريم لابس'} secure={lang === 'en' ? 'SECURE • INSTANT ALERT' : 'آمن • تنبيه فوري'} cta={lang === 'en' ? 'Donate via Streamlabs' : 'ادعم عبر ستريم لابس'}
-                        sub={lang === 'en' ? 'Global cards • instant on-screen alert' : 'بطاقات عالمية • تنبيه فوري على الشاشة'} />
-                    <DonateGate lang={lang} title="DOKAN" url="https://tip.dokan.sa/vfiras" color="#FF7A59" color2="#8B5CF6" markImg="/creators-mark.png"
-                        label={lang === 'en' ? 'CREATORS • SEND TIP' : 'كريترز • دعم دكان'}
-                        secure={lang === 'en' ? 'SECURE • MADA & APPLE PAY' : 'آمن • مدى وآبل باي'} cta={lang === 'en' ? 'Donate via Dokan' : 'ادعم عبر دكان'}
-                        sub={lang === 'en' ? 'Mada • Apple Pay • instant vibe' : 'مدى • آبل باي • تنبيه يهز الشات'} />
+                    <DonateGate lang={lang} title="STREAMLABS" url="https://streamlabs.com/vfiras0" color="#C9A24B" markImg="/21785434543.png"
+                        label={lang === 'en' ? 'STREAMLABS' : 'ستريم لابس'} secure={lang === 'en' ? 'SECURE • INSTANT' : 'آمن • فوري'} cta={lang === 'en' ? 'Donate via Streamlabs' : 'ادعم عبر ستريم لابس'}
+                        sub={lang === 'en' ? 'Cards • instant alert' : 'بطاقات • تنبيه فوري'} />
+                    <DonateGate lang={lang} title="DOKAN & CREATORS" url="https://tip.dokan.sa/vfiras" color="#C9A24B" color2="#8A6A3A" markImg="/2452444.png"
+                        label={lang === 'en' ? 'DOKAN • SEND TIP' : 'دكان • إرسال دعم'}
+                        secure={lang === 'en' ? 'SECURE • MADA' : 'آمن • مدى'} cta={lang === 'en' ? 'Donate via Dokan' : 'ادعم عبر دكان'}
+                        sub={lang === 'en' ? 'Mada • Apple Pay' : 'مدى • آبل باي'} />
                 </div>
             </div>
 
-            <AlertTiers lang={lang} title={t.tiersTitle} note={lang === 'en' ? 'Donations are non-refundable • name appears live' : 'التبرعات غير قابلة للاسترداد • اسمك يظهر مباشرة على البث'} />
+            <AlertTiers lang={lang} title={t.tiersTitle} note={lang === 'en' ? 'Non-refundable • live name' : 'غير قابلة للاسترداد • اسمك يظهر live'} />
         </div>
     );
 };
@@ -724,6 +737,7 @@ const SupportArena: React.FC<{ lang: Language; supporters: Supporter[] }> = ({ l
 export default function App() {
     const [isHoveringProfile, setIsHoveringProfile] = useState(false);
     const [theaterWide, setTheaterWide] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
     const [lang, setLang] = useState<Language>('ar');
     const [view, setView] = useState<'home' | 'game'>('home');
     const openGame = () => setView('game');
@@ -842,7 +856,7 @@ export default function App() {
                             isLive={streamInfo.isLive}
                             viewers={streamInfo.viewers}
                             statusText={streamInfo.isLive ? t.status : t.statusOffline}
-                            onRefresh={() => fetchKickStatus()}
+                            onOpenSearch={() => setSearchOpen(true)}
                         />
                     </div>
                     <div className="relative z-10 w-full max-w-[1200px] mx-auto px-3 sm:px-4 md:px-8 pb-10 overflow-clip">
@@ -863,13 +877,6 @@ export default function App() {
                                     </span>
                                 </div>
 
-                                <div className="animate-fade-in-up mt-6" style={{ animationDelay: '100ms' }}>
-                                    <span className="eyebrow-chip">
-                                        <span className={`w-2 h-2 rounded-full shrink-0 ${streamInfo.isLive ? 'bg-[#53FC18] animate-pulse shadow-[0_0_10px_#53FC18]' : 'bg-[#C9A24B] animate-pulse shadow-[0_0_10px_#C9A24B]'}`} />
-                                        {t.eyebrow}
-                                    </span>
-                                </div>
-
                                 {/* giant backdrop word */}
                                 <p className="font-gaming text-stroke-red pointer-events-none select-none absolute inset-x-0 -top-4 md:top-2 text-[26vw] md:text-[190px] leading-none opacity-30" dir="ltr" aria-hidden="true">FIRAS</p>
 
@@ -884,17 +891,12 @@ export default function App() {
                                         <span dir="ltr" className="hero-firas">FIRAS</span>
                                     )}
                                 </h1>
-                                <p className="animate-fade-in-up font-gaming text-lg sm:text-xl md:text-3xl gold-text tracking-[0.12em] mt-2" dir="ltr" style={{ animationDelay: '240ms' }} aria-hidden="true">RISE WITH FIRE</p>
 
-                                <p className="animate-fade-in-up text-white/70 text-[15px] md:text-lg leading-relaxed max-w-2xl mt-4 md:mt-5 font-medium mx-auto" style={{ animationDelay: '300ms' }}>{t.bio}</p>
-
-                                <div className="animate-fade-in-up flex flex-wrap justify-center gap-2 sm:gap-2.5 mt-5" style={{ animationDelay: '360ms' }}>
-                                    {t.tags.map((tag, i) => (
-                                        <span key={i} className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-[#C9A24B]/35 bg-black/50 backdrop-blur text-[11px] sm:text-xs font-bold text-[#E8D5A8]">
-                                            <span className="w-1 h-1 rotate-45 bg-[#C9A24B]" aria-hidden="true" />#{tag}
-                                        </span>
-                                    ))}
-                                </div>
+                                <p className="animate-fade-in-up flex items-center justify-center gap-3 mt-6 text-[15px] sm:text-lg md:text-2xl font-black text-white/80" style={{ animationDelay: '300ms' }}>
+                                    <span className="h-px w-10 bg-gradient-to-l from-[#C9A24B]/80 to-transparent" aria-hidden="true" />
+                                    <span>{t.rolePre} <span className="gold-text font-black" dir={lang === 'ar' ? 'rtl' : 'ltr'}>{t.roleTeam}</span></span>
+                                    <span className="h-px w-10 bg-gradient-to-r from-[#C9A24B]/80 to-transparent" aria-hidden="true" />
+                                </p>
 
                                 <div className="animate-fade-in-up flex flex-col sm:flex-row justify-center gap-2.5 sm:gap-3 mt-7" style={{ animationDelay: '420ms' }}>
                                     <a href="https://kick.com/firas" target="_blank" rel="noopener noreferrer"
@@ -927,8 +929,6 @@ export default function App() {
                                 </div>
                             </div>
                         </section>
-
-                        <Marquee lang={lang} />
 
                         {/* ===== SOCIALS BENTO ===== */}
                         <section id="socials" className="pt-12 md:pt-16 scroll-mt-28">
@@ -1022,13 +1022,13 @@ export default function App() {
 
                         {/* ===== SUPPORT ===== */}
                         <section id="support" className="pt-12 md:pt-16 scroll-mt-28">
-                            <Reveal><SectionHeading no={streamInfo.isLive ? '04' : '03'} title={t.supportTitle} sub={t.supportSub} en="SUPPORT" /></Reveal>
+                            <Reveal><SectionHeading no={streamInfo.isLive ? '04' : '03'} title={t.supportTitle} en="SUPPORT" /></Reveal>
                             <Reveal delay={80}><SupportArena lang={lang} supporters={[]} /></Reveal>
                         </section>
 
                         {/* ===== MODERATORS ===== */}
                         <section id="moderators" className="pt-12 md:pt-16 scroll-mt-28">
-                            <Reveal><SectionHeading no={streamInfo.isLive ? '05' : '04'} title={t.modsTitle} sub={t.modsSub} en="MODERATORS" /></Reveal>
+                            <Reveal><SectionHeading no={streamInfo.isLive ? '05' : '04'} title={t.modsTitle} en="MODERATORS" /></Reveal>
                             <Reveal delay={80}><Suspense fallback={<div className="w-full h-64 rounded-[26px] border border-white/10 bg-white/[0.02] animate-pulse" />}><ModeratorsSection lang={lang} /></Suspense></Reveal>
                         </section>
 
@@ -1068,6 +1068,17 @@ export default function App() {
 
                     {/* AI chat button hidden per request — uncomment to restore */}
                     {/* <Suspense fallback={null}><AIChat lang={lang} /></Suspense> */}
+
+                    {/* ===== SITE SEARCH — clips, full streams, highlights + sections ===== */}
+                    {searchOpen && (
+                        <SearchOverlay
+                            lang={lang}
+                            clips={clips}
+                            videos={[lastSession, ...pastSessions].filter(Boolean)}
+                            onClose={() => setSearchOpen(false)}
+                            onRefresh={() => fetchKickStatus()}
+                        />
+                    )}
 
                     {/* ===== FIRAS RUNNER — full game page overlay ===== */}
                     {view === 'game' && (

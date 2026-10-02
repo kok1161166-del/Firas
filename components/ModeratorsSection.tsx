@@ -120,17 +120,13 @@ interface ModeratorsSectionProps {
 const ModeratorsSection: React.FC<ModeratorsSectionProps> = ({ lang }) => {
   const [profiles, setProfiles] = useState<Record<string, ModProfile>>(() => readCache()?.data || {});
   const [loading, setLoading] = useState(true);
-  const [updatedAt, setUpdatedAt] = useState<number | null>(() => readCache()?.at || null);
 
   const t = {
-    live: lang === 'ar' ? 'مباشر من إكس' : 'Live from X',
-    boss: lang === 'ar' ? 'الرايس' : 'THE BOSS',
     mod: lang === 'ar' ? 'مشرف' : 'MOD',
     followers: lang === 'ar' ? 'متابع' : 'Followers',
     posts: lang === 'ar' ? 'منشور' : 'Posts',
     follow: lang === 'ar' ? 'تابع' : 'Follow',
     viewKick: 'Kick',
-    updated: lang === 'ar' ? 'آخر تحديث' : 'Updated',
   };
 
   useEffect(() => {
@@ -140,7 +136,6 @@ const ModeratorsSection: React.FC<ModeratorsSectionProps> = ({ lang }) => {
       const fresh = cached && Date.now() - cached.at < CACHE_TTL_MS;
       if (useCacheFirst && fresh) {
         setProfiles(cached.data);
-        setUpdatedAt(cached.at);
         setLoading(false);
         return;
       }
@@ -164,9 +159,8 @@ const ModeratorsSection: React.FC<ModeratorsSectionProps> = ({ lang }) => {
         setProfiles((prev) => ({ ...prev, ...next }));
       }
       if (cancelled) return;
-      const at = Date.now();
-      setUpdatedAt(at);
       setLoading(false);
+      const at = Date.now();
       try {
         localStorage.setItem(CACHE_KEY, JSON.stringify({ at, data: { ...(readCache()?.data || {}), ...next } }));
       } catch { /* ignore */ }
@@ -178,14 +172,6 @@ const ModeratorsSection: React.FC<ModeratorsSectionProps> = ({ lang }) => {
       clearInterval(timer);
     };
   }, []);
-
-  const timeAgo = (at: number | null) => {
-    if (!at) return '';
-    const s = Math.floor((Date.now() - at) / 1000);
-    if (s < 60) return lang === 'ar' ? 'الآن' : 'now';
-    if (s < 3600) return lang === 'ar' ? `منذ ${Math.floor(s / 60)} د` : `${Math.floor(s / 60)}m ago`;
-    return lang === 'ar' ? `منذ ${Math.floor(s / 3600)} س` : `${Math.floor(s / 3600)}h ago`;
-  };
 
   const boss = ROSTER[0];
   const rest = ROSTER.slice(1);
@@ -199,13 +185,9 @@ const ModeratorsSection: React.FC<ModeratorsSectionProps> = ({ lang }) => {
 
   return (
     <div className="w-full animate-fade-in-up">
-      {/* live status line */}
-      <div className="flex items-center justify-center gap-2 mb-5">
-        <span className="inline-flex items-center gap-2 text-[10px] font-black tracking-[0.2em] uppercase px-4 py-2 rounded-full bg-white/[0.04] border border-white/10 text-white/60">
-          <span className={`w-1.5 h-1.5 rounded-full ${loading ? 'bg-yellow-400 animate-pulse' : 'bg-[#53FC18] animate-pulse shadow-[0_0_8px_#53FC18]'}`} />
-          {t.live}
-          {updatedAt && <span className="text-white/30 normal-case tracking-normal font-bold">• {t.updated} {timeAgo(updatedAt)}</span>}
-        </span>
+      {/* slim sync bar while X data streams in */}
+      <div className={`h-[2px] w-full overflow-hidden rounded-full bg-white/[0.06] mb-4 md:mb-6 transition-opacity duration-700 ${loading ? 'opacity-100' : 'opacity-0'}`} aria-hidden="true">
+        <div className="h-full w-1/3 rounded-full bg-gradient-to-r from-transparent via-[#C9A24B] to-transparent animate-pulse" />
       </div>
 
       {/* ===== BOSS HERO — A7MEDO ===== */}
@@ -219,13 +201,6 @@ const ModeratorsSection: React.FC<ModeratorsSectionProps> = ({ lang }) => {
               <div className="w-full h-full bg-gradient-to-l from-[#C9A24B]/30 via-white/[0.04] to-[#8B5CF6]/20" />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-[#080808] via-[#080808]/40 to-transparent" />
-            {/* crown + boss tag */}
-            <div className="absolute top-3 start-3 sm:top-4 sm:start-4 flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-black tracking-[0.18em] px-3 py-1.5 rounded-full bg-gradient-to-b from-[#FFE9B8] via-[#C9A24B] to-[#8A6A3A] text-black shadow-[0_0_24px_rgba(201,162,75,0.7)]">
-                <CrownIcon className="w-3.5 h-3.5" />
-                {t.boss}
-              </span>
-            </div>
             <a href={`https://x.com/${boss.x}`} target="_blank" rel="noopener noreferrer" className="absolute top-3 end-3 sm:top-4 sm:end-4 w-9 h-9 rounded-xl bg-black/60 backdrop-blur border border-white/15 text-white/80 hover:text-black hover:bg-[#FFE9B8] flex items-center justify-center transition-all active:scale-95" aria-label="X profile">
               <XIconSmall className="w-4 h-4" />
             </a>
@@ -274,6 +249,10 @@ const ModeratorsSection: React.FC<ModeratorsSectionProps> = ({ lang }) => {
       </div>
 
       {/* ===== MODS GRID ===== */}
+      <div className="flex items-center gap-3 mb-4 md:mb-5" aria-hidden="true">
+        <span className="w-1.5 h-1.5 rotate-45 bg-[#C9A24B]" />
+        <span className="h-px flex-1 bg-gradient-to-r from-[#C9A24B]/45 to-transparent" />
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
         {rest.map((m, i) => {
           const p = get(m.x);

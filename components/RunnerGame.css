@@ -1,75 +1,527 @@
-/* Firas Runner — game-only utilities (ported from the runner project, plain CSS). */
+/* ============================================================
+   FIRAS CITADEL — Runner game chrome (port of the runner project's
+   design system). Palette mirrors the hub: gold #C9A24B, pale
+   #F0DDAE, deep #8A6A3A over ink #0B0906.
+   ============================================================ */
 
-.runner-scope .font-cyber {
-  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+.runner-scope {
+  --cit-gold: #C9A24B;
+  --cit-gold-lt: #F0DDAE;
+  --cit-pale: #FFF3D6;
+  --cit-deep: #8A6A3A;
+  --cit-ink: #0B0906;
+  --cit-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: "Outfit", "Tajawal", ui-sans-serif, system-ui, sans-serif;
 }
 
-.runner-scope .font-title {
-  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+.runner-scope .font-cyber,
+.runner-scope .font-title,
+.runner-scope .font-ar {
+  font-family: "Outfit", "Cairo", "Tajawal", ui-sans-serif, system-ui, sans-serif;
 }
 
-.runner-scope .no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
+.runner-scope .no-scrollbar::-webkit-scrollbar { display: none; }
+.runner-scope .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-.runner-scope .no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+.runner-scope .animate-grid-flow { animation: runner-grid-flow 2s linear infinite; }
 
-.runner-scope .animate-grid-flow {
-  animation: runner-grid-flow 2s linear infinite;
-}
+.runner-scope .animate-heart-pulse { animation: runner-heart-pulse 1.8s ease-in-out infinite; }
+.runner-scope .animate-heart-shatter { animation: runner-heart-shatter 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 
-.runner-scope .animate-heart-pulse {
-  animation: runner-heart-pulse 1.5s ease-in-out infinite;
-}
-
-.runner-scope .animate-heart-shatter {
-  animation: runner-heart-shatter 0.5s ease-out forwards;
-}
-
-@keyframes runner-grid-flow {
-  0% { background-position: 0 0; }
-  100% { background-position: 0 20px; }
-}
-
+@keyframes runner-grid-flow { 0% { background-position: 0 0; } 100% { background-position: 0 20px; } }
 @keyframes runner-heart-pulse {
-  0%, 100% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(1.1); filter: brightness(1.3); }
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(201, 162, 75, 0.55)); }
+  50% { transform: scale(1.12); filter: drop-shadow(0 0 12px rgba(240, 221, 174, 0.9)); }
 }
-
 @keyframes runner-heart-shatter {
-  0% { transform: scale(1); opacity: 1; }
-  100% { transform: scale(2); opacity: 0; filter: blur(10px); }
+  0% { transform: scale(1) rotate(0); opacity: 1; filter: brightness(2); }
+  25% { transform: scale(1.45) rotate(9deg); opacity: 0.95; }
+  100% { transform: scale(0) rotate(-40deg); opacity: 0; filter: blur(8px); }
 }
 
-.runner-scope .scanline {
-  width: 100%;
-  height: 100px;
-  z-index: 10;
-  background: linear-gradient(
-    0deg,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 255, 255, 0.05) 50%,
-    rgba(0, 0, 0, 0) 100%
-  );
-  opacity: 0.1;
+/* ============================== SCENE BACKDROP ============================== */
+
+.runner-scope .cit-void {
   position: absolute;
-  bottom: 100%;
-  animation: runner-scanline 6s linear infinite;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 42% at 50% 26%, rgba(201, 162, 75, 0.10), transparent 62%),
+    radial-gradient(ellipse 44% 40% at 8% 88%, rgba(138, 106, 58, 0.14), transparent 70%),
+    linear-gradient(180deg, rgba(11, 9, 6, 0.55) 0%, transparent 34%, transparent 62%, rgba(11, 9, 6, 0.86) 100%);
 }
 
-@keyframes runner-scanline {
-  0% { bottom: 100%; }
-  100% { bottom: -100px; }
+.runner-scope .cit-aurora {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(201, 162, 75, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201, 162, 75, 0.055) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(ellipse 92% 70% at 50% 34%, black 24%, transparent 76%);
+  mask-image: radial-gradient(ellipse 92% 70% at 50% 34%, black 24%, transparent 76%);
 }
+
+.runner-scope .cit-scrim {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 40vh;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(11, 9, 6, 0.72), rgba(11, 9, 6, 0.16) 46%, transparent);
+}
+
+/* ============================== HUD CHROME ============================== */
+
+.runner-scope .cit-glass {
+  position: relative;
+  background: linear-gradient(170deg, rgba(28, 20, 10, 0.82) 0%, rgba(11, 9, 6, 0.9) 100%);
+  border: 1px solid rgba(201, 162, 75, 0.24);
+  box-shadow: 0 18px 44px -22px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(240, 221, 174, 0.14);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+.runner-scope .cit-glass::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(240, 221, 174, 0.85), transparent);
+  pointer-events: none;
+}
+
+.runner-scope .cit-kicker {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgba(240, 221, 174, 0.55);
+}
+
+.runner-scope .cit-gold-text {
+  background: linear-gradient(135deg, #FFF6DE 0%, #F0DDAE 26%, #C9A24B 62%, #8A6A3A 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.runner-scope .cit-gold-text--shine {
+  background-image: linear-gradient(110deg, #8A6A3A 0%, #C9A24B 18%, #FFF6DE 40%, #F0DDAE 50%, #FFF6DE 60%, #C9A24B 82%, #8A6A3A 100%);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: runner-cit-shine 7s ease-in-out infinite;
+}
+
+@keyframes runner-cit-shine { 0%, 100% { background-position: 0% center; } 50% { background-position: 100% center; } }
+
+.runner-scope .cit-progress {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(11, 9, 6, 0.72);
+  border: 1px solid rgba(201, 162, 75, 0.28);
+  overflow: hidden;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.runner-scope .cit-progress > i {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #8A6A3A 0%, #C9A24B 42%, #F0DDAE 100%);
+  box-shadow: 0 0 16px rgba(201, 162, 75, 0.7);
+}
+
+.runner-scope .cit-progress > i::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 15%, rgba(255, 246, 222, 0.85) 50%, transparent 85%);
+  background-size: 220% 100%;
+  animation: runner-bar-shine 3.2s ease-in-out infinite;
+}
+
+@keyframes runner-bar-shine { 0% { background-position: 160% 0; } 60%, 100% { background-position: -160% 0; } }
+
+/* ---------------------------------------------------------------
+ * Life plate - a bevelled gold ingot with the heart engraved into
+ * it. Reads as a machined gauge rather than a row of icons: the
+ * spent sockets keep their outline so the row still holds its shape.
+ * --------------------------------------------------------------- */
+
+.runner-scope .cit-heart {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 26px;
+  border-radius: 7px;
+  overflow: hidden;
+  color: #0B0906;
+  background:
+    linear-gradient(165deg,
+      #FFF6DE 0%,
+      #F0DDAE 16%,
+      #E0C288 34%,
+      #C9A24B 62%,
+      #A8823F 82%,
+      #8A6A3A 100%);
+  border: 1px solid rgba(255, 243, 214, 0.55);
+  box-shadow:
+    0 2px 10px -3px rgba(0, 0, 0, 0.85),
+    0 0 16px -6px rgba(201, 162, 75, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.3);
+  transition: background 0.45s ease, border-color 0.45s ease, box-shadow 0.45s ease, transform 0.45s var(--cit-ease);
+}
+
+/* Machined bevel: a bright hairline across the top of the plate. */
+.runner-scope .cit-heart__bevel {
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  top: 3px;
+  height: 1px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  pointer-events: none;
+}
+
+.runner-scope .cit-heart__glyph {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.35));
+}
+
+@keyframes runner-cit-heart-breathe {
+  0%, 100% { transform: scale(1); box-shadow: 0 2px 10px -3px rgba(0,0,0,0.85), 0 0 16px -6px rgba(201,162,75,0.75), inset 0 1px 0 rgba(255,255,255,0.8), inset 0 -2px 0 rgba(0,0,0,0.3); }
+  50% { transform: scale(1.07); box-shadow: 0 2px 12px -3px rgba(0,0,0,0.85), 0 0 22px -4px rgba(240,221,174,0.95), inset 0 1px 0 rgba(255,255,255,0.8), inset 0 -2px 0 rgba(0,0,0,0.3); }
+}
+
+.runner-scope .cit-heart[data-on="1"] {
+  animation: runner-cit-heart-breathe 2.2s ease-in-out infinite;
+}
+
+/* Spent socket - the plate cools to ink but keeps its machined edge. */
+.runner-scope .cit-heart[data-on="0"] {
+  background: linear-gradient(165deg, rgba(28, 20, 10, 0.75), rgba(11, 9, 6, 0.85));
+  border-color: rgba(201, 162, 75, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transform: scale(0.94);
+  animation: none;
+}
+
+.runner-scope .cit-heart[data-on="0"] .cit-heart__bevel {
+  background: rgba(201, 162, 75, 0.16);
+}
+
+.runner-scope .cit-heart[data-on="0"] .cit-heart__glyph {
+  filter: none;
+}
+
+/* The empty socket outline the heart leaves behind. */
+.runner-scope .cit-heart__socket {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  border: 1px solid rgba(201, 162, 75, 0.22);
+  transform: rotate(45deg);
+}
+
+@keyframes runner-cit-heart-break {
+  0% { transform: scale(1); }
+  22% { transform: scale(1.5) rotate(8deg); }
+  100% { transform: scale(0.4) rotate(-30deg); opacity: 0; }
+}
+
+.runner-scope .cit-heart[data-break="1"] {
+  animation: runner-cit-heart-break 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Narrow phones: shrink the plate rather than letting the rail overflow. */
+@media (max-width: 400px) {
+  .runner-scope .cit-heart { width: 19px; height: 23px; border-radius: 6px; }
+  .runner-scope .cit-heart__socket { width: 9px; height: 9px; }
+}
+.runner-scope .cit-letter {
+  position: relative;
+  width: 34px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  font-weight: 900;
+  font-style: italic;
+  font-size: 18px;
+  color: rgba(240, 221, 174, 0.22);
+  background: rgba(11, 9, 6, 0.62);
+  border: 1px solid rgba(201, 162, 75, 0.18);
+  transition: box-shadow 0.4s ease, background 0.4s ease, color 0.3s ease, border-color 0.4s ease;
+}
+
+.runner-scope .cit-letter[data-on="1"] {
+  border-color: rgba(255, 243, 214, 0.7);
+  box-shadow: 0 10px 26px -10px rgba(0, 0, 0, 0.9), 0 0 22px rgba(201, 162, 75, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.runner-scope .cit-letter[data-on="1"]::after {
+  content: "";
+  position: inset-inline: 22%;
+  top: 4px;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  filter: blur(1px);
+}
+
+/* ============================== BUTTONS ============================== */
+
+.runner-scope .cit-btn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  border-radius: 18px;
+  cursor: pointer;
+  transition: transform 0.28s var(--cit-ease), filter 0.28s, box-shadow 0.28s, background 0.28s, border-color 0.28s;
+}
+
+.runner-scope .cit-btn:hover { transform: translateY(-2px); }
+.runner-scope .cit-btn:active { transform: translateY(1px) scale(0.99); }
+
+.runner-scope .cit-btn--gold {
+  background: linear-gradient(180deg, #FFF6DE 0%, #F0DDAE 20%, #C9A24B 56%, #8A6A3A 100%);
+  color: #0B0906;
+  border: 1px solid rgba(255, 243, 214, 0.6);
+  box-shadow: 0 18px 40px -14px rgba(201, 162, 75, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -3px 0 rgba(0, 0, 0, 0.28);
+}
+
+.runner-scope .cit-btn--gold:hover {
+  filter: brightness(1.07);
+  box-shadow: 0 22px 52px -14px rgba(201, 162, 75, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -3px 0 rgba(0, 0, 0, 0.28);
+}
+
+.runner-scope .cit-btn--ghost {
+  background: rgba(201, 162, 75, 0.07);
+  border: 1px solid rgba(201, 162, 75, 0.42);
+  color: #F0DDAE;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.runner-scope .cit-btn--ghost:hover {
+  background: rgba(201, 162, 75, 0.16);
+  border-color: rgba(240, 221, 174, 0.85);
+  color: #FFF6DE;
+}
+
+.runner-scope .cit-btn--ember {
+  background: linear-gradient(180deg, #FFD9A8 0%, #E8A05A 30%, #A2521F 70%, #4A2210 100%);
+  color: #140B04;
+  border: 1px solid rgba(255, 217, 168, 0.5);
+  box-shadow: 0 18px 40px -14px rgba(226, 116, 43, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -3px 0 rgba(0, 0, 0, 0.3);
+}
+
+.runner-scope .cit-btn--ember:hover { filter: brightness(1.07); }
+
+.runner-scope .cit-btn__sheen {
+  position: absolute;
+  inset-block: 0;
+  width: 55%;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transform: skewX(-18deg) translateX(-220%);
+  transition: transform 0.85s var(--cit-ease);
+}
+
+.runner-scope .cit-btn:hover .cit-btn__sheen { transform: skewX(-18deg) translateX(320%); }
+
+/* ============================== RESULT FRAMES ============================== */
+
+.runner-scope .cit-frame {
+  position: relative;
+  border-radius: 34px;
+  background: linear-gradient(175deg, rgba(28, 20, 10, 0.94) 0%, rgba(11, 9, 6, 0.96) 58%, rgba(6, 5, 3, 0.97) 100%);
+  border: 1px solid rgba(201, 162, 75, 0.28);
+  box-shadow: 0 44px 110px -40px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(240, 221, 174, 0.16);
+  -webkit-backdrop-filter: blur(22px);
+  backdrop-filter: blur(22px);
+}
+
+.runner-scope .cit-frame--win {
+  border-color: rgba(201, 162, 75, 0.45);
+  box-shadow: 0 44px 110px -40px rgba(0, 0, 0, 0.95), 0 0 90px -34px rgba(201, 162, 75, 0.55), inset 0 1px 0 rgba(240, 221, 174, 0.2);
+}
+
+.runner-scope .cit-frame--lose {
+  border-color: rgba(196, 106, 47, 0.42);
+  box-shadow: 0 44px 110px -40px rgba(0, 0, 0, 0.95), 0 0 90px -34px rgba(196, 106, 47, 0.5), inset 0 1px 0 rgba(255, 217, 168, 0.14);
+}
+
+.runner-scope .cit-frame__rule {
+  position: absolute;
+  top: 0;
+  left: 14%;
+  right: 14%;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #F0DDAE, transparent);
+}
+
+.runner-scope .cit-corner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-color: #C9A24B;
+  opacity: 0.8;
+  z-index: 3;
+}
+
+.runner-scope .cit-corner--tl { top: -1px; left: -1px; border-top-width: 2px; border-left-width: 2px; border-top-left-radius: 34px; }
+.runner-scope .cit-corner--tr { top: -1px; right: -1px; border-top-width: 2px; border-right-width: 2px; border-top-right-radius: 34px; }
+.runner-scope .cit-corner--bl { bottom: -1px; left: -1px; border-bottom-width: 2px; border-left-width: 2px; border-bottom-left-radius: 34px; }
+.runner-scope .cit-corner--br { bottom: -1px; right: -1px; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 34px; }
+
+.runner-scope .cit-halo {
+  position: absolute;
+  inset: -16px;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: conic-gradient(from 0deg, transparent 0 62%, rgba(240, 221, 174, 0.95) 80%, rgba(201, 162, 75, 0.15) 89%, transparent 100%);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), black calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), black calc(100% - 2px));
+  animation: runner-cit-spin 13s linear infinite;
+}
+
+.runner-scope .cit-halo--rev { animation-direction: reverse; animation-duration: 20s; opacity: 0.6; inset: -9px; }
+
+@keyframes runner-cit-spin { to { transform: rotate(360deg); } }
+
+.runner-scope .cit-medal {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 92px;
+  border-radius: 9999px;
+  color: #0B0906;
+  background: linear-gradient(180deg, #FFF6DE 0%, #E8D5A8 32%, #C9A24B 72%, #8A6A3A 100%);
+  border: 1px solid rgba(255, 243, 214, 0.7);
+  box-shadow: 0 20px 44px -16px rgba(201, 162, 75, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 -4px 0 rgba(0, 0, 0, 0.25);
+}
+
+.runner-scope .cit-medal--lose {
+  color: #140B04;
+  background: linear-gradient(180deg, #FFE0BE 0%, #E8A05A 34%, #A2521F 74%, #4A2210 100%);
+  border-color: rgba(255, 224, 190, 0.6);
+  box-shadow: 0 20px 44px -16px rgba(226, 116, 43, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -4px 0 rgba(0, 0, 0, 0.3);
+}
+
+.runner-scope .cit-stat {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  padding: 14px 12px;
+  text-align: center;
+  background: linear-gradient(170deg, rgba(201, 162, 75, 0.1), rgba(11, 9, 6, 0.55));
+  border: 1px solid rgba(201, 162, 75, 0.2);
+  transition: transform 0.3s var(--cit-ease), border-color 0.3s, background 0.3s;
+}
+
+.runner-scope .cit-stat:hover {
+  transform: translateY(-3px);
+  border-color: rgba(240, 221, 174, 0.55);
+  background: linear-gradient(170deg, rgba(201, 162, 75, 0.18), rgba(11, 9, 6, 0.55));
+}
+
+.runner-scope .cit-stat::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  width: 45%;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transform: skewX(-18deg) translateX(-260%);
+  transition: transform 1s var(--cit-ease);
+}
+
+.runner-scope .cit-stat:hover::before { transform: skewX(-18deg) translateX(360%); }
+
+.runner-scope .cit-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(201, 162, 75, 0.4);
+  background: rgba(201, 162, 75, 0.08);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(240, 221, 174, 0.9);
+}
+
+.runner-scope .cit-embers { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+
+.runner-scope .cit-ember {
+  position: absolute;
+  bottom: -12px;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: #F0DDAE;
+  box-shadow: 0 0 12px rgba(201, 162, 75, 0.9);
+  animation: runner-cit-rise linear infinite;
+}
+
+@keyframes runner-cit-rise {
+  0% { transform: translateY(0) scale(0.4); opacity: 0; }
+  14% { opacity: 0.9; }
+  100% { transform: translateY(-104vh) scale(1); opacity: 0; }
+}
+
+.runner-scope .cit-bloom {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  filter: blur(90px);
+  animation: runner-cit-breathe 9s ease-in-out infinite alternate;
+}
+
+@keyframes runner-cit-breathe {
+  0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.55; }
+  50% { transform: translate3d(2%, -3%, 0) scale(1.12); opacity: 0.8; }
+  100% { transform: translate3d(-3%, 2%, 0) scale(1.04); opacity: 0.6; }
+}
+
+.runner-scope .cit-scroll-hide::-webkit-scrollbar { display: none; }
+.runner-scope .cit-scroll-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .runner-scope .animate-grid-flow,
-  .runner-scope .animate-heart-pulse,
-  .runner-scope .animate-heart-shatter,
-  .runner-scope .scanline {
-    animation: none;
+  .runner-scope .cit-halo,
+  .runner-scope .cit-gold-text--shine,
+  .runner-scope .cit-bloom,
+  .runner-scope .cit-progress > i::after,
+  .runner-scope .cit-ember,
+  .runner-scope .animate-heart-pulse {
+    animation: none !important;
   }
+  .runner-scope .cit-btn, .runner-scope .cit-stat { transition: none !important; }
 }

@@ -26,6 +26,9 @@ const HIPS_GEO = new THREE.CylinderGeometry(0.16, 0.16, 0.2);
 const LEG_GEO = new THREE.BoxGeometry(0.15, 0.7, 0.15);
 const SHADOW_GEO = new THREE.CircleGeometry(0.5, 32);
 
+/** Late-run jetpack tint — the hub's neon accent. */
+const HOT_GLOW = new THREE.Color('#53FC18');
+
 export const Player: React.FC<{ trackOffset?: number, playerId?: string }> = ({ trackOffset = 0, playerId }) => {
   const groupRef = useRef<THREE.Group>(null);
   const bodyRef = useRef<THREE.Group>(null);
@@ -56,6 +59,8 @@ export const Player: React.FC<{ trackOffset?: number, playerId?: string }> = ({ 
   
   const [lane, setLane] = React.useState(0);
   const targetX = useRef(0);
+  const glowTick = useRef(0);
+  const baseGlow = useRef(new THREE.Color('#F0DDAE'));
   
   // Physics State (using Refs for immediate logic updates)
   const isJumping = useRef(false);
@@ -71,18 +76,18 @@ export const Player: React.FC<{ trackOffset?: number, playerId?: string }> = ({ 
 
   // Memoized Materials
   const { armorMaterial, jointMaterial, glowMaterial, shadowMaterial } = useMemo(() => {
-      let armorColor = '#00aaff';
-      let glowColor = '#00ffff';
+      let armorColor = '#C9A24B';
+      let glowColor = '#F0DDAE';
 
       if (selectedColor === 'char_neon') {
-          armorColor = '#00f2ff';
-          glowColor = '#ff00ff';
+          armorColor = '#F0DDAE';
+          glowColor = '#53FC18';
       } else if (selectedColor === 'char_gold') {
-          armorColor = '#ffd700';
-          glowColor = '#ffffff';
+          armorColor = '#FFF3D6';
+          glowColor = '#FFFFFF';
       } else if (selectedColor === 'char_void') {
-          armorColor = '#4b0082';
-          glowColor = '#ff0000';
+          armorColor = '#4A3820';
+          glowColor = '#C9A24B';
       }
 
       if (isImmortalityActive) {
@@ -92,7 +97,7 @@ export const Player: React.FC<{ trackOffset?: number, playerId?: string }> = ({ 
       
       return {
           armorMaterial: new THREE.MeshStandardMaterial({ color: armorColor, roughness: 0.3, metalness: 0.8 }),
-          jointMaterial: new THREE.MeshStandardMaterial({ color: '#111111', roughness: 0.7, metalness: 0.5 }),
+          jointMaterial: new THREE.MeshStandardMaterial({ color: '#1C140A', roughness: 0.7, metalness: 0.5 }),
           glowMaterial: new THREE.MeshBasicMaterial({ color: glowColor }),
           shadowMaterial: new THREE.MeshBasicMaterial({ color: '#000000', opacity: 0.3, transparent: true })
       };
@@ -143,18 +148,28 @@ export const Player: React.FC<{ trackOffset?: number, playerId?: string }> = ({ 
       if (status !== GameStatus.PLAYING && status !== GameStatus.ONLINE) return;
       if (status === GameStatus.ONLINE && countdown > 0) return;
       if (lives <= 0) return;
-      
+
+      const key = e.key;
+      // Arrow keys scroll the page unless we claim them.
+      if (key === 'ArrowLeft' || key === 'ArrowRight' || key === 'ArrowUp' || key === 'ArrowDown' || key === ' ') {
+        e.preventDefault();
+      }
+
       const maxLane = Math.floor(laneCount / 2);
 
-      if (e.key === 'ArrowLeft') setLane(l => Math.max(l - 1, -maxLane));
-      else if (e.key === 'ArrowRight') setLane(l => Math.min(l + 1, maxLane));
-      else if (e.key === 'ArrowUp' || e.key === 'w') triggerJump();
-      else if (e.key === ' ' || e.key === 'Enter') {
-          activateImmortality();
+      if (key === 'ArrowLeft' || key === 'a' || key === 'A') {
+        setLane(l => Math.max(l - 1, -maxLane));
+      } else if (key === 'ArrowRight' || key === 'd' || key === 'D') {
+        setLane(l => Math.min(l + 1, maxLane));
+      } else if (key === 'ArrowUp' || key === 'w' || key === 'W' || key === ' ' || key === 'Enter') {
+        // Jump: Up arrow, W, Space and Enter all trigger it.
+        triggerJump();
+      } else if (key === 'Shift' || key === 'h' || key === 'H') {
+        activateImmortality();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, { passive: false });
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [status, laneCount, hasDoubleJump, activateImmortality]);
 
@@ -180,8 +195,9 @@ export const Player: React.FC<{ trackOffset?: number, playerId?: string }> = ({ 
              else setLane(l => Math.max(l - 1, -maxLane));
         } else if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY < -30) {
             triggerJump();
-        } else if (Math.abs(deltaX) < 10 && Math.abs(deltaY) < 10) {
-            activateImmortality();
+        } else if (Math.abs(deltaX) < 14 && Math.abs(deltaY) < 14) {
+            // Tap jumps — the only control a thumb needs.
+            triggerJump();
         }
     };
 
@@ -292,6 +308,17 @@ export const Player: React.FC<{ trackOffset?: number, playerId?: string }> = ({ 
     groupRef.current.rotation.z = -xDiff * 0.2; 
     groupRef.current.rotation.x = isJumping.current ? 0.1 : 0.05; 
 
+    // The jetpack glow drifts from ivory gold toward the citadel's neon accent
+    // as the run deepens — a quiet "you have gone a long way" signal. Updated
+    // a few times a second, never per frame, so no material is rebuilt.
+    if (++glowTick.current % 12 === 0) {
+      const intensity = useStore.getState().distance;
+      const k = Math.min(1, intensity / 26000);
+      (glowMaterial as THREE.MeshBasicMaterial).color
+        .copy(baseGlow.current)
+        .lerp(HOT_GLOW, k * 0.85);
+    }
+
     // 3. Skeletal Animation
     const time = state.clock.elapsedTime * 25; 
     
@@ -397,13 +424,13 @@ export const Player: React.FC<{ trackOffset?: number, playerId?: string }> = ({ 
             {selectedAccessory === 'char_king' && (
                 <mesh position={[0, 0.2, 0]} castShadow rotation={[Math.PI / 2, 0, 0]}>
                     <torusGeometry args={[0.15, 0.05, 8, 16]} />
-                    <meshStandardMaterial color="#FFD700" metalness={1} roughness={0.1} />
+                    <meshStandardMaterial color="#F0DDAE" metalness={1} roughness={0.1} />
                 </mesh>
             )}
             {selectedAccessory === 'char_hacker' && (
                 <mesh position={[0, 0.05, 0.05]} castShadow>
                     <boxGeometry args={[0.27, 0.35, 0.32]} />
-                    <meshStandardMaterial color="#111111" />
+                    <meshStandardMaterial color="#1C140A" />
                 </mesh>
             )}
         </group>

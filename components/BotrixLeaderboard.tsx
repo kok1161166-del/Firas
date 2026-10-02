@@ -203,7 +203,7 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
       <div className="group relative rounded-[28px] overflow-hidden bg-white/[0.03] border border-white/10 backdrop-blur-2xl transition-colors duration-500 hover:border-white/20">
         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-transparent via-[#FFE9B8]/60 to-transparent" aria-hidden="true" />
         <div className="absolute -top-24 start-1/4 w-96 h-96 bg-[#FFE9B8]/[0.08] blur-[110px] pointer-events-none" aria-hidden="true" />
-        <div className="absolute -bottom-32 end-0 w-96 h-96 bg-[#B388FF]/[0.08] blur-[110px] pointer-events-none" aria-hidden="true" />
+        <div className="absolute -bottom-32 end-0 w-96 h-96 bg-[#8A6A3A]/[0.10] blur-[110px] pointer-events-none" aria-hidden="true" />
 
         {/* header — modern */}
         <div className="relative p-5 md:p-7 pb-4 flex items-center gap-4">
@@ -307,7 +307,7 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
                         <span className="text-[11px] font-black px-2.5 py-1.5 rounded-xl bg-[#FFE9B8]/10 border border-[#FFE9B8]/30 text-[#FFE9B8] shrink-0" dir="ltr" title={formatHoursLong(e.watchtime, lang)}>{formatHours(e.watchtime)}</span>
                       </div>
                       <div className="mt-2 ms-[76px] h-1 rounded-full bg-white/[0.06] overflow-hidden" dir="ltr">
-                        <div className="bar-grow h-full rounded-full bg-gradient-to-r from-[#FFE9B8] via-[#C9A24B] to-[#B388FF]" style={{ width: `${pct}%`, animationDelay: `${Math.min(idx * 60, 480)}ms` }} />
+                        <div className="bar-grow h-full rounded-full bg-gradient-to-r from-[#F0DDAE] via-[#C9A24B] to-[#8A6A3A]" style={{ width: `${pct}%`, animationDelay: `${Math.min(idx * 60, 480)}ms` }} />
                       </div>
                     </div>
                   );

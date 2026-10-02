@@ -7,7 +7,6 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { Text3D, Center, Float } from '@react-three/drei';
 import { v4 as uuidv4 } from 'uuid';
 import { useStore } from '../../store';
 import { GameObject, ObjectType, LANE_WIDTH, SPAWN_DISTANCE, REMOVE_DISTANCE, GameStatus, GEMINI_COLORS, RUN_SPEED_BASE, getTargetWord } from '../../types';
@@ -26,9 +25,11 @@ const ALIEN_BODY_GEO = new THREE.CylinderGeometry(0.6, 0.3, 0.3, 8);
 const ALIEN_DOME_GEO = new THREE.SphereGeometry(0.4, 16, 16, 0, Math.PI * 2, 0, Math.PI/2);
 const ALIEN_EYE_GEO = new THREE.SphereGeometry(0.1);
 
-// Missile Geometries
-const MISSILE_CORE_GEO = new THREE.CylinderGeometry(0.08, 0.08, 3.0, 8);
-const MISSILE_RING_GEO = new THREE.TorusGeometry(0.15, 0.02, 16, 32);
+// Missile Geometries — chunky enough to read at speed, with a bright tip so
+// the incoming shot is unmistakable.
+const MISSILE_CORE_GEO = new THREE.CylinderGeometry(0.13, 0.13, 3.0, 8);
+const MISSILE_RING_GEO = new THREE.TorusGeometry(0.2, 0.03, 16, 32);
+const MISSILE_HEAD_GEO = new THREE.SphereGeometry(0.24, 16, 16);
 
 // Shadow Geometries
 const SHADOW_LETTER_GEO = new THREE.PlaneGeometry(2, 0.6);
@@ -37,22 +38,177 @@ const SHADOW_ALIEN_GEO = new THREE.CircleGeometry(0.8, 32);
 const SHADOW_MISSILE_GEO = new THREE.PlaneGeometry(0.15, 3);
 const SHADOW_DEFAULT_GEO = new THREE.CircleGeometry(0.8, 6);
 
-// Shop Geometries
-const SHOP_FRAME_GEO = new THREE.BoxGeometry(1, 7, 1); // Will be scaled
-const SHOP_BACK_GEO = new THREE.BoxGeometry(1, 5, 1.2); // Will be scaled
-const SHOP_OUTLINE_GEO = new THREE.BoxGeometry(1, 7.2, 0.8); // Will be scaled
-const SHOP_FLOOR_GEO = new THREE.PlaneGeometry(1, 4); // Will be scaled
-
-const PORTAL_PILLAR_GEO = new THREE.BoxGeometry(2, 12, 2);
-const PORTAL_GATE_GEO = new THREE.PlaneGeometry(1, 1);
+// Billboard plane used for the canvas-drawn letter glyphs
+const LETTER_PLANE_GEO = new THREE.PlaneGeometry(1.9, 1.9);
 
 const PARTICLE_COUNT = 600;
-const BASE_LETTER_INTERVAL = 150; 
 
-const MISSILE_SPEED = 30; // Extra speed added to world speed
+const MISSILE_SPEED = 30; // Extra speed added to world speed (sentry shots)
 
-// Font for 3D Text
-const FONT_URL = "https://cdn.jsdelivr.net/npm/three/examples/fonts/helvetiker_bold.typeface.json";
+/**
+ * Where a sentry opens fire, and how much further up the track it keeps
+ * firing. Generous spacing on purpose: consecutive shots must always be
+ * dodgeable one at a time.
+ */
+const SENTRY_FIRING_Z = -120;
+const SENTRY_SHOT_INTERVAL = 34;
+
+/* ------------------------------------------------------------------ *
+ * Shared render resources.
+ *
+ * Two reasons, both performance-critical for an endless run:
+ *  1. Letter glyphs are drawn into a local canvas instead of being fetched
+ *     as a 3D typeface JSON. The old `Text3D` path downloaded a font over
+ *     the network the first time a letter spawned (a few seconds into a
+ *     run) and froze the whole loop for about a second while it parsed.
+ *  2. Materials are pooled by colour so the endless spawn stream reuses the
+ *     same GPU programs instead of allocating new ones every few frames.
+ * ------------------------------------------------------------------ */
+
+const LETTER_TEX_SIZE = 256;
+
+const letterTextureCache = new Map<string, THREE.CanvasTexture>();
+
+function getLetterTexture(char: string, hex: string): THREE.CanvasTexture {
+  const key = `${char}|${hex}`;
+  const cached = letterTextureCache.get(key);
+  if (cached) return cached;
+
+  const size = LETTER_TEX_SIZE;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return new THREE.CanvasTexture(canvas);
+
+  ctx.clearRect(0, 0, size, size);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'italic 900 176px Outfit, "Segoe UI", system-ui, sans-serif';
+
+  ctx.shadowColor = hex;
+  ctx.shadowBlur = 44;
+  ctx.fillStyle = hex;
+  ctx.fillText(char, size / 2, size / 2 + 8);
+
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#FFF6DE';
+  ctx.fillText(char, size / 2, size / 2 + 8);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
+  tex.needsUpdate = true;
+  letterTextureCache.set(key, tex);
+  return tex;
+}
+
+const materialCache = new Map<string, THREE.Material>();
+
+function getSharedMaterial<T extends THREE.Material>(key: string, make: () => T): T {
+  const cached = materialCache.get(key);
+  if (cached) return cached as T;
+  const mat = make();
+  materialCache.set(key, mat);
+  return mat;
+}
+
+function getGemMaterial(hex: string) {
+  return getSharedMaterial(`gem|${hex}`, () => new THREE.MeshStandardMaterial({
+    color: new THREE.Color(hex),
+    roughness: 0,
+    metalness: 1,
+    emissive: new THREE.Color(hex),
+    emissiveIntensity: 1.6,
+  }));
+}
+
+function getLetterMaterial(char: string, hex: string) {
+  return getSharedMaterial(`letter|${char}|${hex}`, () => new THREE.MeshBasicMaterial({
+    map: getLetterTexture(char, hex),
+    transparent: true,
+    depthWrite: false,
+    toneMapped: false,
+  }));
+}
+
+function getObstacleBodyMaterial() {
+  return getSharedMaterial('obstacle|body', () => new THREE.MeshStandardMaterial({
+    color: '#2A1A0E',
+    roughness: 0.35,
+    metalness: 0.85,
+    flatShading: true,
+  }));
+}
+
+function getObstacleEdgeMaterial(hex: string) {
+  return getSharedMaterial(`obstacle|edge|${hex}`, () => new THREE.MeshBasicMaterial({
+    color: new THREE.Color(hex),
+    wireframe: true,
+    transparent: true,
+    opacity: 0.42,
+  }));
+}
+
+function getFlatMaterial(key: string, hex: string, opacity: number) {
+  return getSharedMaterial(`${key}|${hex}|${opacity}`, () => new THREE.MeshBasicMaterial({
+    color: new THREE.Color(hex),
+    transparent: true,
+    opacity,
+  }));
+}
+
+function getShadowMaterial() {
+  return getSharedMaterial('shadow', () => new THREE.MeshBasicMaterial({
+    color: '#000000',
+    opacity: 0.3,
+    transparent: true,
+  }));
+}
+
+function getObstacleRingMaterial(hex: string) {
+  return getSharedMaterial(`obstacle|ring|${hex}`, () => new THREE.MeshBasicMaterial({
+    color: new THREE.Color(hex),
+    transparent: true,
+    opacity: 0.55,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  }));
+}
+
+function getAlienBodyMaterial() {
+  return getSharedMaterial('alien-body', () => new THREE.MeshStandardMaterial({
+    color: '#3A2A16',
+    metalness: 0.9,
+    roughness: 0.2,
+  }));
+}
+
+function getAlienDomeMaterial() {
+  return getSharedMaterial('alien-dome', () => new THREE.MeshStandardMaterial({
+    color: '#C46A2F',
+    emissive: '#C46A2F',
+    emissiveIntensity: 0.6,
+    transparent: true,
+    opacity: 0.85,
+  }));
+}
+
+function getMissileCoreMaterial() {
+  return getSharedMaterial('missile-core', () => new THREE.MeshStandardMaterial({
+    color: '#E2742B',
+    emissive: '#E2742B',
+    emissiveIntensity: 4,
+  }));
+}
+
+/** Bright tip on the leading end of a shot — the part you actually track. */
+function getMissileHeadMaterial() {
+  return getSharedMaterial('missile-head', () => new THREE.MeshBasicMaterial({
+    color: new THREE.Color('#FFF3D6'),
+    toneMapped: false,
+  }));
+}
 
 // --- Particle System ---
 const ParticleSystem: React.FC = () => {
@@ -148,10 +304,177 @@ const ParticleSystem: React.FC = () => {
 };
 
 
-const getRandomLane = (laneCount: number) => {
-    const max = Math.floor(laneCount / 2);
-    return Math.floor(Math.random() * (max * 2 + 1)) - max;
+/* ------------------------------------------------------------------ *
+ * Pattern helpers
+ *
+ * These exist to make the spawner *provably* fair instead of fair-ish.
+ * The old generator filled rows by shuffling lanes and taking a count,
+ * which could seal every lane at once and could stack walls closer than a
+ * jump arc — genuinely unpassable stretches, and long dead-straight ones
+ * where nothing at all spawned.
+ * ------------------------------------------------------------------ */
+
+/** In-place Fisher-Yates on a small number array. */
+function shuffleInPlace(arr: number[]) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = tmp;
+    }
+}
+
+/**
+ * Walks the safe corridor one lane at a time and returns the new lane.
+ *
+ * The corridor is the single lane a row leaves clear. Because it can only
+ * move by one lane per row, a player who reads ahead always has a legal
+ * next move — the pattern is solvable by weaving alone, no jumps required.
+ * It wanders rather than settling, so there is no "just hold one lane"
+ * degenerate strategy.
+ */
+function stepCorridor(state: { lane: number; step: number }, laneCount: number): number {
+    const maxLane = Math.floor(laneCount / 2);
+    if (maxLane <= 0) { state.lane = 0; return 0; }
+
+    if (state.lane === 0) state.step = Math.random() < 0.5 ? 1 : -1;
+    else if (Math.abs(state.lane) >= maxLane) {
+        // Pinned to an edge: turn back inwards.
+        state.step = state.lane > 0 ? -1 : 1;
+    } else if (Math.random() < 0.3) {
+        // Mostly single steps, occasionally a two-lane stride for spice.
+        state.step = (Math.random() < 0.5 ? -1 : 1) * (Math.random() < 0.18 ? 2 : 1);
+    }
+
+    let next = state.lane + state.step;
+    if (next > maxLane || next < -maxLane) next = state.lane - state.step;
+    state.lane = next;
+    return next;
+}
+
+/** Visits every lane index in [-maxLane, maxLane]. */
+function forEachLane(laneCount: number, fn: (lane: number) => void) {
+    const maxLane = Math.floor(laneCount / 2);
+    for (let l = -maxLane; l <= maxLane; l++) fn(l);
+}
+
+/** Small factory so gem rows stay one-liners above. */
+const gem = (x: number, y: number, z: number, color: string, points: number): GameObject => ({
+    id: uuidv4(),
+    type: ObjectType.GEM,
+    position: [x, y, z],
+    active: true,
+    color,
+    points,
+});
+
+/* ------------------------------------------------------------------ *
+ * ENDLESS DIFFICULTY CURVE
+ *
+ * The run never ends: there is no finish portal, no pause screen and no
+ * "you finished" modal. Everything below is a pure function of one
+ * `intensity` value (distance covered) plus the lifetime score.
+ *
+ * Three deliberate rules:
+ *  1. Hard from the first frame. The opening already throws 78% obstacles,
+ *     walls of two, a double-barrel sentry pool and a 0.26s reaction
+ *     window — there is no "easy first minute" to coast through. All the
+ *     ramps below are shallow, so it never spikes past that on top.
+ *  2. Fair. Row spacing is a *fraction of current speed*, so the reaction
+ *     window tightens 0.26s -> 0.18s and then holds. Past that point the
+ *     game gets harder through density and patterns, never by stealing
+ *     reaction time.
+ *  3. Bounded track. The runner widens 3 -> 4 -> 5 lanes, and the 5th is
+ *     earned by a strong score rather than handed out.
+ * ------------------------------------------------------------------ */
+
+const SPEED_START = RUN_SPEED_BASE + 11.5;  // 34 LY/s — opens at pace
+const SPEED_MAX = 400;
+/** Speed is still climbing after ~105,000 LY — roughly 17 minutes of running. */
+const SPEED_RAMP_PER_LY = 0.0035;
+
+const getSpeedForIntensity = (intensity: number) =>
+  Math.min(SPEED_MAX, SPEED_START + intensity * SPEED_RAMP_PER_LY);
+
+/** Score gates for the 4th and 5th lane. */
+const LANE_4_SCORE = 20000;
+const LANE_5_SCORE = 100000;
+
+/**
+ * Track width. Deliberately capped at 5 slots — lane 5 is the reward for a
+ * strong run, not a default. Odd counts only, because even counts put the
+ * outer lane centres exactly on the drawn separators.
+ */
+const getLaneCount = (totalScore: number) => {
+  if (totalScore >= LANE_5_SCORE) return 5;
+  if (totalScore >= LANE_4_SCORE) return 4;
+  return 3;
 };
+
+/**
+ * Sentries are a *readable* threat, not a wall of lead. They take a bigger
+ * share of the obstacle budget as the run deepens, which is where the extra
+ * difficulty comes from once the cone rate is dialled back.
+ */
+const getAlienChance = (intensity: number) =>
+  Math.min(0.42, 0.16 + intensity * 0.00001);
+
+/** One shot from the start, up to five deep into a long run. */
+const getSentryShots = (intensity: number) =>
+  1 + Math.min(4, Math.floor(intensity / 8000));
+
+/**
+ * Missile closing speed, in LY/s on top of the world speed. Fast enough to
+ * feel like a real shot, still slow enough to see, jump and land.
+ */
+const getMissileSpeed = (intensity: number) =>
+  Math.min(60, 22 + intensity * 0.0011);
+
+/**
+ * Row spacing as a slice of one second of travel: 0.26s -> 0.18s, then it
+ * holds. This is the fairness contract of the endless curve.
+ */
+const getMinGap = (speed: number, intensity: number) =>
+  Math.max(6, speed * (0.26 - Math.min(0.08, intensity * 0.000008)));
+
+/**
+ * Spacing between rows inside a single spawn slot.
+ *
+ * This one is not about reaction time — it is about the jump. A full jump
+ * covers `speed * JUMP_AIRTIME` light-years, so anything stacked closer than
+ * that lands the player on top of the next wall. Getting this wrong is what
+ * produced genuinely impossible stretches, so it is derived from the physics
+ * rather than from the difficulty curve.
+ */
+const JUMP_AIRTIME = 0.64;   // 2 * JUMP_FORCE / GRAVITY, from Player.tsx
+const getStackGap = (speed: number) => speed * JUMP_AIRTIME * 0.95;
+
+/** How many rows a single slot lays down: two at the start, four deep in. */
+const getStackRows = (intensity: number) =>
+  Math.min(3, 1 + Math.floor(intensity / 5000));
+
+/**
+ * How many lanes a wall may seal. Capped at `laneCount - 1` by the caller —
+ * there is always a way through.
+ */
+const getWallSize = (intensity: number) =>
+  2 + Math.floor(intensity / 500);
+
+/** Letter cadence: 80 LY apart, tightening to 42 LY by ~4,750 LY. */
+const getLetterSpacing = (intensity: number) =>
+  Math.max(42, 80 - intensity * 0.008);
+
+/**
+ * Hard ceiling on live entities.
+ *
+ * Sized against the densest case the curve can reach: four stacked rows of
+ * up to four blocks, spread over the spawn horizon. The budget is generous
+ * enough that a normal run never touches it — it exists so a pathological
+ * streak can never grow the list (and the React tree) without bound.
+ */
+const MAX_LIVE_OBJECTS = 260;
+
+const LETTER_SPACING_BASE = 80;
 
 export const LevelManager: React.FC<{ trackOffset?: number, playerId?: string }> = ({ trackOffset = 0, playerId }) => {
   const status = useStore(state => state.status);
@@ -161,18 +484,11 @@ export const LevelManager: React.FC<{ trackOffset?: number, playerId?: string }>
   const collectedLetters = useStore(state => state.collectedLetters);
   const laneCount = useStore(state => state.laneCount);
   const setDistance = useStore(state => state.setDistance);
-  const setTargetDistance = useStore(state => state.setTargetDistance);
-  const openShop = useStore(state => state.openShop);
   const level = useStore(state => state.level);
-  const targetDistance = useStore(state => state.targetDistance);
-  const completeLevel = useStore(state => state.completeLevel);
   const updateOnlinePlayer = useStore(state => state.updateOnlinePlayer);
   const localUserId = useStore(state => state.localUserId);
 
-  const multiplayerMode = useStore(state => state.multiplayerMode);
   const isLocal = !playerId || playerId === localUserId;
-  
-
   
   const objectsRef = useRef<GameObject[]>([]);
   const [renderTrigger, setRenderTrigger] = useState(0);
@@ -180,28 +496,68 @@ export const LevelManager: React.FC<{ trackOffset?: number, playerId?: string }>
   const prevLevel = useRef(level);
 
   const playerObjRef = useRef<THREE.Object3D | null>(null);
+  /** Endless lifetime distance for this run — never rewinds on a tier change. */
   const distanceTraveled = useRef(0);
   const lastReportedDistance = useRef(0);
-  const nextLetterDistance = useRef(targetDistance / 8);
-  const endPortalSpawned = useRef(false);
+  const nextLetterDistance = useRef(LETTER_SPACING_BASE);
+  const tierStartRef = useRef(0);
+  const elapsedRef = useRef(0);
+  // Scratch buffers, reused every frame to keep a long run allocation-free.
+  // `scratchRef` is built up during the frame, `liveRef` becomes the new
+  // `objectsRef` at the end. They must stay separate arrays: the loop above
+  // iterates the live list while the scratch list is being rebuilt.
+  const playerPosRef = useRef(new THREE.Vector3(0, 0, 0));
+  const scratchRef = useRef<GameObject[]>([]);
+  const liveRef = useRef<GameObject[]>([]);
+  const newSpawnsRef = useRef<GameObject[]>([]);
+  /** The wandering safe corridor the pattern generator walks. */
+  const pattern = useRef({ lane: 0, step: 1 });
+
+  // Compile every pooled material and glyph up front, so the first obstacle
+  // of the run never pays for a shader build mid-frame.
+  useEffect(() => {
+    getObstacleBodyMaterial();
+    getObstacleEdgeMaterial('#E2742B');
+    getObstacleRingMaterial('#E2742B');
+    getAlienBodyMaterial();
+    getAlienDomeMaterial();
+    getFlatMaterial('alien-eye', '#FFD9A8', 1);
+    getMissileCoreMaterial();
+    getMissileHeadMaterial();
+    getFlatMaterial('missile-ring', '#FFD9A8', 1);
+    getShadowMaterial();
+    getGemMaterial('#F0DDAE');
+    getGemMaterial('#FFF3D6');
+    for (const ch of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') getLetterTexture(ch, '#C9A24B');
+  }, []);
 
   // Handle resets and transitions
   useEffect(() => {
-    const isRestarting = ((status === GameStatus.PLAYING || status === GameStatus.ONLINE) && (prevStatus.current === GameStatus.GAME_OVER || prevStatus.current === GameStatus.LEVEL_COMPLETE || prevStatus.current === GameStatus.VICTORY));
-    const isInitialStart = (status === GameStatus.PLAYING || status === GameStatus.ONLINE) && (prevStatus.current === GameStatus.MENU || prevStatus.current === GameStatus.LEVEL_SELECT || prevStatus.current === GameStatus.LOBBY);
-    const isMenuReset = status === GameStatus.MENU;
+    const isEnteringRun = (status === GameStatus.PLAYING || status === GameStatus.ONLINE)
+      && prevStatus.current !== GameStatus.PLAYING && prevStatus.current !== GameStatus.ONLINE;
 
-    if (isMenuReset || isRestarting || isInitialStart) {
-        // Hard Reset of objects
+    if (isEnteringRun) {
+        // New tier or new run: clear the field so nothing from the previous
+        // tier survives the speed / lane change.
         objectsRef.current = [];
         playerObjRef.current = null; // Force re-find player
-        
-        // Reset trackers
-        distanceTraveled.current = 0;
         lastReportedDistance.current = 0;
-        endPortalSpawned.current = false;
-        nextLetterDistance.current = targetDistance / 8;
-        
+
+        // A brand-new run rewinds the endless counter; a milestone does not.
+        const storedDistance = useStore.getState().distance;
+        if (storedDistance < distanceTraveled.current) {
+          distanceTraveled.current = storedDistance;
+          lastReportedDistance.current = storedDistance;
+        }
+
+        // A fresh pattern corridor, centred so the first row is survivable.
+        pattern.current.lane = 0;
+        pattern.current.step = 1;
+
+        tierStartRef.current = useStore.getState().tierStart;
+        nextLetterDistance.current = tierStartRef.current + LETTER_SPACING_BASE;
+        elapsedRef.current = 0;
+
         setRenderTrigger(t => t + 1);
     } else if (status === GameStatus.GAME_OVER || status === GameStatus.VICTORY || status === GameStatus.LEVEL_COMPLETE) {
         setDistance(Math.floor(distanceTraveled.current));
@@ -209,7 +565,7 @@ export const LevelManager: React.FC<{ trackOffset?: number, playerId?: string }>
     
     prevStatus.current = status;
     prevLevel.current = level;
-  }, [status, level, setDistance, targetDistance]);
+  }, [status, level, setDistance]);
 
   useFrame((state) => {
       if (!playerObjRef.current) {
@@ -224,7 +580,8 @@ export const LevelManager: React.FC<{ trackOffset?: number, playerId?: string }>
   useFrame((state, delta) => {
     if (status !== GameStatus.PLAYING && status !== GameStatus.ONLINE) return;
     
-    const { speed, onlinePlayers, countdown, lives, hasTimeWarp, hasLaser, hasMagnet } = useStore.getState();
+    const store = useStore.getState();
+    const { onlinePlayers, countdown, lives, hasTimeWarp, hasLaser, hasMagnet } = store;
 
     // Check countdown for online
     if (status === GameStatus.ONLINE && countdown > 0) return;
@@ -232,55 +589,69 @@ export const LevelManager: React.FC<{ trackOffset?: number, playerId?: string }>
     // If we are local player and we are dead, stop progressing our level
     if (isLocal && lives <= 0) return;
 
-    const safeDelta = Math.min(delta, 0.05); 
-    
-    // DIFFICULTY SCALING (Incremental based on distance in ONLINE mode)
-    if (status === GameStatus.ONLINE && isLocal) {
-        const difficultyFactor = distanceTraveled.current / 1000;
-        const baseTarget = RUN_SPEED_BASE + 10 + difficultyFactor * 8;
-        const targetSpeed = Math.min(180, hasTimeWarp ? baseTarget * 0.8 : baseTarget);
-        if (speed < targetSpeed) {
-            useStore.setState({ speed: speed + safeDelta * 2 });
-        }
-    } else if (hasTimeWarp && isLocal) {
-        // Apply Time Warp slow down to single player as well
-        const currentSpeed = speed;
-        // In store.ts the speed is set at startGame. We should reduce it here gradually or just reduce dist
+    // A frame that arrives after a long stall (tab switch, GC pause) must not
+    // teleport the player through the obstacle field.
+    const safeDelta = Math.min(delta, 0.05);
+    elapsedRef.current += safeDelta;
+
+    // New tier started: re-base the letter cadence on the new tier origin.
+    if (store.tierStart !== tierStartRef.current) {
+      tierStartRef.current = store.tierStart;
+      nextLetterDistance.current = store.tierStart + LETTER_SPACING_BASE;
     }
+
+    // ---- ENDLESS PROGRESSION -------------------------------------------
+    // One number drives everything: speed, lane width and spawn density all
+    // grow with it, so a run never "wins" — it only ever gets harder.
+    const intensity = distanceTraveled.current;
+    const missileSpeed = getMissileSpeed(intensity);
+    const sentryShots = getSentryShots(intensity);
+    const desiredSpeed = getSpeedForIntensity(intensity) * (hasTimeWarp && isLocal ? 0.8 : 1);
+
+    if (Math.abs(store.speed - desiredSpeed) > 0.05) {
+      const eased = store.speed + (desiredSpeed - store.speed) * Math.min(1, safeDelta * 1.5);
+      useStore.setState({ speed: eased });
+    }
+    const speed = useStore.getState().speed;
 
     let dist = speed * safeDelta;
     if (hasTimeWarp && isLocal && status !== GameStatus.ONLINE) {
-        dist *= 0.8; // 20% slower perception of time
+      dist *= 0.8; // 20% slower perception of time
     }
     
-    const alivePlayers = onlinePlayers.filter(p => !p.is_dead);
-    const isOnePlayerLeft = status === GameStatus.ONLINE && alivePlayers.length === 1 && !onlinePlayers.find(p => p.user_id === localUserId)?.is_dead;
-
-    if (isOnePlayerLeft && !endPortalSpawned.current && isLocal) {
-        // If everyone else is dead, create a finish line shortly
-        if (targetDistance > distanceTraveled.current + 300) {
-            setTargetDistance(Math.floor(distanceTraveled.current + 250));
-        }
-    }
-
     distanceTraveled.current += dist;
 
-    // Update store distance periodically for HUD progress bar
-    if (isLocal && distanceTraveled.current - lastReportedDistance.current > 5) {
-        setDistance(distanceTraveled.current);
-        lastReportedDistance.current = distanceTraveled.current;
+    // Report distance in coarse steps (12 LY) so the HUD and the persisted
+    // store are not rewritten dozens of times a second.
+    if (isLocal && distanceTraveled.current - lastReportedDistance.current > 12) {
+      lastReportedDistance.current = distanceTraveled.current;
+      setDistance(Math.floor(distanceTraveled.current));
 
-        // Dynamic Level Scaling for obstacles (not just speed)
-        if (status === GameStatus.ONLINE) {
-           const newLevel = Math.min(100, 1 + Math.floor(distanceTraveled.current / 800));
-           if (newLevel > level) {
-               useStore.setState({ level: newLevel, laneCount: Math.min(9, 3 + Math.floor(newLevel / 8)) });
-           }
-        }
+      // Widen the track only when the lifetime score earns it.
+      const desiredLanes = getLaneCount(store.score);
+      if (desiredLanes !== useStore.getState().laneCount) {
+        useStore.setState({ laneCount: desiredLanes });
+      }
+    }
+
+    // ---- MILESTONE (the endless "tier cleared" beat) --------------------
+    // Never pauses and never ends: it fires a banner and hands over a wider,
+    // faster, denser tier while the player keeps running.
+    if (isLocal && status !== GameStatus.ONLINE) {
+      const st = useStore.getState();
+      if (st.status === GameStatus.PLAYING && !st.milestoneFlash && distanceTraveled.current >= st.targetDistance) {
+        st.completeLevel(distanceTraveled.current);
+      }
+      // One wall-clock second per second, rounded — used by score verification.
+      const secs = Math.round(elapsedRef.current);
+      if (secs !== st.runSeconds) useStore.setState({ runSeconds: secs });
     }
 
     let hasChanges = false;
-    let playerPos = new THREE.Vector3(0, 0, 0);
+    // Reused every frame — allocating a Vector3 per frame is needless garbage
+    // once a run is minutes long.
+    const playerPos = playerPosRef.current;
+    playerPos.set(0, 0, 0);
     
     if (playerObjRef.current) {
         playerObjRef.current.getWorldPosition(playerPos);
@@ -288,8 +659,10 @@ export const LevelManager: React.FC<{ trackOffset?: number, playerId?: string }>
 
     // 1. Move & Update
     const currentObjects = objectsRef.current;
-    const keptObjects: GameObject[] = [];
-    const newSpawns: GameObject[] = [];
+    const scratch = scratchRef.current;
+    const newSpawns = newSpawnsRef.current;
+    scratch.length = 0;
+    newSpawns.length = 0;
 
     for (const obj of currentObjects) {
         // Standard Movement
@@ -297,7 +670,7 @@ export const LevelManager: React.FC<{ trackOffset?: number, playerId?: string }>
         
         // Missile Movement (Moves faster than world)
         if (obj.type === ObjectType.MISSILE) {
-            moveAmount += MISSILE_SPEED * safeDelta;
+            moveAmount += missileSpeed * safeDelta;
         }
 
         // Store previous Z for swept collision check (prevents tunneling)
@@ -330,34 +703,39 @@ export const LevelManager: React.FC<{ trackOffset?: number, playerId?: string }>
                  obj.active = false;
                  hasChanges = true;
                  window.dispatchEvent(new CustomEvent('particle-burst', { 
-                     detail: { position: obj.position, color: '#ff0000' } 
+                     detail: { position: obj.position, color: '#E2742B' } 
                  }));
              }
         }
         
         // Alien AI Logic
-        if (obj.type === ObjectType.ALIEN && obj.active && !obj.hasFired) {
-             // Fire when within range (e.g., -90 units away)
-             if (obj.position[2] > -90) {
-                 obj.hasFired = true;
-                 
-                 // Spawn Missile
-                 newSpawns.push({
-                     id: uuidv4(),
-                     type: ObjectType.MISSILE,
-                     position: [obj.position[0], 1.0, obj.position[2] + 2], // Spawn slightly in front
-                     active: true,
-                     color: '#ff0000'
-                 });
-                 hasChanges = true;
-                 
-                 // Visual flare event
-                 if (isLocal) {
-                    window.dispatchEvent(new CustomEvent('particle-burst', { 
-                        detail: { position: obj.position, color: '#ff00ff' } 
-                    }));
-                 }
-             }
+        // Sentry fire control. Early on a sentry gets a single shot; deeper in
+        // the run it walks up firing a volley, which is where the late-game
+        // pressure actually comes from.
+        if (obj.type === ObjectType.ALIEN && obj.active) {
+            const shots = obj.shots ?? 0;
+            if (shots < sentryShots) {
+                const firingZ = SENTRY_FIRING_Z + shots * SENTRY_SHOT_INTERVAL;
+                if (obj.position[2] > firingZ) {
+                    obj.shots = shots + 1;
+
+                    newSpawns.push({
+                        id: uuidv4(),
+                        type: ObjectType.MISSILE,
+                        position: [obj.position[0], 1.0, obj.position[2] + 2],
+                        active: true,
+                        color: '#E2742B',
+                        shots: 0,
+                    });
+                    hasChanges = true;
+
+                    if (isLocal) {
+                        window.dispatchEvent(new CustomEvent('particle-burst', {
+                            detail: { position: obj.position, color: '#C46A2F' },
+                        }));
+                    }
+                }
+            }
         }
 
         let keep = true;
@@ -366,40 +744,8 @@ export const LevelManager: React.FC<{ trackOffset?: number, playerId?: string }>
             // INCREASED THRESHOLD from 1.0 to 2.0 to prevent missile tunneling at low FPS/High Speed
             const zThreshold = 2.0; 
             const inZZone = (prevZ < playerPos.z + zThreshold) && (obj.position[2] > playerPos.z - zThreshold);
-            
-            // END PORTAL COLLISION
-            if (obj.type === ObjectType.END_PORTAL) {
-                const dz = Math.abs(obj.position[2] - playerPos.z);
-                if (dz < 2) { 
-                    if (isLocal) {
-                        if (status === GameStatus.ONLINE) {
-                             useStore.getState().updateOnlinePlayer(playerId, { is_finished: true });
-                             const state = useStore.getState();
-                             const aliveOpponents = state.onlinePlayers.filter(p => !p.is_dead && p.user_id !== playerId);
-                             const someoneFinished = aliveOpponents.some(p => p.is_finished);
-                             if (!someoneFinished) {
-                                 state.setStatus(GameStatus.VICTORY);
-                             } else {
-                                 state.setStatus(GameStatus.GAME_OVER);
-                             }
-                        } else {
-                             completeLevel();
-                        }
-                    }
-                    obj.active = false;
-                    hasChanges = true;
-                    keep = false; 
-                }
-            } else if (obj.type === ObjectType.SHOP_PORTAL) {
-                // Strict proximity check for portal since it's large
-                const dz = Math.abs(obj.position[2] - playerPos.z);
-                if (dz < 2) { 
-                     if (isLocal) openShop();
-                     obj.active = false;
-                     hasChanges = true;
-                     keep = false; 
-                }
-            } else if (inZZone) {
+
+            if (inZZone) {
                 // STANDARD COLLISION
                 const dx = Math.abs(obj.position[0] - playerPos.x);
                 if (dx < 0.9) { // Slightly increased horizontal forgiveness
@@ -435,7 +781,7 @@ export const LevelManager: React.FC<{ trackOffset?: number, playerId?: string }>
                              // Visual burst for missile impact
                              if (obj.type === ObjectType.MISSILE && isLocal) {
                                 window.dispatchEvent(new CustomEvent('particle-burst', { 
-                                    detail: { position: obj.position, color: '#ff4400' } 
+                                    detail: { position: obj.position, color: '#FFB870' } 
                                 }));
                              }
                          }
@@ -479,191 +825,156 @@ export const LevelManager: React.FC<{ trackOffset?: number, playerId?: string }>
         }
 
         if (keep) {
-            keptObjects.push(obj);
+            scratch.push(obj);
         }
     }
 
     // Add any newly spawned entities (Missiles)
     if (newSpawns.length > 0) {
-        keptObjects.push(...newSpawns);
+        scratch.push(...newSpawns);
     }
 
     // 2. Spawning Logic
     let furthestZ = 0;
     // Only consider static obstacles/gems for gap calculation, not missiles or moving aliens
-    const staticObjects = keptObjects.filter(o => o.type !== ObjectType.MISSILE);
-    
+    const staticObjects = scratch.filter(o => o.type !== ObjectType.MISSILE);
+
     if (staticObjects.length > 0) {
         furthestZ = Math.min(...staticObjects.map(o => o.position[2]));
     } else {
         furthestZ = -20;
     }
 
-    if (furthestZ > -SPAWN_DISTANCE) {
-         // Cap speed effect on gap so it doesn't get too sparse, but reduce gap based on level
-         const minGap = Math.max(6, 10 + (speed * 0.2) - (level * 0.2)); // Tighter gaps for medium start
-         const spawnZ = Math.min(furthestZ - minGap, -SPAWN_DISTANCE);
-         
-         if (distanceTraveled.current >= targetDistance && !endPortalSpawned.current) {
-             keptObjects.push({
-                 id: uuidv4(),
-                 type: ObjectType.END_PORTAL,
-                 position: [0, 0, spawnZ - 20], 
-                 active: true,
-             });
-             endPortalSpawned.current = true;
-             hasChanges = true;
-         } else if (distanceTraveled.current < targetDistance) {
-             const isLetterDue = status !== GameStatus.ONLINE && distanceTraveled.current >= nextLetterDistance.current;
+    const minGap = getMinGap(speed, intensity);
+    const stackGap = getStackGap(speed);
+    const stackRows = getStackRows(intensity);
+    // A slot lays down up to `stackRows + 1` rows, each a jump apart further
+    // out. The spawn horizon has to cover that whole stack, otherwise the far
+    // rows push `furthestZ` past the horizon and spawning silently stops for
+    // the rest of the run.
+    const spawnHorizon = SPAWN_DISTANCE + stackRows * stackGap;
 
-             if (isLetterDue) {
-                 const lane = getRandomLane(laneCount);
-                 const target = getTargetWord(level);
+    if (furthestZ > -spawnHorizon) {
+        const spawnZ = Math.min(furthestZ - minGap, -SPAWN_DISTANCE);
 
-                 const availableIndices = target.map((_, i) => i).filter(i => !collectedLetters.includes(i));
+        const isLetterDue = status !== GameStatus.ONLINE
+          && distanceTraveled.current >= nextLetterDistance.current;
 
-                 if (availableIndices.length > 0) {
-                     const chosenIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
-                     const val = target[chosenIndex];
-                     const color = GEMINI_COLORS[chosenIndex % GEMINI_COLORS.length];
+        if (isLetterDue) {
+            // The word pickup takes the slot to itself — it is the one row the
+            // player is actively hunting, so nothing competes with it.
+            const safeLane = stepCorridor(pattern.current, laneCount);
+            const target = getTargetWord(level);
+            const availableIndices = target
+              .map((_, i) => i)
+              .filter(i => !collectedLetters.includes(i));
 
-                     keptObjects.push({
-                        id: uuidv4(),
-                        type: ObjectType.LETTER,
-                        position: [lane * LANE_WIDTH, 1.0, spawnZ], 
-                        active: true,
-                        color: color,
-                        value: val,
-                        targetIndex: chosenIndex
-                     });
-                     
-                     nextLetterDistance.current += (targetDistance / 8);
-                     hasChanges = true;
-                 } else {
-                    // Fallback to gem if all letters collected for this level
-                    keptObjects.push({
-                        id: uuidv4(),
-                        type: ObjectType.GEM,
-                        position: [trackOffset + lane * LANE_WIDTH, 1.2, spawnZ],
-                        active: true,
-                        color: '#00ffff',
-                        points: 50
-                    });
-                    hasChanges = true;
-                 }
-
-             } else if (Math.random() > 0.1) { // 90% chance to attempt spawn if gap exists
-            
-            // Increased obstacle probability from 0.35 up to a max of 0.85
-            const obstacleProb = Math.min(0.85, 0.35 + (level * 0.02));
-            const isObstacle = Math.random() < obstacleProb;
-
-            if (isObstacle) {
-                // Decide between Alien (Level 1+) or Spikes
-                const alienProb = Math.min(0.50, 0.15 + (level * 0.02));
-                const spawnAlien = level >= 1 && Math.random() < alienProb;
-
-                if (spawnAlien) {
-                    // Multi-Lane Alien Logic
-                    const availableLanes = [];
-                    const maxLane = Math.floor(laneCount / 2);
-                    for (let i = -maxLane; i <= maxLane; i++) availableLanes.push(i);
-                    availableLanes.sort(() => Math.random() - 0.5);
-
-                    // Determine how many aliens to spawn (1 to 3, based on probability)
-                    let alienCount = 1;
-                    const pAlien = Math.random();
-                    
-                    if (pAlien > 0.7) {
-                        // 30% chance for 2 aliens
-                        alienCount = Math.min(2, availableLanes.length);
-                    }
-                    // 10% chance for 3 aliens if there's enough space (and random allows)
-                    if (pAlien > 0.9 && availableLanes.length >= 3) {
-                        alienCount = 3;
-                    }
-
-                    for (let k = 0; k < alienCount; k++) {
-                        const lane = availableLanes[k];
-                        keptObjects.push({
-                            id: uuidv4(),
-                            type: ObjectType.ALIEN,
-                            position: [trackOffset + lane * LANE_WIDTH, 1.5, spawnZ],
-                            active: true,
-                            color: '#00ff00',
-                            hasFired: false
-                        });
-                    }
-                } else {
-                    // Standard Obstacle Spawning
-                    const availableLanes = [];
-                    const maxLane = Math.floor(laneCount / 2);
-                    for (let i = -maxLane; i <= maxLane; i++) availableLanes.push(i);
-                    availableLanes.sort(() => Math.random() - 0.5);
-                    
-                    let countToSpawn = 1;
-                    const p = Math.random();
-
-                    // Increased difficulty probabilities
-                    const tripleProb = Math.min(0.50, 0.10 + (level * 0.02));
-                    const doubleProb = Math.min(0.80, 0.30 + (level * 0.03));
-
-                    if (p < tripleProb) {
-                        // Triple Spike
-                        countToSpawn = Math.min(3, availableLanes.length);
-                    } else if (p < doubleProb) {
-                        // Double Spike
-                        countToSpawn = Math.min(2, availableLanes.length);
-                    } else {
-                        // Single Spike
-                        countToSpawn = 1;
-                    }
-
-                    for (let i = 0; i < countToSpawn; i++) {
-                        const lane = availableLanes[i];
-                        const laneX = lane * LANE_WIDTH;
-                        
-                        keptObjects.push({
-                            id: uuidv4(),
-                            type: ObjectType.OBSTACLE,
-                            position: [trackOffset + laneX, OBSTACLE_HEIGHT / 2, spawnZ],
-                            active: true,
-                            color: '#ff0054'
-                        });
-
-                        // Chance for gem on top of obstacle
-                        if (Math.random() < 0.3) {
-                             keptObjects.push({
-                                id: uuidv4(),
-                                type: ObjectType.GEM,
-                                position: [trackOffset + laneX, OBSTACLE_HEIGHT + 1.0, spawnZ],
-                                active: true,
-                                color: '#ffd700',
-                                points: 100
-                            });
-                        }
-                    }
-                }
-
-            } else {
-                // GROUND GEM SPAWNING
-                const lane = getRandomLane(laneCount);
-                keptObjects.push({
+            if (availableIndices.length > 0) {
+                const chosenIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+                scratch.push({
                     id: uuidv4(),
-                    type: ObjectType.GEM,
-                    position: [trackOffset + lane * LANE_WIDTH, 1.2, spawnZ],
+                    type: ObjectType.LETTER,
+                    position: [safeLane * LANE_WIDTH, 1.0, spawnZ],
                     active: true,
-                    color: '#00ffff',
-                    points: 50
+                    color: GEMINI_COLORS[chosenIndex % GEMINI_COLORS.length],
+                    value: target[chosenIndex],
+                    targetIndex: chosenIndex,
+                });
+                nextLetterDistance.current += getLetterSpacing(intensity);
+            } else {
+                // Word already complete this tier — pay out with gems instead.
+                forEachLane(laneCount, (lane) => {
+                    if (lane === safeLane) return;
+                    scratch.push(gem(trackOffset + lane * LANE_WIDTH, 1.2, spawnZ, '#F0DDAE', 50));
                 });
             }
             hasChanges = true;
-         }
-       }
+        } else {
+
+        // ------------------------------------------------------------------
+        //  PATTERN ROW
+        //
+        //  Solvability contract — every row below obeys all four:
+        //
+        //   1. One lane is always left completely clear (the "corridor").
+        //   2. The corridor only ever moves by one lane between rows, so the
+        //      player can walk it by weaving, never by a teleport.
+        //   3. Rows inside a stack are a full jump arc apart, so a jump
+        //      always lands before the next wall.
+        //   4. Blocks and sentries only ever occupy non-corridor lanes.
+        //
+        //  Density contract — the road is never empty either: every lane the
+        //  row does not block gets a gem, and blocked lanes sometimes carry
+        //  one on top.
+        // ------------------------------------------------------------------
+        const maxLane = Math.floor(laneCount / 2);
+        const wallBudget = Math.min(
+            laneCount - 1,           // rule 1: never seal the whole track
+            1 + Math.floor(Math.random() * getWallSize(intensity)),
+        );
+        const sentryP = getAlienChance(intensity);
+
+        for (let row = 0; row <= stackRows; row++) {
+            const rowZ = spawnZ - row * stackGap;
+
+            // rule 2 — wander the corridor by at most one lane per row.
+            const safeLane = stepCorridor(pattern.current, laneCount);
+
+            const closed: number[] = [];
+            for (let l = -maxLane; l <= maxLane; l++) if (l !== safeLane) closed.push(l);
+            shuffleInPlace(closed);
+
+            const blockedThisRow = closed.slice(0, wallBudget);
+
+            for (const lane of blockedThisRow) {
+                if (Math.random() < sentryP) {
+                    scratch.push({
+                        id: uuidv4(),
+                        type: ObjectType.ALIEN,
+                        position: [trackOffset + lane * LANE_WIDTH, 1.5, rowZ],
+                        active: true,
+                        color: '#C46A2F',
+                        shots: 0,
+                    });
+                } else {
+                    scratch.push({
+                        id: uuidv4(),
+                        type: ObjectType.OBSTACLE,
+                        position: [trackOffset + lane * LANE_WIDTH, OBSTACLE_HEIGHT / 2, rowZ],
+                        active: true,
+                        color: '#E2742B',
+                    });
+
+                    // A gem perched on the block: tempting, but optional, so it
+                    // never forces a jump the corridor did not already allow.
+                    if (Math.random() < 0.34) {
+                        scratch.push(gem(trackOffset + lane * LANE_WIDTH, OBSTACLE_HEIGHT + 1.0, rowZ, '#FFF3D6', 100));
+                    }
+                }
+            }
+
+            // Every lane this row leaves open is a reward lane.
+            for (const lane of closed.slice(blockedThisRow.length)) {
+                scratch.push(gem(trackOffset + lane * LANE_WIDTH, 1.2, rowZ, '#F0DDAE', 50));
+            }
+        }
+
+        hasChanges = true;
+        }
     }
 
-    if (hasChanges) {
-        objectsRef.current = keptObjects;
+    // Hard cap on live entities. `live` is built in spawn order, oldest
+    // first, and the oldest objects are the ones nearest the player - so the
+    // budget is spent on the front of the queue and the surplus is dropped
+    // from the far tail, which the spawner then refills. Trimming the wrong
+    // end would delete the obstacles the player is about to hit.
+    const keep = Math.min(scratch.length, MAX_LIVE_OBJECTS);
+    const live = liveRef.current;
+    live.length = 0;
+    for (let i = 0; i < keep; i++) live.push(scratch[i]);
+
+    objectsRef.current = live;
+    if (hasChanges || live.length !== currentObjects.length) {
         setRenderTrigger(t => t + 1);
     }
   });
@@ -695,9 +1006,7 @@ const GameEntity: React.FC<{ data: GameObject }> = React.memo(({ data }) => {
         if (visualRef.current) {
             const baseHeight = data.position[1];
             
-            if (data.type === ObjectType.SHOP_PORTAL) {
-                 visualRef.current.scale.setScalar(1 + Math.sin(state.clock.elapsedTime * 2) * 0.02);
-            } else if (data.type === ObjectType.MISSILE) {
+            if (data.type === ObjectType.MISSILE) {
                  // Missile rotation
                  visualRef.current.rotation.z += delta * 20; // Fast spin
                  visualRef.current.position.y = baseHeight;
@@ -725,163 +1034,80 @@ const GameEntity: React.FC<{ data: GameObject }> = React.memo(({ data }) => {
     const shadowGeo = useMemo(() => {
         if (data.type === ObjectType.LETTER) return SHADOW_LETTER_GEO;
         if (data.type === ObjectType.GEM) return SHADOW_GEM_GEO;
-        if (data.type === ObjectType.SHOP_PORTAL) return null; // No shadow needed or custom handled
         if (data.type === ObjectType.ALIEN) return SHADOW_ALIEN_GEO;
         if (data.type === ObjectType.MISSILE) return SHADOW_MISSILE_GEO;
         return SHADOW_DEFAULT_GEO; 
     }, [data.type]);
 
+    // Pooled materials - resolved once per entity, reused through the cache.
+    const tone = data.color || '#C9A24B';
+    const obstacleBodyMaterial = getObstacleBodyMaterial();
+    const obstacleEdgeMaterial = getObstacleEdgeMaterial(tone);
+    const obstacleRingMaterial = getObstacleRingMaterial(tone);
+    const alienBodyMaterial = getAlienBodyMaterial();
+    const alienDomeMaterial = getAlienDomeMaterial();
+    const alienEyeMaterial = getFlatMaterial('alien-eye', '#FFD9A8', 1);
+    const missileCoreMaterial = getMissileCoreMaterial();
+    const missileHeadMaterial = getMissileHeadMaterial();
+    const missileRingMaterial = getFlatMaterial('missile-ring', '#FFD9A8', 1);
+    const shadowMaterial = getShadowMaterial();
+
+    const letterMaterial = data.type === ObjectType.LETTER && data.value
+      ? getLetterMaterial(data.value, tone)
+      : null;
+    const gemMaterial = data.type === ObjectType.GEM ? getGemMaterial(tone) : null;
+
     return (
         <group ref={groupRef} position={[data.position[0], 0, data.position[2]]}>
-            {data.type !== ObjectType.SHOP_PORTAL && shadowGeo && (
-                <mesh ref={shadowRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]} geometry={shadowGeo}>
-                    <meshBasicMaterial color="#000000" opacity={0.3} transparent />
-                </mesh>
+            {shadowGeo && (
+                <mesh ref={shadowRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]} geometry={shadowGeo} material={shadowMaterial} />
             )}
 
             <group ref={visualRef} position={[0, data.position[1], 0]}>
-                {/* --- SHOP PORTAL --- */}
-                {data.type === ObjectType.SHOP_PORTAL && (
-                    <group>
-                         <mesh position={[0, 3, 0]} geometry={SHOP_FRAME_GEO} scale={[laneCount * LANE_WIDTH + 2, 1, 1]}>
-                             <meshStandardMaterial color="#111111" metalness={0.8} roughness={0.2} />
-                         </mesh>
-                         <mesh position={[0, 2, 0]} geometry={SHOP_BACK_GEO} scale={[laneCount * LANE_WIDTH, 1, 1]}>
-                              <meshBasicMaterial color="#000000" />
-                         </mesh>
-                         <mesh position={[0, 3, 0]} geometry={SHOP_OUTLINE_GEO} scale={[laneCount * LANE_WIDTH + 2.2, 1, 1]}>
-                             <meshBasicMaterial color="#00ffff" wireframe transparent opacity={0.3} />
-                         </mesh>
-                         <Center position={[0, 5, 0.6]}>
-                             <Text3D font={FONT_URL} size={1.2} height={0.2}>
-                                 CYBER SHOP
-                                 <meshBasicMaterial color="#ffff00" />
-                             </Text3D>
-                         </Center>
-                         <mesh position={[0, 0.1, 0]} rotation={[-Math.PI/2, 0, 0]} geometry={SHOP_FLOOR_GEO} scale={[laneCount * LANE_WIDTH, 1, 1]}>
-                             <meshBasicMaterial color="#00ffff" transparent opacity={0.3} />
-                         </mesh>
-                    </group>
-                )}
-
-                {/* --- END PORTAL --- */}
-                {data.type === ObjectType.END_PORTAL && (
-                    <group>
-                        <mesh position={[-(laneCount * LANE_WIDTH) / 2 - 1, 6, 0]} geometry={PORTAL_PILLAR_GEO}>
-                            <meshStandardMaterial color="#111" metalness={0.9} roughness={0.1} />
-                        </mesh>
-                        <mesh position={[(laneCount * LANE_WIDTH) / 2 + 1, 6, 0]} geometry={PORTAL_PILLAR_GEO}>
-                            <meshStandardMaterial color="#111" metalness={0.9} roughness={0.1} />
-                        </mesh>
-                        <mesh position={[0, 6, 0]} scale={[laneCount * LANE_WIDTH + 2, 12, 1]} geometry={PORTAL_GATE_GEO}>
-                            <meshBasicMaterial color="#00ffff" transparent opacity={0.5} side={THREE.DoubleSide} />
-                        </mesh>
-                        <Center position={[0, 10, 1]}>
-                            <Text3D font={FONT_URL} size={1.5} height={0.2}>
-                                SECTOR CLEAR
-                                <meshStandardMaterial color="#ffffff" emissive="#00ffff" emissiveIntensity={2} />
-                            </Text3D>
-                        </Center>
-                    </group>
-                )}
-
                 {/* --- OBSTACLE --- */}
                 {data.type === ObjectType.OBSTACLE && (
                     <group>
-                        <mesh geometry={OBSTACLE_GEOMETRY} castShadow receiveShadow>
-                             <meshStandardMaterial 
-                                 color="#330011"
-                                 roughness={0.3} 
-                                 metalness={0.8} 
-                                 flatShading={true}
-                             />
-                        </mesh>
-                        <mesh scale={[1.02, 1.02, 1.02]} geometry={OBSTACLE_GLOW_GEO}>
-                             <meshBasicMaterial 
-                                 color={data.color} 
-                                 wireframe 
-                                 transparent 
-                                 opacity={0.3} 
-                             />
-                        </mesh>
-                         <mesh position={[0, -OBSTACLE_HEIGHT/2 + 0.05, 0]} rotation={[-Math.PI/2,0,0]} geometry={OBSTACLE_RING_GEO}>
-                             <meshBasicMaterial color={data.color} transparent opacity={0.4} side={THREE.DoubleSide} />
-                         </mesh>
+                        <mesh geometry={OBSTACLE_GEOMETRY} castShadow receiveShadow material={obstacleBodyMaterial} />
+                        <mesh scale={[1.02, 1.02, 1.02]} geometry={OBSTACLE_GLOW_GEO} material={obstacleEdgeMaterial} />
+                         <mesh position={[0, -OBSTACLE_HEIGHT/2 + 0.05, 0]} rotation={[-Math.PI/2,0,0]} geometry={OBSTACLE_RING_GEO} material={obstacleRingMaterial} />
                     </group>
                 )}
 
-                {/* --- ALIEN (LEVEL 2+) --- */}
+                {/* --- ALIEN (hovering sentinel) --- */}
                 {data.type === ObjectType.ALIEN && (
                     <group>
                         {/* Saucer Body */}
-                        <mesh castShadow geometry={ALIEN_BODY_GEO}>
-                            <meshStandardMaterial color="#4400cc" metalness={0.8} roughness={0.2} />
-                        </mesh>
+                        <mesh castShadow geometry={ALIEN_BODY_GEO} material={alienBodyMaterial} />
                         {/* Dome */}
-                        <mesh position={[0, 0.2, 0]} geometry={ALIEN_DOME_GEO}>
-                            <meshStandardMaterial color="#00ff00" emissive="#00ff00" emissiveIntensity={0.5} transparent opacity={0.8} />
-                        </mesh>
+                        <mesh position={[0, 0.2, 0]} geometry={ALIEN_DOME_GEO} material={alienDomeMaterial} />
                         {/* Glowing Eyes/Lights */}
-                        <mesh position={[0.3, 0, 0.3]} geometry={ALIEN_EYE_GEO}>
-                             <meshBasicMaterial color="#ff00ff" />
-                        </mesh>
-                        <mesh position={[-0.3, 0, 0.3]} geometry={ALIEN_EYE_GEO}>
-                             <meshBasicMaterial color="#ff00ff" />
-                        </mesh>
+                        <mesh position={[0.3, 0, 0.3]} geometry={ALIEN_EYE_GEO} material={alienEyeMaterial} />
+                        <mesh position={[-0.3, 0, 0.3]} geometry={ALIEN_EYE_GEO} material={alienEyeMaterial} />
                     </group>
                 )}
 
-                {/* --- MISSILE (Long Laser) --- */}
+                {/* --- MISSILE (sentry shot) --- */}
                 {data.type === ObjectType.MISSILE && (
                     <group rotation={[Math.PI / 2, 0, 0]}>
-                        {/* Long glowing core: Oriented along Y (which is Z after rotation) */}
-                        <mesh geometry={MISSILE_CORE_GEO}>
-                            <meshStandardMaterial color="#ff0000" emissive="#ff0000" emissiveIntensity={4} />
-                        </mesh>
+                        {/* Core: oriented along local Y, which is Z after the rotation */}
+                        <mesh geometry={MISSILE_CORE_GEO} material={missileCoreMaterial} />
+                        {/* Bright head — local +Y is the end nearest the runner */}
+                        <mesh position={[0, 1.42, 0]} geometry={MISSILE_HEAD_GEO} material={missileHeadMaterial} />
                         {/* Energy Rings */}
-                        <mesh position={[0, 1.0, 0]} geometry={MISSILE_RING_GEO}>
-                            <meshBasicMaterial color="#ffff00" />
-                        </mesh>
-                        <mesh position={[0, 0, 0]} geometry={MISSILE_RING_GEO}>
-                            <meshBasicMaterial color="#ffff00" />
-                        </mesh>
-                        <mesh position={[0, -1.0, 0]} geometry={MISSILE_RING_GEO}>
-                            <meshBasicMaterial color="#ffff00" />
-                        </mesh>
+                        <mesh position={[0, 0.9, 0]} geometry={MISSILE_RING_GEO} material={missileRingMaterial} />
+                        <mesh position={[0, 0, 0]} geometry={MISSILE_RING_GEO} material={missileRingMaterial} />
+                        <mesh position={[0, -0.9, 0]} geometry={MISSILE_RING_GEO} material={missileRingMaterial} />
                     </group>
                 )}
 
                 {/* --- GEM --- */}
-                {data.type === ObjectType.GEM && (
-                    <mesh castShadow geometry={GEM_GEOMETRY}>
-                        <meshStandardMaterial 
-                            color={data.color} 
-                            roughness={0} 
-                            metalness={1} 
-                            emissive={data.color} 
-                            emissiveIntensity={2} 
-                        />
-                    </mesh>
+                {gemMaterial && (
+                    <mesh castShadow geometry={GEM_GEOMETRY} material={gemMaterial} />
                 )}
 
-                {/* --- LETTER --- */}
-                {data.type === ObjectType.LETTER && (
-                    <group scale={[1.5, 1.5, 1.5]}>
-                         <Center>
-                             <Text3D 
-                                font={FONT_URL} 
-                                size={0.8} 
-                                height={0.5} 
-                                bevelEnabled
-                                bevelThickness={0.02}
-                                bevelSize={0.02}
-                                bevelSegments={5}
-                             >
-                                {data.value}
-                                <meshStandardMaterial color={data.color} emissive={data.color} emissiveIntensity={1.5} />
-                             </Text3D>
-                         </Center>
-                    </group>
+                {/* --- LETTER (canvas glyph — no network font) --- */}
+                {letterMaterial && (
+                    <mesh geometry={LETTER_PLANE_GEO} material={letterMaterial} rotation={[0, 0, -0.06]} />
                 )}
             </group>
         </group>

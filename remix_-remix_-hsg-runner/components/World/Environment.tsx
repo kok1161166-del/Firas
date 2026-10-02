@@ -95,23 +95,30 @@ const LaneGuides: React.FC<{ theme: any }> = ({ theme }) => {
     const { laneCount, onlinePlayers, status } = useStore();
     
     const renderGuides = (trackOffset: number, keyPrefix: string) => {
-        const startX = -(laneCount * LANE_WIDTH) / 2;
+        // The separators must be derived from the *same* lane math the player
+        // uses, otherwise the runner ends up walking on the lines instead of
+        // between them. Player.tsx clamps the lane to +-floor(laneCount / 2),
+        // so the drawable slots are exactly 2 * half + 1 and each separator
+        // sits half a lane outside the outermost slot centre.
+        const halfLanes = Math.floor(laneCount / 2);
+        const slots = halfLanes * 2 + 1;
+        const trackWidth = slots * LANE_WIDTH;
         const lines: number[] = [];
-        for (let i = 0; i <= laneCount; i++) {
-            lines.push(startX + (i * LANE_WIDTH));
+        for (let i = -halfLanes - 1; i <= halfLanes; i++) {
+            lines.push((i + 0.5) * LANE_WIDTH);
         }
 
         return (
             <group key={keyPrefix} position={[trackOffset, 0.02, 0]}>
                 <mesh position={[0, -0.02, -20]} rotation={[-Math.PI / 2, 0, 0]}>
-                    <planeGeometry args={[laneCount * LANE_WIDTH, 200]} />
+                    <planeGeometry args={[trackWidth, 200]} />
                     <meshBasicMaterial color={theme.bg} transparent opacity={0.9} />
                 </mesh>
 
                 {lines.map((x, i) => (
                     <mesh key={`sep-${keyPrefix}-${i}`} position={[x, 0, -20]} rotation={[-Math.PI / 2, 0, 0]}>
                         <planeGeometry args={[0.05, 200]} /> 
-                        <meshBasicMaterial color={theme.dirLight} transparent opacity={0.4} />
+                        <meshBasicMaterial color={theme.dirLight} transparent opacity={0.55} />
                     </mesh>
                 ))}
             </group>
@@ -137,6 +144,8 @@ const RetroSun: React.FC<{ theme: any }> = ({ theme }) => {
             matRef.current.uniforms.uColorBottom.value.set(theme.sunBot);
         }
         if (sunGroupRef.current) {
+            // Slow, gentle drift — the citadel horizon is meant to feel like a
+            // still backdrop, not something that slides when you speed up.
             sunGroupRef.current.position.y = 30 + Math.sin(state.clock.elapsedTime * 0.2) * 1.0;
         }
     });
@@ -181,7 +190,6 @@ const RetroSun: React.FC<{ theme: any }> = ({ theme }) => {
         </group>
     );
 };
-
 const MovingGrid: React.FC<{ theme: any }> = ({ theme }) => {
     const meshRef = useRef<THREE.Mesh>(null);
     const offsetRef = useRef(0);
@@ -200,18 +208,18 @@ const MovingGrid: React.FC<{ theme: any }> = ({ theme }) => {
     return (
         <mesh ref={meshRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.2, -100]}>
             <planeGeometry args={[300, 400, 30, 40]} />
-            <meshBasicMaterial color={theme.grid} wireframe transparent opacity={0.15} />
+            <meshBasicMaterial color={theme.grid} wireframe transparent opacity={0.22} />
         </mesh>
     );
 };
 
 const THEMES: Record<number, any> = {
-  1: { bg: '#050011', fog: '#050011', grid: '#8800ff', sunTop: '#ffe600', sunBot: '#ff0077', ambient: '#400080', dirLight: '#00ffff', pointLight: '#ff00aa', stars: '#ffffff' },
-  2: { bg: '#2b0700', fog: '#2b0700', grid: '#ffaa00', sunTop: '#ffffff', sunBot: '#ff3300', ambient: '#802000', dirLight: '#ffcc00', pointLight: '#ff0000', stars: '#ffccaa' },
-  3: { bg: '#000b18', fog: '#000b18', grid: '#00ffff', sunTop: '#ff00ff', sunBot: '#00ffff', ambient: '#004080', dirLight: '#ff00ff', pointLight: '#00ffff', stars: '#ccffff' },
-  4: { bg: '#000000', fog: '#000000', grid: '#ffffff', sunTop: '#555555', sunBot: '#000000', ambient: '#222222', dirLight: '#ffffff', pointLight: '#aaaaaa', stars: '#ffffff' },
-  5: { bg: '#001a00', fog: '#001a00', grid: '#00ff00', sunTop: '#ccffcc', sunBot: '#006600', ambient: '#004000', dirLight: '#00ff00', pointLight: '#00ff66', stars: '#ccffcc' },
-  6: { bg: '#1a0000', fog: '#1a0000', grid: '#ff0000', sunTop: '#ff9900', sunBot: '#660000', ambient: '#400000', dirLight: '#ff0000', pointLight: '#ff3300', stars: '#ffcccc' }
+  1: { bg: '#0B0906', fog: '#0B0906', grid: '#C9A24B', sunTop: '#FFF3D6', sunBot: '#8A6A3A', ambient: '#3a2a16', dirLight: '#F0DDAE', pointLight: '#C9A24B', stars: '#D9C08A' },
+  2: { bg: '#100C07', fog: '#100C07', grid: '#D9C08A', sunTop: '#FFF6DE', sunBot: '#A2521F', ambient: '#4a2f16', dirLight: '#E8D5A8', pointLight: '#C9A24B', stars: '#F0DDAE' },
+  3: { bg: '#0B0906', fog: '#0B0906', grid: '#E8D5A8', sunTop: '#FFFFFF', sunBot: '#C9A24B', ambient: '#3a2a16', dirLight: '#FFF3D6', pointLight: '#D9C08A', stars: '#FFF3D6' },
+  4: { bg: '#050403', fog: '#050403', grid: '#8A6A3A', sunTop: '#F0DDAE', sunBot: '#2A2012', ambient: '#1C140A', dirLight: '#C9A24B', pointLight: '#8A6A3A', stars: '#C9A24B' },
+  5: { bg: '#0B0906', fog: '#0B0906', grid: '#53FC18', sunTop: '#D9C08A', sunBot: '#1b3a12', ambient: '#1a3312', dirLight: '#C9A24B', pointLight: '#53FC18', stars: '#D9C08A' },
+  6: { bg: '#0B0906', fog: '#0B0906', grid: '#C46A2F', sunTop: '#FFD9A8', sunBot: '#4A2210', ambient: '#4a2210', dirLight: '#F0DDAE', pointLight: '#E8A05A', stars: '#FFD9A8' }
 };
 
 export const Environment: React.FC = () => {
@@ -221,9 +229,12 @@ export const Environment: React.FC = () => {
   return (
     <>
       <color attach="background" args={[theme.bg]} />
+      {/* Fixed depth cue. An earlier version tied the fog distance to speed,
+          which read as the whole backdrop sliding once the run got quick —
+          the horizon is meant to stay put and let the grid do the moving. */}
       <fog attach="fog" args={[theme.fog, 40, 160]} />
       
-      <ambientLight intensity={0.2} color={theme.ambient} />
+      <ambientLight intensity={0.35} color={theme.ambient} />
       <directionalLight position={[0, 20, -10]} intensity={1.5} color={theme.dirLight} />
       <pointLight position={[0, 25, -150]} intensity={2} color={theme.pointLight} distance={200} decay={2} />
       

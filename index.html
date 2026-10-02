@@ -193,8 +193,9 @@
       filter: saturate(1.05) contrast(1.04);
     }
     @media (min-width: 768px) {
-      .fortress_bg { background-image: url('/bg-fortress.jpg'); background-attachment: fixed; background-position: center 12%; }
+      .fortress_bg { background-image: url('/bg-fortress.jpg'); background-attachment: scroll; background-position: center 12%; }
     }
+    section[id] { content-visibility: auto; contain-intrinsic-size: auto 600px; }
     .fortress_overlay {
       background:
         linear-gradient(to bottom, rgba(11,9,6,0.42) 0%, rgba(11,9,6,0.18) 22%, rgba(11,9,6,0.34) 48%, rgba(11,9,6,0.82) 78%, rgba(11,9,6,0.94) 100%),
@@ -236,16 +237,16 @@
     .text-stroke-red { -webkit-text-stroke: 1.5px rgba(201,162,75,0.65); color: transparent; }
     @media (min-width: 768px) { .text-stroke, .text-stroke-red { -webkit-text-stroke-width: 2px; } }
 
-    .glass { background: linear-gradient(180deg, rgba(20,14,7,0.82), rgba(10,7,4,0.86)); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
-    .glass-soft { background: rgba(255,255,255,0.04); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+    .glass { background: linear-gradient(180deg, rgba(20,14,7,0.88), rgba(10,7,4,0.9)); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+    .glass-soft { background: rgba(255,255,255,0.04); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 
     /* New citadel panel: hairline gold border + top inner highlight + deep body */
     .citadel-frame {
       position: relative;
-      background: linear-gradient(180deg, rgba(26,19,10,0.88), rgba(9,6,3,0.9));
+      background: linear-gradient(180deg, rgba(26,19,10,0.92), rgba(9,6,3,0.94));
       border: 1px solid rgba(201,162,75,0.22);
-      box-shadow: 0 30px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(217,192,138,0.18);
-      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(217,192,138,0.14);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     }
     .citadel-frame::before {
       content: ""; position: absolute; top: 0; left: 8%; right: 8%; height: 1px;
@@ -266,8 +267,12 @@
       letter-spacing: 0.04em; user-select: none;
     }
 
-    .reveal { opacity: 0; transform: translateY(28px); filter: blur(8px); transition: opacity 1.15s cubic-bezier(0.16,1,0.3,1), transform 1.15s cubic-bezier(0.16,1,0.3,1), filter 1.15s cubic-bezier(0.16,1,0.3,1); will-change: opacity, transform, filter; }
-    .reveal.is-visible { opacity: 1; transform: translateY(0); filter: blur(0); }
+    .reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); will-change: opacity, transform; }
+    .reveal.is-visible { opacity: 1; transform: translateY(0); }
+    @media (max-width: 768px) {
+      .card-sheen::before { animation: none; display: none; }
+      .beam { display: none; }
+    }
     /* عناصر الدخول المتدرج: إخفاء مسبق حتى لا تومض قبل بدء الأنيميشن مع animation-delay */
     .animate-fade-in-up, .animate-fade-in, .animate-slide-down { opacity: 0; animation-fill-mode: both !important; }
     @media (prefers-reduced-motion: reduce) {

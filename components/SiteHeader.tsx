@@ -9,10 +9,10 @@ interface SiteHeaderProps {
     isLive: boolean;
     viewers: number;
     statusText: string;
-    onRefresh: () => void;
+    onOpenSearch: () => void;
 }
 
-const NAV_DEFS = [
+export const NAV_DEFS = [
     {
         href: '#top', id: 'top', ar: 'الرئيسية', en: 'Home',
         icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V20h5v-6h4v6h5V9.5" /></svg>,
@@ -54,9 +54,8 @@ const ArrowIcon = () => (
 );
 
 export const SiteHeader: React.FC<SiteHeaderProps> = ({
-    lang, onToggleLang, profileImage, headerTitle, isLive, viewers, statusText, onRefresh,
+    lang, onToggleLang, isLive, viewers, statusText, onOpenSearch,
 }) => {
-    const [open, setOpen] = useState(false);
     const [compact, setCompact] = useState(false);
     const [hash, setHash] = useState('');
     const [spacerH, setSpacerH] = useState(0);
@@ -75,9 +74,8 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
     useEffect(() => {
         const el = headerRef.current;
         if (!el) return;
-        // Spacer mirrors the CLOSED header height only — the open mobile
-        // menu overlays content instead of pushing it down.
-        const measure = () => { if (!open) setSpacerH(el.offsetHeight); };
+        // Spacer mirrors the header height so content never hides under it.
+        const measure = () => setSpacerH(el.offsetHeight);
         measure();
         if (typeof ResizeObserver === 'undefined') {
             window.addEventListener('resize', measure);
@@ -86,7 +84,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
         const ro = new ResizeObserver(measure);
         ro.observe(el);
         return () => ro.disconnect();
-    }, [open ]);
+    }, []);
 
     useEffect(() => {
         const read = () => setHash(window.location.hash);
@@ -106,13 +104,6 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
         return () => observer.disconnect();
     }, [isLive]);
 
-    useEffect(() => {
-        if (!open) return;
-        const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setOpen(false); };
-        document.addEventListener('keydown', onKey);
-        return () => document.removeEventListener('keydown', onKey);
-    }, [open]);
-
     // Smart targets: live theater only exists while streaming — fall back to the
     // last-session report (archive), then the clips grid. Archive falls back
     // to the clips grid when the last-session section isn't rendered (live).
@@ -131,7 +122,6 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
     };
 
     const goTo = (id: string) => {
-        setOpen(false);
         const target = resolveTarget(id);
         if (target) {
             target.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -162,12 +152,6 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                 radial-gradient(500px 130px at 50% 0%,rgba(217,180,94,.14),transparent 75%);
                 mask-image:linear-gradient(to bottom,#000 0%,#000 65%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 65%,transparent 100%)}
             .forge-wrap{position:relative;width:min(1420px,100%);margin:0 auto}
-            .forge-topline{height:22px;display:flex;align-items:center;justify-content:space-between;padding:2px 14px 0;margin-bottom:6px;
-                color:rgba(247,228,168,.55);font-size:8px;font-weight:800;letter-spacing:.32em;text-transform:uppercase;
-                transition:opacity .3s ease,height .3s ease,margin .3s ease,padding .3s ease;overflow:hidden;white-space:nowrap}
-            .forge-header.forge-compact .forge-topline{opacity:0;height:0;margin:0;padding-top:0;padding-bottom:0}
-            .forge-topline-right{display:flex;align-items:center;gap:8px}
-            .forge-top-dot{width:5px;height:5px;border-radius:50%;background:var(--forge-gold);box-shadow:0 0 12px var(--forge-gold)}
             .forge-main{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:14px;min-height:78px;
                 padding:12px 12px;padding-inline-start:5px;padding-inline-end:5px;border:1px solid rgba(217,180,94,.52);border-radius:24px 24px 16px 16px;
                 background-image:linear-gradient(90deg,rgba(6,5,3,.96),rgba(20,14,7,.7) 45%,rgba(6,5,3,.96)),url('/bg-fortress.jpg');
@@ -216,7 +200,6 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             .forge-crest-mark.on{background:#53FC18;box-shadow:0 0 10px #53FC18}
             .forge-brand-copy{display:flex;flex-direction:column;line-height:.9;text-align:left}
             .forge-brand-copy strong{font-size:24px;font-weight:950;letter-spacing:.16em;color:#FFF8E5;text-shadow:0 2px 18px rgba(217,180,94,.35);white-space:nowrap}
-            .forge-brand-copy small{margin-top:7px;color:var(--forge-gold);font-size:6.5px;font-weight:950;letter-spacing:.34em;white-space:nowrap}
             .forge-right{position:relative;z-index:1;display:flex;align-items:center;justify-content:flex-start;gap:13px;min-width:0;grid-column:2;grid-row:1;padding-inline-start:4px;direction:rtl}
             .forge-nav{display:flex;align-items:center;justify-content:flex-start;min-width:0;overflow-x:auto;scrollbar-width:none}
             .forge-nav::-webkit-scrollbar{display:none}
@@ -238,9 +221,6 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                 background:linear-gradient(135deg,#FFF0BF 0%,#E3BD64 50%,#A77A2A 100%);box-shadow:0 9px 24px -10px rgba(217,180,94,.95),inset 0 1px 0 rgba(255,255,255,.75);
                 font-size:11px;font-weight:950;text-decoration:none;white-space:nowrap;transition:transform .2s ease,filter .2s ease}
             .forge-live-cta:hover{filter:brightness(1.08);transform:translateY(-1px)}
-            .forge-bottom{display:flex;align-items:center;gap:12px;height:22px;padding:0 15px;color:rgba(247,228,168,.42);font-size:8px;font-weight:800;letter-spacing:.2em}
-            .forge-bottom-line{height:1px;flex:1;background:linear-gradient(90deg,rgba(217,180,94,.5),transparent)}
-            .forge-bottom-line.reverse{background:linear-gradient(270deg,rgba(217,180,94,.5),transparent)}
             .forge-menu{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .35s cubic-bezier(.16,1,.3,1),opacity .25s,margin .3s}
             .forge-menu.open{grid-template-rows:1fr;opacity:1;margin-top:9px}
             .forge-menu-inner{overflow:hidden}
@@ -261,8 +241,8 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             .forge-header a:focus-visible,.forge-header button:focus-visible{outline:2px solid #F7E4A8;outline-offset:3px}
             @media(max-width:1350px){.forge-link svg{display:none}.forge-link{padding-inline:6px}}
             @media(max-width:1180px){.forge-main{grid-template-columns:auto minmax(0,1fr) auto auto;gap:12px}.forge-link{padding-inline:5px;font-size:10.5px;gap:4px}.forge-live-cta{padding-inline:10px}.forge-brand{min-width:0;padding-inline-end:12px}.forge-brand-copy strong{font-size:20px}}
-            @media(max-width:940px){.forge-header{padding:14px 12px 0}.forge-header.forge-compact{padding-top:10px}.forge-topline{display:none}.forge-main{grid-template-columns:1fr auto 1fr;min-height:68px;padding:8px 9px;border-radius:19px;animation:none}.forge-fire-halo,.forge-ember{display:none}.forge-status{grid-column:1;grid-row:1;justify-self:start}.forge-status-copy,.forge-viewers,.forge-nav,.forge-live-cta{display:none}.forge-status-orb{width:38px;height:38px}.forge-brand{grid-column:2;grid-row:1;justify-self:center;min-width:0;padding:0;margin:0;border:none}.forge-brand-copy{display:none}.forge-brand-logo{width:39px;height:39px}.forge-right{display:none}.forge-actions{grid-column:3;grid-row:1;justify-self:end;gap:6px}.forge-bottom{height:17px;font-size:7px}}
-            @media(max-width:520px){.forge-header{padding-inline:8px;padding-top:12px}.forge-main{min-height:61px;padding:7px;border-radius:17px}.forge-brand-logo{width:35px;height:35px}.forge-status-orb{width:34px;height:34px}.forge-action{width:35px;height:35px;border-radius:10px}.forge-bottom{padding-inline:7px;letter-spacing:.12em}.forge-bottom span:not(.forge-bottom-line){white-space:nowrap;font-size:6px}}
+            @media(max-width:940px){.forge-header{padding:14px 12px 0}.forge-header.forge-compact{padding-top:10px}.forge-main{grid-template-columns:1fr auto 1fr;min-height:68px;padding:8px 9px;border-radius:19px;animation:none}.forge-fire-halo,.forge-ember{display:none}.forge-status{grid-column:1;grid-row:1;justify-self:start}.forge-status-copy,.forge-viewers,.forge-nav,.forge-live-cta{display:none}.forge-status-orb{width:38px;height:38px}.forge-brand{grid-column:2;grid-row:1;justify-self:center;min-width:0;padding:0;margin:0;border:none}.forge-brand-copy{display:none}.forge-brand-logo{width:39px;height:39px}.forge-right{display:none}.forge-actions{grid-column:3;grid-row:1;justify-self:end;gap:6px}}
+            @media(max-width:520px){.forge-header{padding-inline:8px;padding-top:12px}.forge-main{min-height:61px;padding:7px;border-radius:17px}.forge-brand-logo{width:35px;height:35px}.forge-status-orb{width:34px;height:34px}.forge-action{width:35px;height:35px;border-radius:10px}}
             @media(max-width:940px){section[id],#leaderboard{scroll-margin-top:140px}.forge-menu.open .forge-menu-inner{max-height:calc(100dvh - 140px)}}
             @media(prefers-reduced-motion:reduce){.forge-header,.forge-live-dot.on,.forge-main,.forge-main::after,.forge-fire-halo::before{animation:none}.forge-link,.forge-action,.forge-live-cta,.forge-brand-logo{transition:none}.forge-fire-halo,.forge-ember{display:none}}
             `}</style>
@@ -271,11 +251,6 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             <header ref={headerRef} className={`forge-header${compact ? ' forge-compact' : ''}`}>
                 <span className="forge-ambient" aria-hidden="true" />
                 <div className="forge-wrap">
-                    <div className="forge-topline" dir="ltr">
-                        <span>FIRAS / OFFICIAL STREAM HUB</span>
-                        <span className="forge-topline-right"><span className="forge-top-dot" /> RISE WITH FIRE</span>
-                    </div>
-
                     <div className="forge-main">
                         <span className="forge-fire-halo" aria-hidden="true" />
                         <span className="forge-ember e1" aria-hidden="true" />
@@ -285,7 +260,6 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                             <img className="forge-brand-logo" src="/firas-f.png" alt="" aria-hidden="true" />
                             <span className="forge-brand-copy">
                                 <strong>FIRAS</strong>
-                                <small>RISE WITH FIRE</small>
                             </span>
                         </a>
 
@@ -329,62 +303,9 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                                 <button type="button" className="forge-action" onClick={onToggleLang} aria-label={isAr ? 'Switch to English' : 'التبديل إلى العربية'} title={isAr ? 'English' : 'العربية'}>
                                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-6.4-3.8-9S9.5 5.6 12 3z" /></svg>
                                 </button>
-                                <button type="button" className="forge-action" onClick={() => setOpen((value) => !value)} aria-label={isAr ? 'فتح القائمة' : 'Open menu'} aria-expanded={open}>
-                                    {open ? (
-                                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
-                                    ) : (
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
-                                    )}
+                                <button type="button" className="forge-action" onClick={onOpenSearch} aria-label={isAr ? 'ابحث في المقاطع والبثوث' : 'Search clips and streams'} title={isAr ? 'بحث' : 'Search'}>
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.8-3.8" /></svg>
                                 </button>
-                        </div>
-                    </div>
-
-                    <div className="forge-bottom" dir="ltr">
-                        <span className="forge-bottom-line" />
-                        <span>THE FIRE NEVER FADES</span>
-                        <span className="forge-bottom-line reverse" />
-                    </div>
-
-                    <div className={`forge-menu${open ? ' open' : ''}`}>
-                        <div className="forge-menu-inner">
-                            <div className="forge-panel">
-                                <nav className="forge-panel-nav" aria-label="Mobile menu" dir={isAr ? 'rtl' : 'ltr'}>
-                                    <div className="forge-panel-head">
-                                        <img src={profileImage} alt="" loading="lazy" />
-                                        <span>
-                                            <b dir="ltr">FIRAS</b>
-                                            <small>{headerTitle}</small>
-                                            <em>{isLive ? `${statusText} • ${viewersLabel}` : statusText}</em>
-                                        </span>
-                                    </div>
-                                    {NAV_DEFS.map((item) => (
-                                        <a
-                                            key={item.href}
-                                            href={item.href}
-                                            onClick={() => goTo(item.id)}
-                                            aria-current={activeHash === item.href ? 'page' : undefined}
-                                            className={`forge-panel-link${activeHash === item.href ? ' active' : ''}`}
-                                        >
-                                            {item.icon}
-                                            <span>{isAr ? item.ar : item.en}</span>
-                                        </a>
-                                    ))}
-                                    <a href="https://kick.com/firas" target="_blank" rel="noopener noreferrer" className="forge-panel-link gold" onClick={() => setOpen(false)}>
-                                        <ArrowIcon />
-                                        <span>{isAr ? 'شاهد البث المباشر' : 'Watch live'}</span>
-                                    </a>
-                                    <div className="forge-panel-tools">
-                                        <button type="button" className="forge-panel-link" onClick={() => { onToggleLang(); setOpen(false); }}>
-                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-6.4-3.8-9S9.5 5.6 12 3z" /></svg>
-                                            <span>{isAr ? 'English' : 'العربية'}</span>
-                                        </button>
-                                        <button type="button" className="forge-panel-link" onClick={() => { onRefresh(); setOpen(false); }}>
-                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4v5h.6m15.3 2A8 8 0 0 0 4.6 9m0 0H9m11 11v-5h-.6a8 8 0 0 1-15.3-2m15.3 2H15" /></svg>
-                                            <span>{isAr ? 'تحديث' : 'Refresh'}</span>
-                                        </button>
-                                    </div>
-                                </nav>
-                            </div>
                         </div>
                     </div>
                 </div>

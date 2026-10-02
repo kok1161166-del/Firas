@@ -12,22 +12,16 @@ export const RunnerShowcase: React.FC<RunnerShowcaseProps> = ({ lang, no, onPlay
     const isAr = lang === 'ar';
     const t = {
         title: isAr ? 'فيراس رنر' : 'FIRAS RUNNER',
-        sub: isAr
-            ? 'لعبة القلعة الرسمية — اركض، اجمع الجواهر، واكسر الأرقام القياسية.'
-            : 'The official fortress game — run, grab gems, break records.',
         play: isAr ? 'العب الآن' : 'Play now',
         free: isAr ? 'بدون تسجيل — العب فوراً' : 'No sign-up — jump straight in',
         move: isAr ? 'الأسهم / السحب للحركة' : 'Arrows / swipe to move',
         jump: isAr ? 'مسافة / سحب لفوق للقفز' : 'Space / swipe up to jump',
-        features: isAr
-            ? ['عالم 3D نابض', 'مستويات لا نهائية', 'جواهر وقدرات خاصة', 'يعمل على الجوال والكمبيوتر']
-            : ['Vibrant 3D world', 'Endless levels', 'Gems & power-ups', 'Mobile & desktop ready'],
     };
 
     return (
         <section id="runner" className="pt-12 md:pt-16 scroll-mt-28">
             <Reveal>
-                <SectionHeading no={no} title={t.title} sub={t.sub} en="MINI GAME" />
+                <SectionHeading no={no} title={t.title} en="MINI GAME" />
             </Reveal>
             <Reveal delay={100}>
                 <div className="citadel-frame relative overflow-hidden rounded-[28px] md:rounded-[36px]">
@@ -45,10 +39,11 @@ export const RunnerShowcase: React.FC<RunnerShowcaseProps> = ({ lang, no, onPlay
                             aria-label={t.play}
                         >
                             <img
-                                src="/runner-preview.png"
+                                src="/runner-banner.png"
                                 alt="Firas Runner gameplay"
                                 loading="lazy"
                                 className="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105"
+                                onError={(e) => { const t = e.target as HTMLImageElement; if (!t.src.includes('runner-preview')) t.src = '/runner-preview.png'; }}
                             />
                             <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" aria-hidden="true" />
                             <span className="tech-corner tech-corner-tl" aria-hidden="true" />
@@ -81,28 +76,20 @@ export const RunnerShowcase: React.FC<RunnerShowcaseProps> = ({ lang, no, onPlay
                                     <span dir="ltr" className="hero-firas">FIRAS RUNNER</span>
                                 )}
                             </h3>
-                            <p className="text-white/60 text-[14px] md:text-[15px] leading-relaxed mt-3 font-medium">{t.sub}</p>
+                            <div className="mt-5 h-px w-full bg-gradient-to-l from-[#C9A24B]/60 via-white/10 to-transparent" aria-hidden="true" />
 
-                            <ul className="flex flex-wrap gap-2 mt-5">
-                                {t.features.map((f) => (
-                                    <li
-                                        key={f}
-                                        className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-[#C9A24B]/35 bg-black/50 backdrop-blur text-[11px] sm:text-xs font-bold text-[#E8D5A8]"
-                                    >
-                                        <span className="w-1 h-1 rotate-45 bg-[#C9A24B]" aria-hidden="true" />
-                                        {f}
-                                    </li>
-                                ))}
-                            </ul>
-
-                            <div className="flex flex-wrap items-center gap-2.5 mt-4 text-[11px] font-bold text-white/45">
-                                <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5" dir="ltr">← → • SPACE</span>
-                                <span>{t.move}</span>
-                                <span className="text-white/20">•</span>
-                                <span>{t.jump}</span>
+                            <div className="grid sm:grid-cols-2 gap-2.5 mt-6">
+                                <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur px-4 py-3">
+                                    <span className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-white/15 bg-black/50 px-2.5 py-1.5 text-[11px] font-black text-white/85 shadow-[0_2px_0_rgba(255,255,255,0.06)]" dir="ltr">← →</span>
+                                    <span className="text-[12px] font-bold text-white/55 leading-snug">{t.move}</span>
+                                </div>
+                                <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur px-4 py-3">
+                                    <span className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-white/15 bg-black/50 px-2.5 py-1.5 text-[11px] font-black text-white/85 shadow-[0_2px_0_rgba(255,255,255,0.06)]" dir="ltr">SPACE</span>
+                                    <span className="text-[12px] font-bold text-white/55 leading-snug">{t.jump}</span>
+                                </div>
                             </div>
 
-                            <div className="mt-7">
+                            <div className="mt-7 flex flex-wrap items-center gap-4">
                                 <button
                                     type="button"
                                     onClick={onPlay}
@@ -111,6 +98,10 @@ export const RunnerShowcase: React.FC<RunnerShowcaseProps> = ({ lang, no, onPlay
                                     <svg className="w-5 h-5 fill-current shrink-0" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                                     {t.play}
                                 </button>
+                                <span className="inline-flex items-center gap-2 text-[12px] font-bold text-white/45">
+                                    <span className="w-1.5 h-1.5 rotate-45 bg-[#C9A24B]" aria-hidden="true" />
+                                    {t.free}
+                                </span>
                             </div>
                         </div>
                     </div>

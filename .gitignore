@@ -27,3 +27,5 @@ dist-ssr
 *.sw?
 
 .vercel
+# Stray root-level images - site assets belong in public/
+/*.png

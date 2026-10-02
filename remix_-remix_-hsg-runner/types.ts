@@ -38,10 +38,8 @@ export enum ObjectType {
   OBSTACLE = 'OBSTACLE',
   GEM = 'GEM',
   LETTER = 'LETTER',
-  SHOP_PORTAL = 'SHOP_PORTAL',
   ALIEN = 'ALIEN',
-  MISSILE = 'MISSILE',
-  END_PORTAL = 'END_PORTAL'
+  MISSILE = 'MISSILE'
 }
 
 export interface GameObject {
@@ -54,6 +52,8 @@ export interface GameObject {
   targetIndex?: number; // Index in the GEMINI target word
   points?: number; // Score value for gems
   hasFired?: boolean; // For Aliens
+  /** Missiles a sentry has already launched during this approach. */
+  shots?: number;
 }
 
 export const LANE_WIDTH = 2.2;
@@ -63,16 +63,17 @@ export const RUN_SPEED_BASE = 22.5;
 export const SPAWN_DISTANCE = 120;
 export const REMOVE_DISTANCE = 20; // Behind player
 
-// Google-ish Neon Colors: Blue, Red, Yellow, Blue, Green, Red + Orange, Cyan
+// Citadel gold ramp — lifted straight from the hub's alert-tier metals so the
+// collectibles and the site read as one brand.
 export const GEMINI_COLORS = [
-    '#2979ff', // Blue
-    '#ff1744', // Red
-    '#ffea00', // Yellow
-    '#2979ff', // Blue
-    '#00e676', // Green
-    '#ff1744', // Red
-    '#ff9100', // Orange
-    '#00e5ff', // Cyan
+    '#FFF3D6', // Pale gold
+    '#E8D5A8', // Light gold
+    '#D9C08A', // Gold light
+    '#C9A24B', // Signature gold
+    '#A8823F', // Amber
+    '#8A6A3A', // Deep bronze
+    '#F0DDAE', // Ivory gold
+    '#53FC18', // Neon accent (final letter only — the spark)
 ];
 
 // Word collection — a new word every level, rotating through the list.

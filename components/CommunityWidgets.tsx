@@ -32,7 +32,7 @@ interface CommunityWidgetsProps {
 }
 
 /* ============ 3D tilt engine (pointer-fine only, GPU transforms) ============ */
-function useTilt(max = 9) {
+function useTilt(max = 5) {
    const ref = useRef<HTMLDivElement>(null);
    const fine = useRef(false);
    const [tilt, setTilt] = useState({ rx: 0, ry: 0, gx: 50, gy: 20, on: false });
@@ -93,7 +93,7 @@ interface DiscordLive {
 export const DiscordWidget: React.FC<CommunityWidgetsProps> = ({ lang }) => {
    const [data, setData] = useState<DiscordLive | null>(null);
    const [loading, setLoading] = useState(true);
-   const { ref, tilt, move, leave } = useTilt(9);
+   const { ref, tilt, move, leave } = useTilt(5);
    const isRTL = lang === 'ar';
 
    useEffect(() => {
@@ -162,7 +162,7 @@ export const DiscordWidget: React.FC<CommunityWidgetsProps> = ({ lang }) => {
             onPointerMove={move}
             onPointerLeave={leave}
             style={tiltStyle(tilt)}
-            className="group relative h-full rounded-[26px] p-[1.5px] bg-gradient-to-b from-[#5865F2]/70 via-[#5865F2]/15 to-white/[0.06] shadow-[0_24px_70px_-20px_rgba(88,101,242,0.45)]"
+            className="group relative h-full rounded-[26px] p-[1.5px] bg-gradient-to-b from-[#C9A24B]/60 via-[#C9A24B]/15 to-white/[0.06] shadow-[0_24px_60px_-24px_rgba(201,162,75,0.35)]"
          >
             <div className="relative h-full rounded-[24.5px] bg-[#0a0b16]/95 backdrop-blur-xl overflow-hidden flex flex-col">
                {/* pointer glare */}
@@ -304,7 +304,7 @@ export const DiscordWidget: React.FC<CommunityWidgetsProps> = ({ lang }) => {
                      target="_blank"
                      rel="noopener noreferrer"
                      aria-label={lang === 'en' ? 'Join Discord server' : 'انضم لسيرفر الديسكورد'}
-                     className="btn-arena card-sheen cut-btn relative w-full min-h-[54px] inline-flex items-center justify-center gap-2.5 bg-gradient-to-b from-[#7b86ff] to-[#5865F2] text-white font-black text-sm tracking-wide shadow-[0_14px_36px_-10px_rgba(88,101,242,0.7)] overflow-hidden"
+                      className="btn-arena cut-btn relative w-full min-h-[54px] inline-flex items-center justify-center gap-2.5 bg-gradient-to-b from-[#F0DDAE] via-[#C9A24B] to-[#8A6A3A] text-black font-black text-sm tracking-wide shadow-[0_14px_30px_-12px_rgba(201,162,75,0.6)] overflow-hidden"
                   >
                      <DiscordIcon className="w-5 h-5 shrink-0" />
                      {lang === 'en' ? 'JOIN THE SQUAD' : 'انضم للفرقة الآن'}
@@ -324,9 +324,9 @@ export const DiscordWidget: React.FC<CommunityWidgetsProps> = ({ lang }) => {
 const CLAN_CHANNEL_ID = 'UCD7EpD4o6bw24c5o5vu4hGQ';
 const CLAN_CHANNEL_URL = 'https://www.youtube.com/@leveloneclan';
 // Level One orange identity — team photo banner + orange logo mark.
-const CLAN_BANNER = '/4325243.png';
+const CLAN_BANNER = '/34542.png';
 const CLAN_BANNER_FALLBACK = '/youtube-banner.png';
-const CLAN_MARK = '/levelone-mark.png';
+const CLAN_MARK = '/levelone-emblem.png';
 const CLAN_AVATAR =
    'https://yt3.googleusercontent.com/EG_-83Wmqr7vL5GJ6qzHJqPhyrdDaApGhGByDXfPFW0CL0j5eKP4LSKr_S8DvXAN4A-uZwWNGYI=s176-c-k-c0x00ffffff-no-rj';
 const CLAN_ORANGE = '#FF6A00';
@@ -336,7 +336,7 @@ export const YoutubeWidget: React.FC<CommunityWidgetsProps> = ({ lang }) => {
    const [video, setVideo] = useState<YoutubeData | null>(null);
    const [subs, setSubs] = useState<string>('111K');
    const [loading, setLoading] = useState(true);
-   const { ref, tilt, move, leave } = useTilt(9);
+   const { ref, tilt, move, leave } = useTilt(5);
    const isRTL = lang === 'ar';
    const channelId = CLAN_CHANNEL_ID;
    const channelUrl = CLAN_CHANNEL_URL;
@@ -413,7 +413,7 @@ export const YoutubeWidget: React.FC<CommunityWidgetsProps> = ({ lang }) => {
              onPointerMove={move}
              onPointerLeave={leave}
              style={tiltStyle(tilt)}
-             className="group relative h-full rounded-[26px] p-[1.5px] bg-gradient-to-b from-[#FF6A00]/80 via-[#FF3D00]/20 to-white/[0.06] shadow-[0_24px_70px_-20px_rgba(255,106,0,0.5)]"
+             className="group relative h-full rounded-[26px] p-[1.5px] bg-gradient-to-b from-[#C9A24B]/60 via-[#8A6A3A]/15 to-white/[0.06] shadow-[0_24px_60px_-24px_rgba(201,162,75,0.35)]"
           >
              <div className="relative h-full rounded-[24.5px] bg-[#150803]/95 backdrop-blur-xl overflow-hidden flex flex-col">
                 <div
@@ -534,7 +534,7 @@ export const YoutubeWidget: React.FC<CommunityWidgetsProps> = ({ lang }) => {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={lang === 'en' ? 'Visit YouTube channel' : 'زيارة قناة اليوتيوب'}
-                      className="btn-arena card-sheen cut-btn relative w-full min-h-[54px] inline-flex items-center justify-center gap-2.5 bg-gradient-to-b from-[#FF8A1F] to-[#E04E00] text-white font-black text-sm tracking-wide shadow-[0_14px_36px_-10px_rgba(255,106,0,0.75)] overflow-hidden"
+                       className="btn-arena cut-btn relative w-full min-h-[54px] inline-flex items-center justify-center gap-2.5 bg-gradient-to-b from-[#F0DDAE] via-[#C9A24B] to-[#8A6A3A] text-black font-black text-sm tracking-wide shadow-[0_14px_30px_-12px_rgba(201,162,75,0.6)] overflow-hidden"
                    >
                      <YoutubeIcon className="w-5 h-5 shrink-0" />
                      {lang === 'en' ? 'SUBSCRIBE NOW' : 'اشترك الآن'}

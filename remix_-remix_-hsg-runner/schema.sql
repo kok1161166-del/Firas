@@ -121,3 +121,42 @@ CREATE POLICY "Users can update own inventory." ON inventory FOR UPDATE USING (a
 -- You can run this as a cron job or manually if needed.
 -- DELETE FROM players WHERE last_seen < now() - interval '1 minute';
 -- DELETE FROM rooms WHERE id NOT IN (SELECT DISTINCT room_id FROM players);
+
+-- ============================================================
+-- CITADEL RUNNER — VERIFIED SCORES
+-- ------------------------------------------------------------
+-- The runner is an endless game, so there is no single "level end"
+-- to hang a score off. Every death is submitted to /api/runner-score,
+-- which checks the claim against the runner's own physics and stamps
+-- it with an HMAC receipt. Only rows written here (or accepted in
+-- memory when this table is absent) can appear on a share card.
+--
+-- device_id is an opaque random id kept in the player's localStorage.
+-- No IP, email or personal data is stored.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS public.runner_scores (
+  id          BIGSERIAL PRIMARY KEY,
+  device_id   TEXT        NOT NULL,
+  score       BIGINT      NOT NULL DEFAULT 0,
+  distance    INTEGER     NOT NULL DEFAULT 0,
+  gems        INTEGER     NOT NULL DEFAULT 0,
+  letters     INTEGER     NOT NULL DEFAULT 0,
+  tiers       INTEGER     NOT NULL DEFAULT 1,
+  seconds     INTEGER     NOT NULL DEFAULT 0,
+  receipt     TEXT        NOT NULL DEFAULT '',
+  verified    BOOLEAN     NOT NULL DEFAULT FALSE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- One row per device keeps the ledger small and idempotent.
+CREATE UNIQUE INDEX IF NOT EXISTS runner_scores_device_key
+  ON public.runner_scores (device_id);
+
+CREATE INDEX IF NOT EXISTS runner_scores_best_idx
+  ON public.runner_scores (score DESC);
+
+-- Only the endpoint's service key may write; everyone else reads nothing.
+ALTER TABLE public.runner_scores ENABLE ROW LEVEL SECURITY;
+
+REVOKE ALL ON public.runner_scores FROM anon, authenticated;
