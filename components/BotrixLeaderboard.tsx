@@ -98,6 +98,10 @@ const ROLE_RING: Record<string, string> = {
   og: '#f59e0b',
 };
 
+// Visual order of the podium columns: 2nd, 1st, 3rd. The rank shown on each
+// entry is still the one it earned in the watchtime sort, not its column.
+const PODIUM_ORDER = [1, 0, 2] as const;
+
 const MiniIcon: React.FC<{ d: string; className?: string }> = ({ d, className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2}>
     <path strokeLinecap="round" strokeLinejoin="round" d={d} />
@@ -124,8 +128,21 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
 
   const sorted = useMemo(() => {
     if (!data) return [];
-    // Rank = watchtime hours first, points break ties
-    return [...data].sort((a, b) => ((b.watchtime || 0) - (a.watchtime || 0)) || ((b.points || 0) - (a.points || 0))).slice(0, 50);
+    // Rank is decided by WATCHTIME (hours) and nothing else.
+    //
+    // Points used to be the tiebreaker, which quietly meant that whenever two
+    // chatters sat on the same number of hours the board was effectively
+    // being sorted by points - and the top slot could flip on chat volume
+    // rather than on time spent in the fortress. Points are now display-only.
+    // Equal watchtime falls back to the name so the order is deterministic
+    // across reloads instead of depending on whatever order the API returned.
+    const minutes = (e: BotrixEntry) =>
+      Number.isFinite(e.watchtime) ? Math.max(0, e.watchtime as number) : 0;
+
+    return [...data]
+      .sort((a, b) => (minutes(b) - minutes(a))
+        || (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+      .slice(0, 50);
   }, [data]);
 
   // Enrich top chatters with live Kick data (followers, bio, verified, avatar)
@@ -182,7 +199,7 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
 
   const t = {
     title: lang === 'ar' ? 'أساطير الشات' : 'Chat Legends',
-    subtitle: lang === 'ar' ? 'الترتيب حسب ساعات المشاهدة — الأعلى أولاً' : 'Ranked by watchtime — highest first',
+    subtitle: lang === 'ar' ? 'الترتيب حسب ساعات المشاهدة فقط — الأعلى أولاً' : 'Ranked by watchtime only — highest first',
     empty: lang === 'ar' ? 'لا توجد بيانات حالياً' : 'No data available',
     points: lang === 'ar' ? 'نقطة' : 'PTS',
     hours: lang === 'ar' ? 'ساعة مشاهدة' : 'WATCHED',
@@ -192,6 +209,7 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
   };
 
   const podium = rich.slice(0, 3);
+
   const ringOf = (rank: number) =>
     rank === 1 ? 'conic-gradient(from 200deg,#ffe977,#8a6a00,#fff6c8,#8a6a00,#ffe977)'
     : rank === 2 ? 'conic-gradient(from 200deg,#e8e8e8,#6f7b8a,#ffffff,#6f7b8a,#e8e8e8)'
@@ -246,10 +264,15 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
               <div className="relative mx-4 md:mx-6 mt-1 rounded-3xl border border-white/[0.07] bg-black/30 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] to-transparent pointer-events-none" aria-hidden="true" />
                 <div className="relative flex items-end justify-center gap-2 sm:gap-5 px-4 pt-6 pb-4" dir="ltr">
-                {([podium[1], podium[0], podium[2]].filter(Boolean)).map((e: any, i: number) => {
-                  const rank = i === 1 ? 1 : i === 0 ? 2 : 3;
+                {/* Podium is laid out visually (2nd, 1st, 3rd) but every entry
+                    keeps the rank it earned in the watchtime sort above, so
+                    "#1" is always the chatter with the most hours. */}
+                {PODIUM_ORDER.map((slot) => {
+                  const e: RichEntry | undefined = podium[slot];
+                  if (!e) return null;
+                  const rank = slot + 1;
                   return (
-                    <div key={e.name} className="flex flex-col items-center w-[30%] max-w-[200px] animate-fade-in-up transition-transform duration-500 hover:-translate-y-1.5" style={{ animationDelay: `${i * 100}ms` }}>
+                    <div key={e.name} className="flex flex-col items-center w-[30%] max-w-[200px] animate-fade-in-up transition-transform duration-500 hover:-translate-y-1.5" style={{ animationDelay: `${rank === 1 ? 100 : rank === 2 ? 0 : 200}ms` }}>
                       <span className={`relative rounded-full p-[2.5px] block transition-transform duration-500 hover:scale-110 ${rank === 1 ? 'w-16 h-16 sm:w-20 sm:h-20' : 'w-12 h-12 sm:w-16 sm:h-16'}`} style={{ background: ringOf(rank), boxShadow: rank === 1 ? '0 0 36px rgba(255,215,106,0.55)' : '0 8px 24px rgba(0,0,0,0.5)' }}>
                         {e.avatar
                           ? <img src={e.avatar} alt={e.name} loading="lazy" className="w-full h-full rounded-full object-cover bg-black" />
@@ -266,9 +289,11 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
                         <span className="truncate">{e.name}</span>
                         {e.verified && <svg className="w-3.5 h-3.5 text-[#FFE9B8] shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>}
                       </p>
+                      {/* Watchtime is the ranking metric, so it gets the gold
+                          pill. Points sit underneath as a stat only. */}
                       <span className="mt-1.5 inline-flex items-center gap-1 text-[11px] sm:text-xs font-black px-2.5 py-1 rounded-xl bg-[#FFE9B8]/10 border border-[#FFE9B8]/30 text-[#FFE9B8]" dir="ltr" title={formatHoursLong(e.watchtime, lang)}>{formatHours(e.watchtime)}</span>
                       <span className="mt-1.5 flex items-center gap-1.5 text-[10px] font-bold text-white/50">
-                        <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5 text-white/60" dir="ltr">{formatNum(e.points)} {t.points}</span>
+                        <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5 text-white/50" dir="ltr" title={lang === 'ar' ? 'إحصائية فقط — لا تؤثر على الترتيب' : 'Stat only - does not affect ranking'}>{formatNum(e.points)} {t.points}</span>
                         {e.role && <RoleBadge role={e.role} />}
                       </span>
                       <span className="mt-1 text-[9px] font-medium text-white/30" dir="auto">{t.since} {formatDate(e.followage, lang)}</span>
@@ -300,7 +325,7 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
                           </p>
                           <p className="mt-1 flex items-center gap-2 text-[10px] text-white/40 font-bold flex-wrap">
                             <span className="inline-flex items-center gap-1 rounded-md bg-[#FFE9B8]/10 border border-[#FFE9B8]/25 px-1.5 py-0.5 text-[#FFE9B8]" dir="ltr" title={formatHoursLong(e.watchtime, lang)}>{formatHours(e.watchtime)}</span>
-                            <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5 text-white/60" dir="ltr">{formatNum(e.points)} {t.points}</span>
+                            <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5 text-white/50" dir="ltr" title={lang === 'ar' ? 'إحصائية فقط — لا تؤثر على الترتيب' : 'Stat only - does not affect ranking'}>{formatNum(e.points)} {t.points}</span>
                             <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-1.5 py-0.5 text-white/35" dir="auto">{t.since} {formatDate(e.followage, lang)}</span>
                           </p>
                         </div>
