@@ -914,7 +914,10 @@ export default function App() {
 
                                 {/* stat band */}
                                 <div className="animate-fade-in-up citadel-frame rounded-3xl mt-8 md:mt-10 overflow-hidden" style={{ animationDelay: '500ms' }}>
-                                    {streamInfo.isLive && <div className="h-[3px] bg-gradient-to-l from-[#53FC18] via-[#53FC18]/40 to-transparent" />}
+                                    {/* Live rule, citadel gold. This was the neon
+                                        green accent and it was the one colour
+                                        left fighting the gold palette. */}
+                                    {streamInfo.isLive && <div className="h-[3px] bg-gradient-to-l from-[#C9A24B] via-[#F0DDAE]/45 to-transparent" />}
                                     <div className="grid grid-cols-2 divide-x divide-x-reverse divide-[#C9A24B]/15">
                                         {[
                                             { v: socialStats['KICK'] || '—', l: t.statsKick },
