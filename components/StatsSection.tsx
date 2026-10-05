@@ -467,7 +467,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ lang }) => {
           </div>
 
           {leaderboards ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-8 items-start relative px-1">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-8 items-start relative px-1 mt-5 md:mt-10">
 
               {/* All Time (Center on Desktop, Top Full on Mobile) - Gold/Yellow Theme */}
               <LeaderboardCard
@@ -514,7 +514,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ lang }) => {
 
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 mt-5 md:mt-10">
               <Skeleton className="col-span-2 md:col-span-1 order-1 md:order-2 h-80 md:h-[480px] w-full rounded-3xl -mt-0 md:-mt-8" />
               <Skeleton className="col-span-1 order-2 md:order-1 h-64 md:h-96 w-full rounded-3xl" />
               <Skeleton className="col-span-1 order-3 md:order-3 h-64 md:h-96 w-full rounded-3xl" />

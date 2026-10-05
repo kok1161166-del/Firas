@@ -4,7 +4,7 @@
 //   3) Verified static fallback (last confirmed live numbers, 2026-09-26)
 //
 // Verified live:
-//   TikTok @vfiras3 .... 68,337 (TikMatrix) | YouTube @leveloneclan 111,326 (Mixerno)
+//   TikTok @vfiras3 .... 45,800 (owner-confirmed, 2026-10-05) | YouTube @leveloneclan 111,326 (Mixerno)
 //   X @vfiras3 ......... 68,568 (FixTweet, verified account)
 
 export interface SocialMediaStats {
@@ -17,7 +17,7 @@ export interface SocialMediaStats {
 
 export const FALLBACK = {
   instagram: 21300, // curated — Instagram walls all free readers for this account
-  tiktok: 68337,
+  tiktok: 45800, // owner-confirmed TikTok followers (live sources down)
   twitter: 68568,
   youtube: 111326, // Level One Clan — live via Mixerno
   whatsapp: 36000, // no public API — curated
