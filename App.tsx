@@ -916,7 +916,7 @@ export default function App() {
                                             <span className="w-1.5 h-1.5 rounded-full bg-[#53FC18] animate-pulse" />LIVE
                                         </span>
                                         <span className="ms-auto text-[11px] font-black text-white/45" dir="ltr">{streamInfo.viewers.toLocaleString()} {t.viewers}</span>
-                                        <a href={`https://kick.com/${CHANNEL_SLUG}/chatroom`} target="_blank" rel="noopener noreferrer" title={lang === 'en' ? 'Pop out chat' : 'فتح الشات في نافذة'} className="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/10 text-white/60 hover:text-[#D9C08A] hover:border-[#C9A24B]/50 flex items-center justify-center transition-all active:scale-95">
+                                        <a href={`https://kick.com/${CHANNEL_SLUG}`} target="_blank" rel="noopener noreferrer" title={lang === 'en' ? 'Watch on Kick' : 'مشاهدة البث على كيك'} aria-label={lang === 'en' ? 'Watch on Kick' : 'مشاهدة البث على كيك'} className="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/10 text-white/60 hover:text-[#D9C08A] hover:border-[#C9A24B]/50 flex items-center justify-center transition-all active:scale-95">
                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                                         </a>
                                         <button type="button" onClick={() => setTheaterWide((v) => !v)} title={theaterWide ? (lang === 'en' ? 'Show chat' : 'إظهار الشات') : (lang === 'en' ? 'Theater mode' : 'وضع المسرح')} aria-pressed={theaterWide} className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all active:scale-95 ${theaterWide ? 'bg-[#C9A24B] border-[#C9A24B] text-black shadow-[0_0_16px_rgba(201,162,75,0.6)]' : 'bg-white/[0.05] border-white/10 text-white/60 hover:text-[#D9C08A] hover:border-[#C9A24B]/50'}`}>
@@ -935,7 +935,9 @@ export default function App() {
                                             <div className="p-4 md:p-5 flex flex-col gap-3">
                                                 <div className="flex items-start justify-between gap-3">
                                                     <div className="min-w-0 flex-1">
-                                                        <h3 className="text-lg md:text-2xl font-black text-white truncate" title={displayTitle}>{displayTitle}</h3>
+                                                        <a href={`https://kick.com/${CHANNEL_SLUG}`} target="_blank" rel="noopener noreferrer" title={lang === 'en' ? 'Watch on Kick' : 'مشاهدة البث على كيك'}>
+                                                            <h3 className="text-lg md:text-2xl font-black text-white truncate hover:text-[#D9C08A] transition-colors" title={displayTitle}>{displayTitle}</h3>
+                                                        </a>
                                                         <p className="text-sm text-white/50 font-bold mt-1"><span className="gold-text font-black" dir="ltr">FIRAS</span> <span className="text-white/25 mx-1">•</span> {displayCategory}</p>
                                                     </div>
                                                     <button onClick={handleShare} aria-label="Share"
