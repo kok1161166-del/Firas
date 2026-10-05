@@ -90,8 +90,7 @@
     }
   </script>
 
-  <link rel="preload" as="image" href="/bg-fortress-mobile.jpg" media="(max-width: 767px)" fetchpriority="high">
-  <link rel="preload" as="image" href="/bg-fortress.jpg" media="(min-width: 768px)" fetchpriority="high">
+  <link rel="preload" as="image" href="/bg-content.png" fetchpriority="high">
   <link rel="preload" as="image" href="/firas-mark.webp" fetchpriority="high">
   <link rel="preconnect" href="https://cdn.tailwindcss.com">
   <link rel="preconnect" href="https://esm.sh" crossorigin>
@@ -183,23 +182,24 @@
     ::-webkit-scrollbar-track { background: #0B0906; }
     ::-webkit-scrollbar-thumb { background: linear-gradient(#D9C08A, #8A6A3A); border-radius: 99px; border: 2px solid #0B0906; }
 
-    /* EMBER CITADEL — new cinematic background tuned for the dark-castle artwork.
-       The art carries light top-left + gold wall right; scrims keep the middle
-       void readable while letting the castle breathe at the edges. */
+    /* EMBER CITADEL — golden F emblem artwork (bg-content.png).
+       Wide art: FIRAS mark left, giant gold F right; scrims keep the middle
+       void readable while letting the emblem breathe at the edges. */
     .fortress_bg {
-      background-image: url('/bg-fortress-mobile.jpg');
-      background-size: cover; background-position: center 18%; background-repeat: no-repeat;
+      background-image: url('/bg-content.png');
+      background-size: cover; background-position: center 32%; background-repeat: no-repeat;
       background-attachment: scroll;
+      transform: scale(1.1);
       filter: saturate(1.05) contrast(1.04);
     }
     @media (min-width: 768px) {
-      .fortress_bg { background-image: url('/bg-fortress.jpg'); background-attachment: scroll; background-position: center 12%; }
+      .fortress_bg { background-image: url('/bg-content.png'); background-attachment: scroll; background-position: center 28%; }
     }
     section[id] { content-visibility: auto; contain-intrinsic-size: auto 600px; }
     .fortress_overlay {
       background:
-        linear-gradient(to bottom, rgba(11,9,6,0.42) 0%, rgba(11,9,6,0.18) 22%, rgba(11,9,6,0.34) 48%, rgba(11,9,6,0.82) 78%, rgba(11,9,6,0.94) 100%),
-        radial-gradient(ellipse 70% 46% at 50% 34%, transparent 45%, rgba(11,9,6,0.55) 100%);
+        linear-gradient(to bottom, rgba(11,9,6,0.64) 0%, rgba(11,9,6,0.4) 24%, rgba(11,9,6,0.55) 50%, rgba(11,9,6,0.8) 82%, rgba(11,9,6,0.95) 100%),
+        radial-gradient(ellipse 70% 46% at 50% 36%, transparent 38%, rgba(11,9,6,0.7) 100%);
     }
     .card-fortress {
       background: rgba(8,6,3,0.62);
@@ -208,11 +208,11 @@
     }
 
     .responsive_bg {
-      background-image: url('/bg-fortress-mobile.jpg');
-      background-size: cover; background-position: center 18%; background-repeat: no-repeat;
+      background-image: url('/bg-content.png');
+      background-size: cover; background-position: center 22%; background-repeat: no-repeat;
     }
     @media (min-width: 768px) {
-      .responsive_bg { background-image: url('/bg-fortress.jpg'); }
+      .responsive_bg { background-image: url('/bg-content.png'); }
     }
 
     /* Light beams sweeping the citadel sky */

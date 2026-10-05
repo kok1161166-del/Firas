@@ -198,14 +198,14 @@ const ArenaBackground: React.FC = () => {
             <div className="absolute top-[8%] right-[-8%] w-[34vw] h-[34vw] max-w-[440px] max-h-[440px] rounded-full bg-[#8A6A3A]/[0.08] blur-[120px]" />
             <canvas ref={canvasRef} className="absolute inset-0 opacity-70" />
             {/* readability vignette: dark void in the middle, deep ink at content depth */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_62%_44%_at_50%_30%,transparent_30%,rgba(11,9,6,0.5)_100%)]" />
-            <div className="absolute inset-x-0 bottom-0 h-[36%] bg-gradient-to-t from-[#0B0906] via-[#0B0906]/70 to-transparent" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_62%_44%_at_50%_30%,transparent_20%,rgba(11,9,6,0.62)_100%)]" />
+            <div className="absolute inset-x-0 bottom-0 h-[24%] bg-gradient-to-t from-[#0B0906] via-[#0B0906]/70 to-transparent" />
         </div>
     );
 };
 
 export const SectionHeading: React.FC<{ no: string; title: string; sub?: string; en?: string }> = ({ no, title, sub, en }) => (
-    <div className="flex items-end gap-3 md:gap-4 mb-6 md:mb-9">
+    <div className="flex items-end gap-3 md:gap-4 mb-4 md:mb-5">
         <span className="font-gaming text-3xl sm:text-4xl md:text-6xl leading-none text-stroke-red select-none shrink-0" dir="ltr">{no}</span>
         <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2.5 flex-wrap">
@@ -597,7 +597,7 @@ const AlertTiers: React.FC<{ title: string; note: string; lang: Language }> = ({
     const max = 1000;
     const isAr = lang === 'ar';
     return (
-        <div id="store" className="relative mt-5 md:mt-7 rounded-[28px] border border-white/10 bg-white/[0.03] overflow-hidden scroll-mt-32">
+        <div id="store" className="relative mt-4 md:mt-5 rounded-[28px] border border-white/10 bg-white/[0.03] overflow-hidden scroll-mt-32">
             <div className="absolute -top-24 start-1/4 w-96 h-96 rounded-full bg-[#C9A24B]/[0.08] blur-[110px] pointer-events-none" aria-hidden="true" />
             <div className="absolute -bottom-24 end-0 w-80 h-80 rounded-full bg-[#8A6A3A]/[0.10] blur-[100px] pointer-events-none" aria-hidden="true" />
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-transparent via-[#C9A24B]/70 to-transparent" aria-hidden="true" />
@@ -735,7 +735,6 @@ const SupportArena: React.FC<{ lang: Language; supporters: Supporter[] }> = ({ l
 };
 
 export default function App() {
-    const [isHoveringProfile, setIsHoveringProfile] = useState(false);
     const [theaterWide, setTheaterWide] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [lang, setLang] = useState<Language>('ar');
@@ -861,26 +860,11 @@ export default function App() {
                     </div>
                     <div className="relative z-10 w-full max-w-[1200px] mx-auto px-3 sm:px-4 md:px-8 pb-10 overflow-clip">
 
-                        {/* ===== HERO — ascension in the citadel void ===== */}
-                        <section id="top" className="relative pt-4 md:pt-6 pb-8 md:pb-12 overflow-clip">
-                            <div className="relative mx-auto w-full max-w-3xl text-center">
-                                {/* emblem seal */}
-                                <div className="animate-fade-in relative mx-auto w-fit" onMouseEnter={() => setIsHoveringProfile(true)} onMouseLeave={() => setIsHoveringProfile(false)}>
-                                    <span className="halo-conic -inset-3" aria-hidden="true" />
-                                    <span className="profile-3d-ring-inner" aria-hidden="true" />
-                                    <span className="relative block w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-[#D9C08A]/70 shadow-[0_0_60px_rgba(201,162,75,0.5)] bg-black">
-                                        <img src={branding.profileImage} alt="Firas official emblem" className={`w-full h-full object-cover transition-transform duration-700 ${isHoveringProfile ? 'scale-110' : ''}`} loading="eager" />
-                                    </span>
-                                    <span className={`absolute -bottom-1 -end-1 flex items-center gap-1 rounded-full border px-2.5 py-1 text-[9px] font-black tracking-[0.18em] ${streamInfo.isLive ? 'border-[#53FC18]/60 bg-black/85 text-[#53FC18]' : 'border-[#C9A24B]/60 bg-black/85 text-[#D9C08A]'}`}>
-                                        <span className={`w-1.5 h-1.5 rounded-full ${streamInfo.isLive ? 'bg-[#53FC18] animate-pulse' : 'bg-[#C9A24B] animate-pulse'}`} />
-                                        {streamInfo.isLive ? 'LIVE' : 'FIRAS'}
-                                    </span>
-                                </div>
-
-                                {/* giant backdrop word */}
-                                <p className="font-gaming text-stroke-red pointer-events-none select-none absolute inset-x-0 -top-4 md:top-2 text-[26vw] md:text-[190px] leading-none opacity-30" dir="ltr" aria-hidden="true">FIRAS</p>
-
-                                <h1 className="animate-fade-in-up relative font-heading font-black text-white leading-[1.05] tracking-tight text-[clamp(2.6rem,9vw,4.8rem)] mt-3" style={{ animationDelay: '180ms' }}>
+                        {/* ===== HERO — فراس بالنص مع فراغ كبير فوق وتحت ===== */}
+                        <section id="top" className="relative min-h-[46vh] md:min-h-[54vh] flex items-center justify-center py-16 md:py-24 overflow-clip">
+                            <div className="relative mx-auto w-full max-w-2xl text-center">
+                                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[220px] rounded-full bg-[#C9A24B]/[0.08] blur-[100px] pointer-events-none" aria-hidden="true" />
+                                <h1 className="animate-fade-in-up relative font-heading font-black text-white leading-[1.05] tracking-tight text-[clamp(3rem,10vw,5.2rem)]" style={{ animationDelay: '120ms', textShadow: '0 4px 40px rgba(0,0,0,0.6)' }}>
                                     {lang === 'ar' ? (
                                         <>
                                             {t.nameAr}
@@ -891,50 +875,16 @@ export default function App() {
                                         <span dir="ltr" className="hero-firas">FIRAS</span>
                                     )}
                                 </h1>
-
-                                <p className="animate-fade-in-up flex items-center justify-center gap-3 mt-6 text-[15px] sm:text-lg md:text-2xl font-black text-white/80" style={{ animationDelay: '300ms' }}>
-                                    <span className="h-px w-10 bg-gradient-to-l from-[#C9A24B]/80 to-transparent" aria-hidden="true" />
-                                    <span>{t.rolePre} <span className="gold-text font-black" dir={lang === 'ar' ? 'rtl' : 'ltr'}>{t.roleTeam}</span></span>
-                                    <span className="h-px w-10 bg-gradient-to-r from-[#C9A24B]/80 to-transparent" aria-hidden="true" />
-                                </p>
-
-                                <div className="animate-fade-in-up flex flex-col sm:flex-row justify-center gap-2.5 sm:gap-3 mt-7" style={{ animationDelay: '420ms' }}>
-                                    <a href="https://kick.com/firas" target="_blank" rel="noopener noreferrer"
-                                        className="btn-arena btn-gold inline-flex items-center justify-center gap-2.5 px-9 py-4 rounded-2xl font-black text-[15px] md:text-base active:scale-[0.98]">
-                                        <svg className="w-5 h-5 fill-current shrink-0" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                                        {t.watchLive}
-                                        {streamInfo.isLive && streamInfo.viewers > 0 && <span className="rounded-lg bg-black/20 px-2 py-0.5 text-xs font-black" dir="ltr">{streamInfo.viewers.toLocaleString()}</span>}
-                                    </a>
-                                    <a href="https://discord.gg/tmfx" target="_blank" rel="noopener noreferrer"
-                                        className="btn-arena btn-ghost-gold inline-flex items-center justify-center gap-2.5 px-9 py-4 rounded-2xl font-black text-[15px] md:text-base active:scale-[0.98]">
-                                        <DiscordIcon className="w-5 h-5 shrink-0" />
-                                        {t.joinDiscord}
-                                    </a>
-                                </div>
-
-                                {/* stat band */}
-                                <div className="animate-fade-in-up citadel-frame rounded-3xl mt-8 md:mt-10 overflow-hidden" style={{ animationDelay: '500ms' }}>
-                                    {/* Live rule, citadel gold. This was the neon
-                                        green accent and it was the one colour
-                                        left fighting the gold palette. */}
-                                    {streamInfo.isLive && <div className="h-[3px] bg-gradient-to-l from-[#C9A24B] via-[#F0DDAE]/45 to-transparent" />}
-                                    <div className="grid grid-cols-2 divide-x divide-x-reverse divide-[#C9A24B]/15">
-                                        {[
-                                            { v: socialStats['KICK'] || '—', l: t.statsKick },
-                                            { v: '5', l: t.statsPlatforms },
-                                        ].map((s, i) => (
-                                            <div key={i} className="px-2 sm:px-4 py-4 sm:py-5 text-center min-w-0">
-                                                <p className="font-heading text-xl sm:text-2xl md:text-3xl font-black text-white truncate" dir="ltr">{s.v}</p>
-                                                <p className="text-[9px] md:text-[10px] font-bold text-[#D9C08A]/60 uppercase tracking-[0.2em] mt-1.5 truncate">{s.l}</p>
-                                            </div>
-                                        ))}
-                                    </div>
+                                <div className="animate-fade-in-up flex items-center justify-center gap-3 mt-4" style={{ animationDelay: '260ms' }} aria-hidden="true">
+                                    <span className="h-px w-16 sm:w-24 bg-gradient-to-l from-transparent via-[#C9A24B]/70 to-transparent" />
+                                    <span className="w-1.5 h-1.5 rotate-45 bg-[#C9A24B] inline-block shadow-[0_0_12px_rgba(201,162,75,0.8)]" />
+                                    <span className="h-px w-16 sm:w-24 bg-gradient-to-r from-transparent via-[#C9A24B]/70 to-transparent" />
                                 </div>
                             </div>
                         </section>
 
-                        {/* ===== SOCIALS BENTO ===== */}
-                        <section id="socials" className="pt-12 md:pt-16 scroll-mt-28">
+                        {/* ===== SOCIALS BENTO — لازق بالبانر بدون فراغ ===== */}
+                        <section id="socials" className="pt-2 md:pt-3 scroll-mt-28">
                             <Reveal><SectionHeading no="01" title={t.socialsTitle} sub={t.socialsSub} en="SOCIAL ARENA" /></Reveal>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                                 {kickCard && (
@@ -952,7 +902,7 @@ export default function App() {
 
                         {/* ===== LIVE THEATER ===== */}
                         {streamInfo.isLive && (
-                            <section id="live" className="pt-12 md:pt-16 scroll-mt-28 animate-slide-down">
+                            <section id="live" className="pt-6 md:pt-8 scroll-mt-28 animate-slide-down">
                                 <Reveal><SectionHeading no="02" title={t.theaterTitle} sub={`${streamInfo.viewers.toLocaleString()} ${t.viewers}`} en="LIVE THEATER" /></Reveal>
                                 <div className="relative rounded-[28px] p-[1px] bg-gradient-to-b from-[#C9A24B]/60 via-white/10 to-transparent shadow-[0_30px_90px_rgba(201,162,75,0.18)]">
                                     <div className="rounded-[27px] bg-[#080808] overflow-hidden">
@@ -1015,7 +965,7 @@ export default function App() {
                         )}
 
                         {/* ===== COMMUNITY ===== */}
-                        <section id="community" className="pt-12 md:pt-16 scroll-mt-28">
+                        <section id="community" className="pt-6 md:pt-8 scroll-mt-28">
                             <Reveal><SectionHeading no={streamInfo.isLive ? '03' : '02'} title={t.communityTitle} en="COMMUNITY HQ" /></Reveal>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-5">
                                 <Reveal delay={0}><DiscordWidget lang={lang} /></Reveal>
@@ -1024,25 +974,25 @@ export default function App() {
                         </section>
 
                         {/* ===== SUPPORT ===== */}
-                        <section id="support" className="pt-12 md:pt-16 scroll-mt-28">
+                        <section id="support" className="pt-6 md:pt-8 scroll-mt-28">
                             <Reveal><SectionHeading no={streamInfo.isLive ? '04' : '03'} title={t.supportTitle} en="SUPPORT" /></Reveal>
                             <Reveal delay={80}><SupportArena lang={lang} supporters={[]} /></Reveal>
                         </section>
 
                         {/* ===== MODERATORS ===== */}
-                        <section id="moderators" className="pt-12 md:pt-16 scroll-mt-28">
+                        <section id="moderators" className="pt-6 md:pt-8 scroll-mt-28">
                             <Reveal><SectionHeading no={streamInfo.isLive ? '05' : '04'} title={t.modsTitle} en="MODERATORS" /></Reveal>
                             <Reveal delay={80}><Suspense fallback={<div className="w-full h-64 rounded-[26px] border border-white/10 bg-white/[0.02] animate-pulse" />}><ModeratorsSection lang={lang} /></Suspense></Reveal>
                         </section>
 
                         {/* ===== LEADERBOARD + CLIPS (before archive) ===== */}
-                        <section className="pt-12 md:pt-16">
+                        <section className="pt-6 md:pt-8">
                             <Reveal><Suspense fallback={<div className="w-full h-40 rounded-[26px] border border-white/10 bg-white/[0.02] animate-pulse" />}><StatsSection lang={lang} /></Suspense></Reveal>
                         </section>
 
                         {/* ===== LAST SESSION ===== */}
                         {!streamInfo.isLive && (
-                            <section id="archive" className="pt-12 md:pt-16 scroll-mt-28">
+                            <section id="archive" className="pt-6 md:pt-8 scroll-mt-28">
                                 <LastSessionReport lang={lang} data={lastSession} clips={clips} past={pastSessions} />
                             </section>
                         )}
@@ -1051,7 +1001,7 @@ export default function App() {
                         <RunnerShowcase lang={lang} no={streamInfo.isLive ? '06' : '05'} onPlay={openGame} />
 
                         {/* ===== FOOTER ===== */}
-                        <footer className="mt-16 md:mt-24 rounded-[28px] border border-white/10 bg-black/60 backdrop-blur-xl overflow-hidden relative">
+                        <footer className="mt-10 md:mt-14 rounded-[28px] border border-white/10 bg-black/60 backdrop-blur-xl overflow-hidden relative">
                             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-transparent via-[#C9A24B]/70 to-transparent" />
                             <div className="p-8 md:p-12 text-center relative">
                                 <p className="font-gaming text-[18vw] md:text-[120px] leading-none text-stroke opacity-40 select-none" dir="ltr" aria-hidden="true">FIRAS</p>

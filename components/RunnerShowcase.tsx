@@ -19,7 +19,7 @@ export const RunnerShowcase: React.FC<RunnerShowcaseProps> = ({ lang, no, onPlay
     };
 
     return (
-        <section id="runner" className="pt-12 md:pt-16 scroll-mt-28">
+        <section id="runner" className="pt-6 md:pt-8 scroll-mt-28">
             <Reveal>
                 <SectionHeading no={no} title={t.title} en="MINI GAME" />
             </Reveal>
