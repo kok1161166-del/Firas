@@ -112,7 +112,7 @@ const TRANSLATIONS = {
         defaultStreamTitle: 'تابع البثوث السابقة | تابعني الآن',
         defaultCategory: 'غير متصل',
         footer: '© 2026 Firas. جميع الحقوق محفوظة.',
-        poweredBy: 'بدعم من HSG',
+        poweredBy: 'POWERED BY HSG',
         watchLive: 'شاهد البث', joinDiscord: 'انضم للديسكورد',
         subOnly: 'للمشتركين فقط', dropsEnabled: 'الجوائز مفعلة', noTags: 'لا يوجد وسوم',
         shareTitle: 'مركز بث Firas', shareText: 'تابع بث Firas المباشر على كيك!',         copied: 'تم نسخ الرابط!',

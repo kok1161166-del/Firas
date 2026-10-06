@@ -33,7 +33,7 @@ export const GalleryPage: React.FC<{ lang: Language; onClose: () => void }> = ({
         <GallerySection lang={lang} />
         <footer className="mt-10 rounded-[24px] border border-white/10 bg-black/60 p-6 text-center">
           <p className="text-[11px] font-black tracking-[0.3em] text-white/50 uppercase">
-            {ar ? 'بدعم من HSG' : 'POWERED BY HSG'}
+            {'POWERED BY HSG'}
           </p>
           <p className="text-[11px] text-white/35 mt-1">© 2026 Firas. All Rights Reserved.</p>
         </footer>
