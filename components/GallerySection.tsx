@@ -269,22 +269,76 @@ function WallCard({
 function Lightbox({ sub, onClose, liked, onToggleLike, onShare, ar }: {
   sub: WallItem; onClose: () => void; liked: boolean; onToggleLike: () => void; onShare: () => void; ar: boolean;
 }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(true);
+  const [muted, setMuted] = useState(true);
   useEffect(() => {
     const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', fn);
     return () => { window.removeEventListener('keydown', fn); };
   }, [onClose]);
+  const togglePlay = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) {
+      v.play().catch(() => {});
+      setPlaying(true);
+    } else {
+      v.pause();
+      setPlaying(false);
+    }
+  };
+  const toggleMute = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = !v.muted;
+    setMuted(v.muted);
+  };
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-6" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-6 pt-24 sm:pt-28 pb-6" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-black/85 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-3xl max-h-[92vh] overflow-auto rounded-[22px] border border-[#D9A441]/30"
+      <div className="relative w-full max-w-3xl max-h-full flex flex-col rounded-[22px] border border-[#D9A441]/30 overflow-hidden my-auto"
         style={{ background: 'linear-gradient(160deg, rgba(26,18,13,0.98), rgba(16,11,8,0.97))' }}>
-        {sub.mediaType === 'video' ? (
-          <video src={sub.mediaUrl} controls playsInline preload="metadata" poster={sub.posterUrl}
-            className="w-full max-h-[65vh] bg-black object-contain" />
-        ) : (
-          <img src={sub.mediaUrl} alt={sub.caption || sub.name} className="w-full max-h-[65vh] object-contain bg-black" />
-        )}
+        {/* الوسائط — كاملة داخل الشاشة دائماً وبدون خلفية سوداء */}
+        <div className="relative flex items-center justify-center shrink min-h-0" style={{ maxHeight: '62dvh' }}>
+          {sub.mediaType === 'video' ? (
+            <>
+              <video ref={videoRef} src={sub.mediaUrl} autoPlay muted loop playsInline preload="auto"
+                poster={sub.posterUrl || undefined}
+                onClick={togglePlay}
+                onPlay={() => setPlaying(true)}
+                onPause={() => setPlaying(false)}
+                className="max-w-full w-auto h-auto object-contain cursor-pointer" style={{ maxHeight: '62dvh' }} />
+              {/* زرّان فقط: تشغيل/إيقاف + صوت */}
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-2 py-2 rounded-full bg-black/65 backdrop-blur border border-[#D9A441]/45 shadow-[0_8px_28px_rgba(0,0,0,0.6)]">
+                <button type="button" onClick={togglePlay} aria-label={playing ? 'pause' : 'play'}
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-black transition-transform active:scale-90 hover:brightness-110"
+                  style={{ background: 'linear-gradient(180deg, #FFF3D6, #C9A24B)' }}>
+                  {playing ? (
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z" /></svg>
+                  ) : (
+                    <svg className="w-4 h-4 fill-current translate-x-[1px]" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                  )}
+                </button>
+                <button type="button" onClick={toggleMute} aria-label={muted ? 'unmute' : 'mute'}
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-[#F0DDAE] border border-white/20 bg-white/[0.06] hover:border-[#D9A441]/60 transition-all active:scale-90">
+                  {muted ? (
+                    <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5 6 9H2v6h4l5 4V5zm11.7 3.3a1 1 0 010 1.4l-2.1 2.1 2.1 2.1a1 1 0 01-1.4 1.4l-2.1-2.1-2.1 2.1a1 1 0 01-1.4-1.4l2.1-2.1-2.1-2.1a1 1 0 011.4-1.4l2.1 2.1 2.1-2.1a1 1 0 011.4 0z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5 6 9H2v6h4l5 4V5zm15.5 7a4.5 4.5 0 00-2.5-4M19 5.5a9 9 0 010 13" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </>
+          ) : (
+            <img src={sub.mediaUrl} alt={sub.caption || sub.name}
+              className="max-w-full w-auto h-auto object-contain" style={{ maxHeight: '62dvh' }} />
+          )}
+        </div>
         <div className="p-4 sm:p-5 flex items-center gap-3 flex-wrap">
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#D9A441]" dir="ltr">@{sub.name}</p>

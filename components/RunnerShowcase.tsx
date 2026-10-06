@@ -11,7 +11,7 @@ interface RunnerShowcaseProps {
 export const RunnerShowcase: React.FC<RunnerShowcaseProps> = ({ lang, no, onPlay }) => {
     const isAr = lang === 'ar';
     const t = {
-        title: isAr ? 'فيراس رنر' : 'FIRAS RUNNER',
+        title: isAr ? 'فراس رنر' : 'FIRAS RUNNER',
         play: isAr ? 'العب الآن' : 'Play now',
         free: isAr ? 'بدون تسجيل — العب فوراً' : 'No sign-up — jump straight in',
         move: isAr ? 'الأسهم / السحب للحركة' : 'Arrows / swipe to move',
@@ -40,7 +40,7 @@ export const RunnerShowcase: React.FC<RunnerShowcaseProps> = ({ lang, no, onPlay
                         >
                             <img
                                 src="/runner-banner.png"
-                                alt="Firas Runner gameplay"
+                                alt="فراس رنر"
                                 loading="lazy"
                                 className="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105"
                                 onError={(e) => { const t = e.target as HTMLImageElement; if (!t.src.includes('runner-preview')) t.src = '/runner-preview.png'; }}
@@ -71,7 +71,7 @@ export const RunnerShowcase: React.FC<RunnerShowcaseProps> = ({ lang, no, onPlay
                             <span className="eyebrow-chip" dir="ltr">MINI GAME • FIRAS ARCADE</span>
                             <h3 className="font-heading font-black text-white leading-tight text-3xl sm:text-4xl md:text-5xl mt-4" dir={isAr ? 'rtl' : 'ltr'}>
                                 {isAr ? (
-                                    <>فيراس <span className="gold-text">رنر</span></>
+                                    <>فراس <span className="gold-text">رنر</span></>
                                 ) : (
                                     <span dir="ltr" className="hero-firas">FIRAS RUNNER</span>
                                 )}

@@ -1058,7 +1058,7 @@ export default function App() {
                             </section>
                         )}
 
-                        {/* ===== FIRAS RUNNER ===== */}
+                        {/* ===== فراس رنر ===== */}
                         <RunnerShowcase lang={lang} no={streamInfo.isLive ? '07' : '06'} onPlay={openGame} />
 
                         {/* ===== GALLERY PAGE — صفحة المعرض المستقلة ===== */}
@@ -1102,9 +1102,9 @@ export default function App() {
                         />
                     )}
 
-                    {/* ===== FIRAS RUNNER — full game page overlay ===== */}
+                    {/* ===== فراس رنر — full game page overlay ===== */}
                     {view === 'game' && (
-                        <div className="fixed inset-0 z-[80] bg-black" role="dialog" aria-modal="true" aria-label="Firas Runner">
+                        <div className="fixed inset-0 z-[80] bg-black" role="dialog" aria-modal="true" aria-label="فراس رنر">
                             <Suspense fallback={
                                 <div className="w-full h-[100dvh] flex flex-col items-center justify-center gap-4 bg-black">
                                     <span className="w-14 h-14 rounded-full border-2 border-[#C9A24B]/25 border-t-[#F0DDAE] animate-spin" aria-hidden="true" />
