@@ -211,26 +211,34 @@ function getMissileHeadMaterial() {
 }
 
 // --- Particle System ---
+// Phones render a smaller pool: the pool is walked every frame, so its size is
+// the single biggest per-frame cost in the effects layer.
+const getParticleCount = () =>
+  (typeof window !== 'undefined' && window.matchMedia
+    ? (window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 900) ? 160 : PARTICLE_COUNT
+    : PARTICLE_COUNT);
+
 const ParticleSystem: React.FC = () => {
     const mesh = useRef<THREE.InstancedMesh>(null);
     const dummy = useMemo(() => new THREE.Object3D(), []);
+    const COUNT = useMemo(() => getParticleCount(), []);
     
-    const particles = useMemo(() => new Array(PARTICLE_COUNT).fill(0).map(() => ({
+    const particles = useMemo(() => new Array(COUNT).fill(0).map(() => ({
         life: 0,
         pos: new THREE.Vector3(),
         vel: new THREE.Vector3(),
         rot: new THREE.Vector3(),
         rotVel: new THREE.Vector3(),
         color: new THREE.Color()
-    })), []);
+    })), [COUNT]);
 
     useEffect(() => {
         const handleExplosion = (e: CustomEvent) => {
             const { position, color } = e.detail;
             let spawned = 0;
-            const burstAmount = 40; 
+            const burstAmount = Math.min(40, Math.floor(COUNT / 4)); 
 
-            for(let i = 0; i < PARTICLE_COUNT; i++) {
+            for(let i = 0; i < COUNT; i++) {
                 const p = particles[i];
                 if (p.life <= 0) {
                     p.life = 1.0 + Math.random() * 0.5; 
@@ -259,14 +267,16 @@ const ParticleSystem: React.FC = () => {
         
         window.addEventListener('particle-burst', handleExplosion as any);
         return () => window.removeEventListener('particle-burst', handleExplosion as any);
-    }, [particles]);
+    }, [particles, COUNT]);
 
     useFrame((state, delta) => {
         if (!mesh.current) return;
         const safeDelta = Math.min(delta, 0.1);
+        let live = 0;
 
         particles.forEach((p, i) => {
             if (p.life > 0) {
+                live++;
                 p.life -= safeDelta * 1.5;
                 p.pos.addScaledVector(p.vel, safeDelta);
                 p.vel.y -= safeDelta * 5; 
@@ -293,10 +303,12 @@ const ParticleSystem: React.FC = () => {
         
         mesh.current.instanceMatrix.needsUpdate = true;
         if (mesh.current.instanceColor) mesh.current.instanceColor.needsUpdate = true;
+        // An empty pool is fully collapsed already — skip the GPU upload.
+        if (live === 0) return;
     });
 
     return (
-        <instancedMesh ref={mesh} args={[undefined, undefined, PARTICLE_COUNT]}>
+        <instancedMesh ref={mesh} args={[undefined, undefined, COUNT]} frustumCulled={false}>
             <octahedronGeometry args={[0.5, 0]} />
             <meshBasicMaterial toneMapped={false} transparent opacity={0.9} />
         </instancedMesh>
@@ -476,7 +488,7 @@ const MAX_LIVE_OBJECTS = 260;
 
 const LETTER_SPACING_BASE = 80;
 
-export const LevelManager: React.FC<{ trackOffset?: number, playerId?: string }> = ({ trackOffset = 0, playerId }) => {
+export const LevelManager: React.FC<{ trackOffset?: number, playerId?: string, lite?: boolean }> = ({ trackOffset = 0, playerId, lite }) => {
   const status = useStore(state => state.status);
 
   const collectGem = useStore(state => state.collectGem);
@@ -502,6 +514,8 @@ export const LevelManager: React.FC<{ trackOffset?: number, playerId?: string }>
   const nextLetterDistance = useRef(LETTER_SPACING_BASE);
   const tierStartRef = useRef(0);
   const elapsedRef = useRef(0);
+  /** Smoothed speed for physics; the store only ever hears coarse steps. */
+  const speedRef = useRef(0);
   // Scratch buffers, reused every frame to keep a long run allocation-free.
   // `scratchRef` is built up during the frame, `liveRef` becomes the new
   // `objectsRef` at the end. They must stay separate arrays: the loop above
@@ -557,6 +571,7 @@ export const LevelManager: React.FC<{ trackOffset?: number, playerId?: string }>
         tierStartRef.current = useStore.getState().tierStart;
         nextLetterDistance.current = tierStartRef.current + LETTER_SPACING_BASE;
         elapsedRef.current = 0;
+        speedRef.current = useStore.getState().speed;
 
         setRenderTrigger(t => t + 1);
     } else if (status === GameStatus.GAME_OVER || status === GameStatus.VICTORY || status === GameStatus.LEVEL_COMPLETE) {
@@ -609,10 +624,21 @@ export const LevelManager: React.FC<{ trackOffset?: number, playerId?: string }>
     const desiredSpeed = getSpeedForIntensity(intensity) * (hasTimeWarp && isLocal ? 0.8 : 1);
 
     if (Math.abs(store.speed - desiredSpeed) > 0.05) {
-      const eased = store.speed + (desiredSpeed - store.speed) * Math.min(1, safeDelta * 1.5);
-      useStore.setState({ speed: eased });
+      const base = speedRef.current || store.speed;
+      const eased = base + (desiredSpeed - base) * Math.min(1, safeDelta * 1.5);
+      speedRef.current = eased;
+      // Publishing speed every frame re-rendered the whole HUD 60x/second on a
+      // phone. Quantising the write keeps the ramp visually identical while
+      // the store — and therefore React — only hears about it in real steps.
+      if (Math.abs(eased - store.speed) >= (lite ? 2 : 0.5)) {
+        useStore.setState({ speed: eased });
+      }
+    } else {
+      speedRef.current = store.speed;
     }
-    const speed = useStore.getState().speed;
+    // Physics always reads the smoothed value, so motion stays perfectly
+    // continuous even while the store is only updated in coarse steps.
+    const speed = speedRef.current;
 
     let dist = speed * safeDelta;
     if (hasTimeWarp && isLocal && status !== GameStatus.ONLINE) {

@@ -525,3 +525,38 @@
   }
   .runner-scope .cit-btn, .runner-scope .cit-stat { transition: none !important; }
 }
+
+/* ============================================================
+   MOBILE ONLY — butter-smooth touch + frame budget
+   Desktop keeps every visual; phones trade pixels for frames.
+   ============================================================ */
+@media (pointer: coarse), (max-width: 900px) {
+  /* Kill browser gestures that fight the runner: pull-to-refresh,
+     double-tap zoom, rubber-banding, long-press callouts, text select. */
+  .runner-scope {
+    touch-action: none;
+    overscroll-behavior: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .runner-scope canvas {
+    /* The canvas owns every gesture — never let the page scroll under it. */
+    touch-action: none;
+    display: block;
+  }
+  /* HUD taps must never be read as a jump. */
+  .runner-scope button,
+  .runner-scope a,
+  .runner-scope input,
+  .runner-scope select,
+  .runner-scope [data-ui] {
+    touch-action: manipulation;
+  }
+}
+
+/* Very small phones: keep the HUD from crowding the track. */
+@media (max-width: 420px) {
+  .runner-scope .cit-btn { min-height: 40px; }
+}

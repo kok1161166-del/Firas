@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import './RunnerGame.css';
@@ -15,6 +15,19 @@ interface RunnerGameProps {
     lang: Language;
     onExit: () => void;
 }
+
+/**
+ * Phones trade pixels for frames.
+ *
+ * The scene is identical, only the sampling budget changes: half-resolution
+ * buffers, no shadow pass, no post-processing chain. Every dropped pass is a
+ * full-screen GPU pass saved, which is exactly what a mid-range phone needs
+ * to keep the touch-to-lane response tight.
+ */
+const isCoarsePointer = () => {
+    if (typeof window === 'undefined' || !window.matchMedia) return false;
+    return window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 900;
+};
 
 // Arcade mode: the front page is stripped — jump straight into gameplay.
 // Any navigation toward a home-ish screen snaps back into the run.
@@ -57,26 +70,27 @@ const CameraController = () => {
     return null;
 };
 
-function Scene() {
+function Scene({ lite }: { lite: boolean }) {
     const { effectsEnabled } = useStore();
     return (
         <>
-            <Environment />
+            <Environment lite={lite} />
             <group>
                 {/* Local Player ONLY */}
                 <group userData={{ isPlayer: true }} name="PlayerGroup">
                     <Player />
                 </group>
 
-                <LevelManager />
+                <LevelManager lite={lite} />
             </group>
-            {effectsEnabled && <Effects />}
+            {effectsEnabled && !lite && <Effects />}
         </>
     );
 }
 
 export const RunnerGame: React.FC<RunnerGameProps> = ({ lang, onExit }) => {
     const isAr = lang === 'ar';
+    const [lite] = useState(isCoarsePointer);
 
     // Jump straight into gameplay — no landing / auth / menus.
     useEffect(() => {
@@ -104,13 +118,16 @@ export const RunnerGame: React.FC<RunnerGameProps> = ({ lang, onExit }) => {
     return (
         <div className="runner-scope relative w-full h-[100dvh] bg-black overflow-hidden select-none" dir="ltr">
             <Canvas
-                shadows
-                dpr={[1, 1.5]}
-                gl={{ antialias: false, stencil: false, depth: true, powerPreference: 'high-performance' }}
+                shadows={lite ? false : true}
+                dpr={lite ? 1 : [1, 1.5]}
+                gl={{ antialias: false, stencil: false, depth: true, powerPreference: 'high-performance', alpha: false }}
                 camera={{ position: [0, 5.5, 8], fov: 60 }}
+                performance={{ min: 0.5 }}
+                frameloop="always"
+                style={{ touchAction: 'none' }}
             >
                 <CameraController />
-                <Scene />
+                <Scene lite={lite} />
             </Canvas>
             <HUD />
 

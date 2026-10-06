@@ -10,9 +10,13 @@ import * as THREE from 'three';
 import { useStore } from '../../store';
 import { LANE_WIDTH, GameStatus } from '../../types';
 
-const StarField: React.FC<{ theme: any }> = ({ theme }) => {
-    const count = 3000;
+const StarField: React.FC<{ theme: any; lite?: boolean }> = ({ theme, lite }) => {
+    // Phones get a smaller sky: the scroll loop below is CPU work per star
+    // per frame, so the count is the single biggest environment cost.
+    const count = lite ? 800 : 3000;
     const meshRef = useRef<THREE.Points>(null);
+    const frame = useRef(0);
+    const smoothRef = useRef(0);
   
   const [positions, sizes] = useMemo(() => {
     const pos = new Float32Array(count * 3);
@@ -34,17 +38,27 @@ const StarField: React.FC<{ theme: any }> = ({ theme }) => {
       sz[i] = Math.random() * 0.5 + 0.1;
     }
     return [pos, sz];
-  }, []);
+  }, [count]);
 
   useFrame((state, delta) => {
     if (!meshRef.current) return;
+    // On phones the sky advances every other frame — 30 updates/s is
+    // indistinguishable from 60 on a parallax layer, and halves the cost.
+    if (lite) {
+      frame.current = (frame.current + 1) % 2;
+      if (frame.current !== 0) return;
+    }
     const posAttr = meshRef.current.geometry.attributes.position;
-    const currentSpeed = useStore.getState().speed;
-    const activeSpeed = currentSpeed > 0 ? currentSpeed : 2; 
+    // Damp toward the published speed so a quantised store value still reads
+    // as a continuous starfield.
+    const target = useStore.getState().speed;
+    smoothRef.current += (target - smoothRef.current) * Math.min(1, delta * 8);
+    const activeSpeed = smoothRef.current > 0 ? smoothRef.current : 2;
+    const step = lite ? delta * 4.0 : delta * 2.0;
 
     for (let i = 0; i < count; i++) {
         let z = posAttr.array[i * 3 + 2];
-        z += activeSpeed * delta * 2.0; 
+        z += activeSpeed * step; 
         
         if (z > 100) {
             z = -550 - Math.random() * 50; 
@@ -193,11 +207,16 @@ const RetroSun: React.FC<{ theme: any }> = ({ theme }) => {
 const MovingGrid: React.FC<{ theme: any }> = ({ theme }) => {
     const meshRef = useRef<THREE.Mesh>(null);
     const offsetRef = useRef(0);
+    const smoothRef = useRef(0);
     
     useFrame((state, delta) => {
         if (meshRef.current) {
-             const currentSpeed = useStore.getState().speed;
-             const activeSpeed = currentSpeed > 0 ? currentSpeed : 5;
+             // The store publishes speed in coarse steps (so the HUD is not
+             // re-rendered 60x/second on a phone). Parallax damps toward that
+             // target itself, so these layers keep gliding smoothly.
+             const target = useStore.getState().speed;
+             smoothRef.current += (target - smoothRef.current) * Math.min(1, delta * 8);
+             const activeSpeed = smoothRef.current > 0 ? smoothRef.current : 5;
              offsetRef.current += activeSpeed * delta;
              const cellSize = 10;
              const zPos = -100 + (offsetRef.current % cellSize);
@@ -222,7 +241,7 @@ const THEMES: Record<number, any> = {
   6: { bg: '#0B0906', fog: '#0B0906', grid: '#C46A2F', sunTop: '#FFD9A8', sunBot: '#4A2210', ambient: '#4a2210', dirLight: '#F0DDAE', pointLight: '#E8A05A', stars: '#FFD9A8' }
 };
 
-export const Environment: React.FC = () => {
+export const Environment: React.FC<{ lite?: boolean }> = ({ lite }) => {
   const mapId = useStore(state => state.mapId) || 1;
   const theme = THEMES[mapId] || THEMES[1];
 
@@ -236,9 +255,11 @@ export const Environment: React.FC = () => {
       
       <ambientLight intensity={0.35} color={theme.ambient} />
       <directionalLight position={[0, 20, -10]} intensity={1.5} color={theme.dirLight} />
-      <pointLight position={[0, 25, -150]} intensity={2} color={theme.pointLight} distance={200} decay={2} />
+      {/* One extra point light is a real cost on a phone GPU — the retro sun
+          already carries the far glow, so it is dropped in lite mode. */}
+      {!lite && <pointLight position={[0, 25, -150]} intensity={2} color={theme.pointLight} distance={200} decay={2} />}
       
-      <StarField theme={theme} />
+      <StarField theme={theme} lite={lite} />
       <Nebula theme={theme} />
       <MovingGrid theme={theme} />
       <LaneGuides theme={theme} />

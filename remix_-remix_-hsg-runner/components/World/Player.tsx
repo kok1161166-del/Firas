@@ -174,38 +174,63 @@ export const Player: React.FC<{ trackOffset?: number, playerId?: string }> = ({ 
   }, [status, laneCount, hasDoubleJump, activateImmortality]);
 
   useEffect(() => {
+    const SWIPE = 24;          // thumb-friendly: fires before the finger lifts
+    let gestureHandled = false;
+
+    const canPlay = () => {
+      const { lives, countdown, status: s } = useStore.getState();
+      if (s !== GameStatus.PLAYING && s !== GameStatus.ONLINE) return false;
+      if (s === GameStatus.ONLINE && countdown > 0) return false;
+      return lives > 0;
+    };
+
+    // A tap that starts on HUD chrome must not also fire a jump.
+    const onUi = (e: Event) => {
+      const t = e.target as HTMLElement | null;
+      if (t && t.closest && t.closest('button, a, input, select, [data-ui]')) {
+        touchStartX.current = Number.NaN;
+      }
+    };
+
     const handleTouchStart = (e: TouchEvent) => {
+      onUi(e);
+      gestureHandled = false;
       touchStartX.current = e.touches[0].clientX;
       touchStartY.current = e.touches[0].clientY;
     };
 
-    const handleTouchEnd = (e: TouchEvent) => {
-        const { lives, countdown } = useStore.getState();
-        if (status !== GameStatus.PLAYING && status !== GameStatus.ONLINE) return;
-        if (status === GameStatus.ONLINE && countdown > 0) return;
-        if (lives <= 0) return;
-        
-        const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-        const deltaY = e.changedTouches[0].clientY - touchStartY.current;
-        const maxLane = Math.floor(laneCount / 2);
-
-        // Swipe Detection
-        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 30) {
-             if (deltaX > 0) setLane(l => Math.min(l + 1, maxLane));
-             else setLane(l => Math.max(l - 1, -maxLane));
-        } else if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY < -30) {
-            triggerJump();
-        } else if (Math.abs(deltaX) < 14 && Math.abs(deltaY) < 14) {
-            // Tap jumps — the only control a thumb needs.
-            triggerJump();
-        }
+    // Lane changes resolve mid-gesture: the lane shifts while the thumb is
+    // still moving, so control feels attached to the finger instead of
+    // waiting for touchend.
+    const handleTouchMove = (e: TouchEvent) => {
+      if (gestureHandled || !canPlay()) return;
+      if (Number.isNaN(touchStartX.current)) return;
+      const dx = e.touches[0].clientX - touchStartX.current;
+      const dy = e.touches[0].clientY - touchStartY.current;
+      if (Math.abs(dx) < SWIPE || Math.abs(dx) <= Math.abs(dy)) return;
+      gestureHandled = true;
+      const maxLane = Math.floor(useStore.getState().laneCount / 2);
+      setLane((l) => (dx > 0 ? Math.min(l + 1, maxLane) : Math.max(l - 1, -maxLane)));
     };
 
-    window.addEventListener('touchstart', handleTouchStart);
-    window.addEventListener('touchend', handleTouchEnd);
+    const handleTouchEnd = (e: TouchEvent) => {
+      const startedOnUi = Number.isNaN(touchStartX.current);
+      touchStartX.current = 0;
+      touchStartY.current = 0;
+      if (startedOnUi || !canPlay()) return;
+      // A horizontal drag already changed lanes; everything else is a jump
+      // (tap or swipe up) — so the only two controls a thumb ever needs.
+      if (gestureHandled) { gestureHandled = false; return; }
+      triggerJump();
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
     return () => {
-        window.removeEventListener('touchstart', handleTouchStart);
-        window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
   }, [status, laneCount, hasDoubleJump, activateImmortality]);
 
