@@ -7,6 +7,18 @@ import { RunnerShowcase } from './components/RunnerShowcase';
 import { ChatWidget } from './components/Chat';
 import { DiscordWidget, YoutubeWidget } from './components/CommunityWidgets';
 import { SearchOverlay } from './components/SearchOverlay';
+import { GalleryTeaser } from './components/GalleryTeaser';
+import { GalleryPage } from './components/GalleryPage';
+import { GalleryAdmin } from './components/GalleryAdmin';
+
+// توجيه صفحة المعرض: #/gallery + #gallery-<id> (رابط مشاركة)
+// الإدارة صفحة سرية مستقلة على مسار /admin فقط (بدون أي زر في الموقع)
+type GalleryRoute = 'home' | 'gallery';
+const galleryRouteFromHash = (): GalleryRoute => {
+    const h = window.location.hash;
+    if (h === '#/gallery' || h.startsWith('#/gallery?') || h.startsWith('#gallery-')) return 'gallery';
+    return 'home';
+};
 
 // Heavy below-fold / on-demand chunks — split out of the first paint
 const StatsSection = lazy(() => import('./components/StatsSection').then(m => ({ default: m.StatsSection })));
@@ -737,6 +749,27 @@ const SupportArena: React.FC<{ lang: Language; supporters: Supporter[] }> = ({ l
 export default function App() {
     const [theaterWide, setTheaterWide] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
+    const [galleryRoute, setGalleryRoute] = useState<GalleryRoute>(() => galleryRouteFromHash());
+    useEffect(() => {
+        const onHash = () => setGalleryRoute(galleryRouteFromHash());
+        window.addEventListener('hashchange', onHash);
+        return () => window.removeEventListener('hashchange', onHash);
+    }, []);
+    useEffect(() => {
+        document.body.style.overflow = galleryRoute !== 'home' ? 'hidden' : '';
+    }, [galleryRoute]);
+    // مسار الإدارة السري — لا يظهر إلا بكتابة /admin يدوياً
+    const [isAdminPath] = useState(() => window.location.pathname === '/admin');
+    useEffect(() => {
+        if (!isAdminPath) return;
+        document.title = 'Console';
+        const m = document.createElement('meta');
+        m.name = 'robots';
+        m.content = 'noindex, nofollow, noarchive';
+        document.head.appendChild(m);
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = ''; };
+    }, [isAdminPath]);
     const [lang, setLang] = useState<Language>('ar');
     const [view, setView] = useState<'home' | 'game'>('home');
     const openGame = () => setView('game');
@@ -841,6 +874,16 @@ export default function App() {
         document.documentElement.lang = lang;
         document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     }, [lang]);
+
+    // صفحة الإدارة السرية — تُعرض وحدها بدون أي محتوى من الموقع
+    if (isAdminPath) {
+        return (
+            <div className={`grain relative min-h-screen w-full overflow-hidden bg-[#0B0906] ${lang === 'ar' ? 'font-arabic' : 'font-sans'}`}>
+                <ArenaBackground />
+                <GalleryAdmin lang={lang} onClose={() => { window.location.href = '/'; }} />
+            </div>
+        );
+    }
 
     return (
         <div className={`grain relative min-h-screen w-full overflow-x-hidden ${lang === 'ar' ? 'font-arabic' : 'font-sans'}`}>
@@ -981,9 +1024,15 @@ export default function App() {
                             <Reveal delay={80}><SupportArena lang={lang} supporters={[]} /></Reveal>
                         </section>
 
+                        {/* ===== GALLERY TEASER — بوابة صفحة المعرض المستقلة ===== */}
+                        <section id="gallery" className="pt-6 md:pt-8 scroll-mt-28">
+                            <Reveal><SectionHeading no={streamInfo.isLive ? '05' : '04'} title={lang === 'ar' ? 'معرض الصور' : 'Gallery Wall'} sub={lang === 'ar' ? 'إبداعات المتابعين — صور وفيديو.' : 'Community edits — photos & videos.'} en="GALLERY WALL" /></Reveal>
+                            <Reveal delay={80}><GalleryTeaser lang={lang} onOpen={() => { window.location.hash = '#/gallery'; }} /></Reveal>
+                        </section>
+
                         {/* ===== MODERATORS ===== */}
                         <section id="moderators" className="pt-6 md:pt-8 scroll-mt-28">
-                            <Reveal><SectionHeading no={streamInfo.isLive ? '05' : '04'} title={t.modsTitle} en="MODERATORS" /></Reveal>
+                            <Reveal><SectionHeading no={streamInfo.isLive ? '06' : '05'} title={t.modsTitle} en="MODERATORS" /></Reveal>
                             <Reveal delay={80}><Suspense fallback={<div className="w-full h-64 rounded-[26px] border border-white/10 bg-white/[0.02] animate-pulse" />}><ModeratorsSection lang={lang} /></Suspense></Reveal>
                         </section>
 
@@ -1000,7 +1049,15 @@ export default function App() {
                         )}
 
                         {/* ===== FIRAS RUNNER ===== */}
-                        <RunnerShowcase lang={lang} no={streamInfo.isLive ? '06' : '05'} onPlay={openGame} />
+                        <RunnerShowcase lang={lang} no={streamInfo.isLive ? '07' : '06'} onPlay={openGame} />
+
+                        {/* ===== GALLERY PAGE — صفحة المعرض المستقلة ===== */}
+                        {galleryRoute === 'gallery' && (
+                            <GalleryPage
+                                lang={lang}
+                                onClose={() => { window.location.hash = '#top'; }}
+                            />
+                        )}
 
                         {/* ===== FOOTER ===== */}
                         <footer className="mt-10 md:mt-14 rounded-[28px] border border-white/10 bg-black/60 backdrop-blur-xl overflow-hidden relative">
