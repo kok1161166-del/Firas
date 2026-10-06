@@ -11,10 +11,12 @@ import { GalleryTeaser } from './components/GalleryTeaser';
 import { GalleryPage } from './components/GalleryPage';
 import { GalleryAdmin } from './components/GalleryAdmin';
 
-// توجيه صفحة المعرض: #/gallery + #gallery-<id> (رابط مشاركة)
+// توجيه صفحة المعرض: مسار /gallery + توافق #/gallery و #gallery-<id> (روابط المشاركة)
 // الإدارة صفحة سرية مستقلة على مسار /admin فقط (بدون أي زر في الموقع)
 type GalleryRoute = 'home' | 'gallery';
-const galleryRouteFromHash = (): GalleryRoute => {
+const galleryRouteFromLocation = (): GalleryRoute => {
+    if (typeof window === 'undefined') return 'home';
+    if (window.location.pathname.replace(/\/$/, '') === '/gallery') return 'gallery';
     const h = window.location.hash;
     if (h === '#/gallery' || h.startsWith('#/gallery?') || h.startsWith('#gallery-')) return 'gallery';
     return 'home';
@@ -749,11 +751,15 @@ const SupportArena: React.FC<{ lang: Language; supporters: Supporter[] }> = ({ l
 export default function App() {
     const [theaterWide, setTheaterWide] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
-    const [galleryRoute, setGalleryRoute] = useState<GalleryRoute>(() => galleryRouteFromHash());
+    const [galleryRoute, setGalleryRoute] = useState<GalleryRoute>(() => galleryRouteFromLocation());
     useEffect(() => {
-        const onHash = () => setGalleryRoute(galleryRouteFromHash());
-        window.addEventListener('hashchange', onHash);
-        return () => window.removeEventListener('hashchange', onHash);
+        const onRoute = () => setGalleryRoute(galleryRouteFromLocation());
+        window.addEventListener('hashchange', onRoute);
+        window.addEventListener('popstate', onRoute);
+        return () => {
+            window.removeEventListener('hashchange', onRoute);
+            window.removeEventListener('popstate', onRoute);
+        };
     }, []);
     useEffect(() => {
         document.body.style.overflow = galleryRoute !== 'home' ? 'hidden' : '';
@@ -889,7 +895,7 @@ export default function App() {
         <div className={`grain relative min-h-screen w-full overflow-x-hidden ${lang === 'ar' ? 'font-arabic' : 'font-sans'}`}>
                 <>
                     <ArenaBackground />
-                    <div className="relative z-20">
+                    <div className={`relative ${galleryRoute === 'gallery' ? 'z-[90]' : 'z-20'}`}>
                         <SiteHeader
                             lang={lang}
                             onToggleLang={() => setLang(p => p === 'en' ? 'ar' : 'en')}
@@ -899,6 +905,10 @@ export default function App() {
                             viewers={streamInfo.viewers}
                             statusText={streamInfo.isLive ? t.status : t.statusOffline}
                             onOpenSearch={() => setSearchOpen(true)}
+                            onNavigate={() => {
+                                // عند التنقل من صفحة المعرض: أغلقها أولاً ليعمل السكرول
+                                if (galleryRoute !== 'home') setGalleryRoute('home');
+                            }}
                         />
                     </div>
                     <div className="relative z-10 w-full max-w-[1200px] mx-auto px-3 sm:px-4 md:px-8 pb-10 overflow-clip">
@@ -1027,7 +1037,7 @@ export default function App() {
                         {/* ===== GALLERY TEASER — بوابة صفحة المعرض المستقلة ===== */}
                         <section id="gallery" className="pt-6 md:pt-8 scroll-mt-28">
                             <Reveal><SectionHeading no={streamInfo.isLive ? '05' : '04'} title={lang === 'ar' ? 'معرض الصور' : 'Gallery Wall'} sub={lang === 'ar' ? 'إبداعات المتابعين — صور وفيديو.' : 'Community edits — photos & videos.'} en="GALLERY WALL" /></Reveal>
-                            <Reveal delay={80}><GalleryTeaser lang={lang} onOpen={() => { window.location.hash = '#/gallery'; }} /></Reveal>
+                            <Reveal delay={80}><GalleryTeaser lang={lang} onOpen={() => { window.location.href = '/gallery'; }} /></Reveal>
                         </section>
 
                         {/* ===== MODERATORS ===== */}
@@ -1055,7 +1065,7 @@ export default function App() {
                         {galleryRoute === 'gallery' && (
                             <GalleryPage
                                 lang={lang}
-                                onClose={() => { window.location.hash = '#top'; }}
+                                onClose={() => { window.location.href = '/'; }}
                             />
                         )}
 

@@ -147,7 +147,7 @@ export async function toggleLike(item: WallItem, liked: boolean) {
 }
 
 export async function shareItem(item: WallItem) {
-  const url = `${location.origin}${location.pathname}#gallery-${item.id}`;
+  const url = `${location.origin}/gallery#gallery-${item.id}`;
   const text = item.caption ? `${item.name}: ${item.caption}` : `شاهد إبداع ${item.name} في معرض فراس`;
   try {
     if (navigator.share) await navigator.share({ title: 'معرض فراس', text, url });

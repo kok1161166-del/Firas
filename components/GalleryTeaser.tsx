@@ -21,21 +21,32 @@ export const GalleryTeaser: React.FC<{ lang: Language; onOpen: () => void }> = (
 
   return (
     <div className="relative overflow-hidden rounded-[28px] border border-[#C9A24B]/25 group">
-      {/* البانر */}
+      {/* البانر الجديد مع بديل تلقائي */}
       <div className="absolute inset-0" aria-hidden="true"
         style={{ backgroundImage: "url('/bg-content.png')", backgroundSize: 'cover', backgroundPosition: 'center 30%' }} />
+      <img src="/34956789403.png" alt="" aria-hidden="true" loading="lazy"
+        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+        className="absolute inset-0 w-full h-full object-cover" />
       <div className="absolute inset-0" aria-hidden="true"
         style={{ background: 'linear-gradient(to left, rgba(11,9,6,0.92) 20%, rgba(11,9,6,0.55) 60%, rgba(11,9,6,0.75))' }} />
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-transparent via-[#C9A24B] to-transparent" aria-hidden="true" />
       <div className="absolute -bottom-20 -start-20 w-72 h-72 rounded-full bg-[#C9A24B]/10 blur-[90px] pointer-events-none" aria-hidden="true" />
 
       <div className="relative p-6 sm:p-10 flex flex-col md:flex-row items-center gap-6 md:gap-10">
-        {/* اللوجو */}
+        {/* اللوجو — دائري بإطار بني مطور */}
         <div className="relative shrink-0">
           <div className="absolute inset-0 rounded-full bg-[#C9A24B]/20 blur-2xl" aria-hidden="true" />
-          <img src="/firas-mark.webp" alt="Firas logo"
-            className="relative w-24 h-24 sm:w-32 sm:h-32 object-contain animate-float-soft transition-transform duration-500 group-hover:scale-105"
-            style={{ filter: 'drop-shadow(0 8px 30px rgba(201,162,75,0.55))' }} loading="lazy" />
+          <span className="relative block w-28 h-28 sm:w-36 sm:h-36 rounded-full transition-transform duration-500 group-hover:scale-105" aria-hidden="true">
+            <span className="absolute inset-0 rounded-full"
+              style={{ background: 'conic-gradient(from 0deg, #8A6A3A 0%, #D9C08A 18%, #8A6A3A 36%, #5C4525 52%, #D9C08A 68%, #8A6A3A 84%, #8A6A3A 100%)' }} />
+            <span className="absolute inset-[3px] rounded-full bg-[#0d0a06]" />
+            <span className="absolute inset-[3px] rounded-full border border-[#D9C08A]/50" />
+            <span className="absolute inset-[7px] rounded-full overflow-hidden bg-black border border-[#8A6A3A]/60 shadow-[inset_0_0_20px_rgba(0,0,0,0.8)]">
+            <img src="/firas-mark.webp" alt="Firas logo"
+              className="absolute inset-0 w-full h-full object-cover scale-110"
+                style={{ filter: 'drop-shadow(0 6px 22px rgba(201,162,75,0.65))' }} loading="lazy" />
+            </span>
+          </span>
         </div>
 
         {/* النص */}

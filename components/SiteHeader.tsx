@@ -10,6 +10,7 @@ interface SiteHeaderProps {
     viewers: number;
     statusText: string;
     onOpenSearch: () => void;
+    onNavigate?: (id: string) => void;
 }
 
 export const NAV_DEFS = [
@@ -60,7 +61,7 @@ const ArrowIcon = () => (
 );
 
 export const SiteHeader: React.FC<SiteHeaderProps> = ({
-    lang, onToggleLang, isLive, viewers, statusText, onOpenSearch,
+    lang, onToggleLang, isLive, viewers, statusText, onOpenSearch, onNavigate,
 }) => {
     const [compact, setCompact] = useState(false);
     const [hash, setHash] = useState('');
@@ -124,6 +125,14 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
     };
 
     const goTo = (id: string) => {
+        // مسار مستقل (مثل /gallery): تنقل كامل
+        if (id.startsWith('/')) {
+            onNavigate?.(id);
+            window.location.href = id;
+            return;
+        }
+        // إغلاق أي صفحة مفتوحة (المعرض) قبل السكرول حتى يعمل التنقل منها
+        onNavigate?.(id);
         const target = resolveTarget(id);
         if (target) {
             target.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -133,6 +142,13 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
         (document.activeElement as HTMLElement | null)?.blur?.();
     };
 
+    const isActiveLink = (href: string) => {
+        if (href.startsWith('#/')) {
+            return activeHash === href || window.location.pathname.replace(/\/$/, '') === href.slice(1);
+        }
+        return activeHash === href;
+    };
+
     const renderLinks = (items: typeof NAV_DEFS) => (
         <>
             {items.map((item) => (
@@ -140,8 +156,8 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                     key={item.href}
                     href={item.href}
                     onClick={(event) => { event.preventDefault(); goTo(item.id); }}
-                    aria-current={activeHash === item.href ? 'page' : undefined}
-                    className={`forge-link${activeHash === item.href ? ' active' : ''}`}
+                    aria-current={isActiveLink(item.href) ? 'page' : undefined}
+                    className={`forge-link${isActiveLink(item.href) ? ' active' : ''}`}
                 >
                     {item.icon}
                     <span>{isAr ? item.ar : item.en}</span>

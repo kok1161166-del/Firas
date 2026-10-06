@@ -361,6 +361,7 @@ function UploadBox({ ar, onDone }: { ar: boolean; onDone: () => void }) {
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
+  const [done, setDone] = useState<null | { kind: 'image' | 'video' }>(null);
 
   const pick = (f: File | null) => {
     setFile(f);
@@ -369,18 +370,26 @@ function UploadBox({ ar, onDone }: { ar: boolean; onDone: () => void }) {
     setPreview(f ? URL.createObjectURL(f) : null);
   };
 
+  const resetAll = () => {
+    setName('');
+    setCaption('');
+    pick(null);
+    setDone(null);
+  };
+
   const submit = async () => {
     if (busy || !file) return;
     if (name.trim().length < 2) {
       setMsg({ ok: false, t: ar ? 'اكتب اسمك (حرفان على الأقل)' : 'Enter your name (2+ chars)' });
       return;
     }
+    const kind: 'image' | 'video' = file.type.startsWith('video/') ? 'video' : 'image';
     setBusy(true);
     setMsg(null);
     try {
       const j = await uploadToWall(file, name.trim(), caption.trim());
       if (j?.ok) {
-        setMsg({ ok: true, t: j.message || (ar ? 'تم رفع صورتك بنجاح وهي الآن بانتظار موافقة الإدارة' : 'Uploaded! Pending admin approval') });
+        setDone({ kind });
         setName('');
         setCaption('');
         pick(null);
@@ -408,6 +417,47 @@ function UploadBox({ ar, onDone }: { ar: boolean; onDone: () => void }) {
       setBusy(false);
     }
   };
+
+  // ===== واجهة النجاح: تم الرفع للإدارة =====
+  if (done) {
+    return (
+      <div className="relative rounded-[26px] border border-emerald-400/30 overflow-hidden up-pop"
+        style={{ background: 'linear-gradient(165deg, rgba(20,40,28,0.95), rgba(10,14,8,0.95))' }}>
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-transparent via-emerald-300/80 to-transparent" />
+        <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full bg-emerald-400/15 blur-[90px] pointer-events-none" aria-hidden="true" />
+        <div className="relative p-6 sm:p-8 text-center">
+          <span className="relative mx-auto w-20 h-20 rounded-full flex items-center justify-center" aria-hidden="true">
+            <span className="absolute inset-0 rounded-full border-2 border-emerald-300/60 up-ring" />
+            <span className="absolute inset-0 rounded-full bg-emerald-400/15 blur-md" />
+            <svg className="relative w-9 h-9 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </span>
+          <h3 className="mt-4 text-xl sm:text-2xl font-black text-white">
+            {ar ? 'تم الرفع للإدارة ✅' : 'Sent to moderation ✅'}
+          </h3>
+          <p className="mt-2 text-[13.5px] text-white/65 font-medium leading-relaxed max-w-md mx-auto">
+            {ar
+              ? (done.kind === 'video'
+                ? 'الآن الإدارة تتحقق من الفيديو حقك — وبعد الموافقة يظهر في الجدار للجميع'
+                : 'الآن الإدارة تتحقق من الصورة حقتك — وبعد الموافقة تظهر في الجدار للجميع')
+              : 'The team is now reviewing your upload — it will shine on the wall after approval'}
+          </p>
+          <div className="mt-5 flex items-center justify-center gap-2.5 flex-wrap">
+            <button type="button" onClick={resetAll}
+              className="min-h-[48px] px-6 rounded-2xl font-black text-black text-sm transition-transform active:scale-[0.98] hover:brightness-110"
+              style={{ background: 'linear-gradient(180deg, #FFF3D6 0%, #E8D5A8 30%, #C9A24B 70%, #8A6A3A 100%)' }}>
+              {ar ? 'رفع آخر' : 'Upload another'}
+            </button>
+            <a href="#wall"
+              className="min-h-[48px] px-6 rounded-2xl font-black text-[#F0DDAE] text-sm inline-flex items-center border border-[#C9A24B]/40 bg-black/40 hover:bg-[#C9A24B]/10 transition-colors">
+              {ar ? 'تصفح الجدار' : 'Browse wall'}
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative rounded-[26px] border border-[#C9A24B]/25 overflow-hidden"
@@ -537,8 +587,8 @@ export const GallerySection: React.FC<{ lang: Language }> = ({ lang }) => {
 
   const sortBtn = (v: typeof sort, label: string) => (
     <button key={v} type="button" onClick={() => setSort(v)}
-      className={`h-10 px-4 rounded-full text-[12px] font-black tracking-wide border transition-all active:scale-95 ${sort === v ? 'text-black border-transparent' : 'text-white/60 border-white/12 hover:text-white'}`}
-      style={sort === v ? { background: 'linear-gradient(180deg, #FFF3D6, #C9A24B)' } : { background: 'rgba(255,255,255,0.04)' }}>
+      className={`h-10 px-4 rounded-full text-[12px] font-black tracking-wide transition-all active:scale-95 ${sort === v ? 'text-black shadow-[0_8px_24px_rgba(201,162,75,0.35)]' : 'text-white/55 hover:text-[#F0DDAE] hover:bg-white/[0.05]'}`}
+      style={sort === v ? { background: 'linear-gradient(180deg, #FFF3D6, #C9A24B)' } : { background: 'transparent' }}>
       {label}
     </button>
   );
@@ -548,34 +598,60 @@ export const GallerySection: React.FC<{ lang: Language }> = ({ lang }) => {
       <style>{`
         .wall-enter{opacity:0;transform:translateY(30px);animation:wallIn 0.55s cubic-bezier(0.22,1,0.36,1) forwards}
         @keyframes wallIn{to{opacity:1;transform:translateY(0)}}
-        .gallery-hero{background-image:url('/bg-content.png');background-size:cover;background-position:center 30%}
+        .gallery-hero-fallback{background-image:url('/bg-content.png');background-size:cover;background-position:center 30%}
+        @keyframes upPop{0%{opacity:0;transform:scale(0.92) translateY(14px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+        .up-pop{animation:upPop 0.55s cubic-bezier(0.22,1,0.36,1) both}
+        @keyframes upRing{0%{transform:scale(0.7);opacity:0}35%{opacity:1}100%{transform:scale(1.35);opacity:0}}
+        .up-ring{animation:upRing 1.8s ease-out infinite}
+        @keyframes logoHalo{to{transform:rotate(360deg)}}
+        .logo-halo{animation:logoHalo 18s linear infinite}
       `}</style>
 
-      {/* ===== HERO — البانر + اللوجو ===== */}
+      {/* ===== HERO — البانر الجديد + اللوجو الدائري المؤطر (المحتوى داخل الدائرة) ===== */}
       <div className="relative overflow-hidden rounded-[28px] border border-[#C9A24B]/25">
-        <div className="absolute inset-0 gallery-hero" aria-hidden="true" />
+        <div className="absolute inset-0 gallery-hero-fallback" aria-hidden="true" />
+        <img src="/34956789403.png" alt="" aria-hidden="true" loading="eager" fetchPriority="high"
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ objectPosition: 'center 42%', filter: 'brightness(1.07) saturate(1.06)' }} />
         <div className="absolute inset-0" aria-hidden="true"
-          style={{ background: 'linear-gradient(to bottom, rgba(11,9,6,0.55), rgba(11,9,6,0.72) 55%, rgba(11,9,6,0.94))' }} />
+          style={{ background: 'radial-gradient(ellipse 52% 66% at 50% 44%, transparent 38%, rgba(11,9,6,0.22) 70%, rgba(11,9,6,0.58) 100%)' }} />
+        <div className="absolute inset-x-0 bottom-0 h-40 pointer-events-none" aria-hidden="true"
+          style={{ background: 'linear-gradient(to top, rgba(11,9,6,0.75), transparent)' }} />
         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-transparent via-[#C9A24B] to-transparent" aria-hidden="true" />
-        <div className="relative p-6 sm:p-10 text-center">
-          <img src="/firas-mark.webp" alt="Firas logo"
-            className="mx-auto w-20 h-20 sm:w-24 sm:h-24 object-contain animate-float-soft"
-            style={{ filter: 'drop-shadow(0 6px 26px rgba(201,162,75,0.5))' }} />
-          <p className="mt-3 text-[10px] font-black tracking-[0.35em] text-[#D9C08A]/80 uppercase" dir="ltr">FIRAS • EDITS WALL</p>
-          <h2 className="mt-1 text-3xl sm:text-5xl font-black text-white leading-tight">
+        <div className="relative min-h-[430px] sm:min-h-[480px] flex flex-col items-center justify-center text-center p-6 sm:p-10 pb-16 sm:pb-20">
+          <span className="relative block w-20 h-20 sm:w-24 sm:h-24" aria-hidden="true">
+            <span className="logo-halo absolute -inset-2 rounded-full pointer-events-none"
+              style={{
+                background: 'conic-gradient(from 0deg, transparent 0 55%, rgba(217,192,138,0.95) 72%, rgba(138,106,58,0.9) 82%, rgba(217,192,138,0.15) 90%, transparent 100%)',
+                WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 3px))',
+                mask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 3px))',
+              }} />
+            <span className="absolute inset-0 rounded-full border-2 border-[#8A6A3A]/80 shadow-[0_0_30px_rgba(201,162,75,0.45),inset_0_0_18px_rgba(0,0,0,0.7)]" />
+            <span className="absolute inset-[5px] rounded-full overflow-hidden bg-black/60 backdrop-blur-[1px] border border-[#D9C08A]/30">
+              <img src="/firas-mark.webp" alt="Firas logo"
+                className="absolute inset-0 w-full h-full object-cover scale-110"
+                style={{ filter: 'drop-shadow(0 4px 18px rgba(201,162,75,0.65))' }} />
+            </span>
+          </span>
+          <p className="mt-4 text-[10px] font-black tracking-[0.35em] text-[#D9C08A]/90 uppercase" dir="ltr"
+            style={{ textShadow: '0 2px 12px rgba(0,0,0,0.9)' }}>FIRAS • EDITS WALL</p>
+          <h2 className="mt-1 text-2xl sm:text-4xl font-black text-white leading-tight"
+            style={{ textShadow: '0 3px 24px rgba(0,0,0,0.9)' }}>
             {ar ? 'معرض الصور والفيديو' : 'Photo & Video Wall'}
           </h2>
-          <p className="mt-2 text-[13px] sm:text-sm text-white/60 font-medium max-w-xl mx-auto">
+          <p className="mt-1.5 text-xs sm:text-[13px] text-white/70 font-medium max-w-md mx-auto"
+            style={{ textShadow: '0 2px 12px rgba(0,0,0,0.9)' }}>
             {ar
               ? 'جدار إبداعات المتابعين — ارفع صورتك أو الفيديو، وبعد موافقة الإدارة يظهر هنا للجميع'
               : 'Community edits wall — upload your photo or video, it appears here after approval'}
           </p>
-          <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-2 text-[11px] font-black px-4 py-2 rounded-full bg-black/50 border border-[#C9A24B]/40 text-[#F0DDAE]">
+          <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-black px-3.5 py-1.5 rounded-full bg-black/55 backdrop-blur border border-[#C9A24B]/40 text-[#F0DDAE]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#C9A24B] animate-pulse" />
               <span dir="ltr">{items.length}</span> {ar ? 'منشور معتمد' : 'approved'}
             </span>
-            <span className="inline-flex items-center gap-2 text-[11px] font-black px-4 py-2 rounded-full bg-black/50 border border-white/10 text-white/60">
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-black px-3.5 py-1.5 rounded-full bg-black/55 backdrop-blur border border-white/10 text-white/60">
               {ar ? 'تحديث تلقائي كل 45 ثانية' : 'Auto-refresh 45s'}
             </span>
           </div>
@@ -614,17 +690,18 @@ export const GallerySection: React.FC<{ lang: Language }> = ({ lang }) => {
         {sortBtn('newest', ar ? 'الأحدث' : 'Newest')}
         {sortBtn('top', ar ? 'الأكثر إعجاباً' : 'Most liked')}
         <button type="button" onClick={() => setVideosOnly((v) => !v)}
-          className={`h-10 px-4 rounded-full text-[12px] font-black border transition-all active:scale-95 ${videosOnly ? 'text-black border-transparent' : 'text-white/60 border-white/12'}`}
-          style={videosOnly ? { background: 'linear-gradient(180deg, #FFF3D6, #C9A24B)' } : { background: 'rgba(255,255,255,0.04)' }}>
+          className={`h-10 px-4 rounded-full text-[12px] font-black transition-all active:scale-95 ${videosOnly ? 'text-black shadow-[0_8px_24px_rgba(201,162,75,0.35)]' : 'text-white/55 hover:text-[#F0DDAE] hover:bg-white/[0.05]'}`}
+          style={videosOnly ? { background: 'linear-gradient(180deg, #FFF3D6, #C9A24B)' } : { background: 'transparent' }}>
           {ar ? 'فيديو فقط' : 'Videos only'}
         </button>
-        <button type="button" onClick={load} className="ms-auto h-10 px-4 rounded-full text-[12px] font-black border border-white/12 text-white/60 hover:text-white transition-all">
+        <button type="button" onClick={load} className="ms-auto h-10 px-4 rounded-full text-[12px] font-black text-white/55 hover:text-[#F0DDAE] hover:bg-white/[0.05] transition-all flex items-center gap-1.5">
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
           {ar ? 'تحديث' : 'Refresh'}
         </button>
       </div>
 
       {/* ===== Wall (max-w-6xl + flex starters) ===== */}
-      <div className="max-w-6xl mx-auto mt-3">
+      <div id="wall" className="max-w-6xl mx-auto mt-3 scroll-mt-24">
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {Array.from({ length: 6 }).map((_, i) => (
