@@ -297,6 +297,8 @@ const LoseScreen: React.FC = () => {
         tiers: accepted.tiers,
         receipt: receipt?.receipt ?? '',
         verified: !!receipt?.clean,
+        // An unanswered endpoint is an offline run, not a rejected claim.
+        reached: receipt ? receipt.reached !== false : false,
         best: Math.max(receipt?.best ?? 0, accepted.score),
       });
       const outcome = await shareScoreCard(blob, accepted.score);

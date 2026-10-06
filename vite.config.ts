@@ -558,6 +558,121 @@ export default defineConfig(({ mode }) => {
               }
               return;
             }
+            // ---- /api/runner-score : مرآة لـ api/runner-score.ts (نفس الفيزياء والإيصال) ----
+            if (req.url && (req.url === '/api/runner-score' || req.url.startsWith('/api/runner-score?'))) {
+              const RS_START = 34;
+              const RS_MAX = 400;
+              const RS_RAMP = 0.0035;
+              const LS_BASE = 80;
+              const LS_FLOOR = 42;
+              const MAX_TIER = 41;
+              const msLen = (lvl: number) => 1100 + Math.min(Math.max(1, Math.floor(lvl)) - 1, MAX_TIER) * 220;
+              const maxHonest = (secs: number) => {
+                const t = Math.max(0, secs);
+                if (t <= 0) return 0;
+                const r = RS_RAMP;
+                const d1 = (RS_MAX - RS_START) / r;
+                const t1 = Math.log(RS_MAX / RS_START) / r;
+                if (t <= t1) return (RS_START / r) * (Math.exp(r * t) - 1);
+                return d1 + (t - t1) * RS_MAX;
+              };
+              try {
+                for (const [k, v] of Object.entries(projectFileEnv)) {
+                  if (typeof v === 'string' && v) process.env[k] = v;
+                }
+                const SBU = (process.env.SUPABASE_URL || '').trim().replace(/\/$/, '');
+                const SBK = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || '').trim();
+                const sH = { apikey: SBK, Authorization: `Bearer ${SBK}`, 'Content-Type': 'application/json' };
+                const secret = process.env.RUNNER_SIGNING_SECRET || 'firas-runner-citadel-v1';
+                const sendJson = (st: number, o: unknown) => {
+                  res.statusCode = st;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.setHeader('Cache-Control', 'no-store');
+                  res.setHeader('Access-Control-Allow-Origin', '*');
+                  res.end(JSON.stringify(o));
+                };
+                if (req.method === 'OPTIONS') { res.statusCode = 204; res.end(); return; }
+
+                if (req.method === 'GET') {
+                  const u = new URL(req.url, 'http://localhost');
+                  const device = u.searchParams.get('device') || '';
+                  let best: number | null = null;
+                  if (SBU && SBK && device) {
+                    try {
+                      const r = await fetch(`${SBU}/rest/v1/runner_scores?device_id=eq.${encodeURIComponent(device)}&select=score,distance&order=score.desc&limit=1`, { headers: sH });
+                      if (r.ok) {
+                        const rows = await r.json().catch(() => []);
+                        if (Array.isArray(rows) && rows[0]) best = Number(rows[0].score) || 0;
+                      }
+                    } catch { /* optional */ }
+                  }
+                  sendJson(200, { ok: true, best: best === null ? null : { score: best, distance: 0 } });
+                  return;
+                }
+                if (req.method !== 'POST') { sendJson(405, { ok: false, error: 'method_not_allowed' }); return; }
+
+                const chunks: Buffer[] = [];
+                for await (const c of req) chunks.push(c as Buffer);
+                const body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+                const device = String(body?.device || '').slice(0, 64);
+                if (!device) { sendJson(400, { ok: false, error: 'missing_device' }); return; }
+
+                const num = (v: unknown, f = 0) => { const n = Number(v); return Number.isFinite(n) && n > 0 ? n : f; };
+                const tiers = Math.min(4000, Math.max(1, Math.floor(num(body?.tiers, 1))));
+                const seconds = Math.min(86400, num(body?.seconds, 0));
+                const claimedDistance = Math.min(1e9, Math.floor(num(body?.distance, 0)));
+                const claimedGems = Math.min(1e7, Math.floor(num(body?.gems, 0)));
+                const claimedLetters = Math.min(1e7, Math.floor(num(body?.letters, 0)));
+                const claimedScore = Math.min(1e12, Math.floor(num(body?.score, 0)));
+
+                const maxDistance = maxHonest(seconds) * 1.12;
+                const maxTiers = Math.max(1, Math.floor((maxDistance + 1) / msLen(1)));
+                const allowedTiers = Math.min(tiers, maxTiers);
+                const allowedDistance = Math.min(claimedDistance, Math.floor(maxDistance));
+                const maxGems = allowedDistance > 0 ? Math.floor((allowedDistance / 6) * 0.94) : 0;
+                const allowedGems = Math.min(claimedGems, maxGems);
+                const spacing = Math.max(LS_FLOOR, LS_BASE - allowedDistance * 0.008);
+                const maxLetters = allowedDistance > 0 ? Math.floor(allowedDistance / spacing) + 8 : 0;
+                const allowedLetters = Math.min(claimedLetters, maxLetters);
+                const allowedScore = Math.min(claimedScore, allowedGems * 100 + allowedLetters * 1000);
+
+                const flags: string[] = [];
+                if (allowedScore !== claimedScore) flags.push('score');
+                if (allowedDistance !== claimedDistance) flags.push('distance');
+                if (allowedGems !== claimedGems) flags.push('gems');
+                if (allowedLetters !== claimedLetters) flags.push('letters');
+                if (allowedTiers !== tiers) flags.push('tiers');
+
+                const accepted = {
+                  score: allowedScore, distance: allowedDistance, gems: allowedGems,
+                  letters: allowedLetters, tiers: allowedTiers, seconds: Math.round(seconds),
+                };
+                const payload = `FIRAS-RUNNER-V1|score=${accepted.score}|dist=${accepted.distance}|gems=${accepted.gems}|letters=${accepted.letters}|tiers=${accepted.tiers}|secs=${accepted.seconds}`;
+                const receipt = createHmac('sha256', secret).update(payload).digest('hex').slice(0, 24).toUpperCase();
+
+                let stored: number | null = null;
+                if (SBU && SBK) {
+                  try {
+                    const r = await fetch(`${SBU}/rest/v1/runner_scores?on_conflict=device_id`, {
+                      method: 'POST',
+                      headers: { ...sH, Prefer: 'resolution=merge-duplicates,return=representation' },
+                      body: JSON.stringify([{ device_id: device, ...accepted, receipt, verified: flags.length === 0, created_at: new Date().toISOString() }]),
+                    });
+                    if (r.ok) { const rows = await r.json().catch(() => []); stored = Array.isArray(rows) && rows[0] ? Number(rows[0].score) || null : null; }
+                  } catch { /* optional */ }
+                }
+
+                sendJson(200, {
+                  ok: true, accepted, clean: flags.length === 0, flags, receipt,
+                  best: stored !== null ? stored : accepted.score,
+                });
+              } catch (err: any) {
+                res.statusCode = 500;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ ok: false, error: 'local_runner_score_failed', details: String(err?.message || err).slice(0, 160) }));
+              }
+              return;
+            }
             // ---- /api/groq : نفس سلوك سيرفر Vercel لكن محلياً (npm run dev) ----
             if (req.url && (req.url === '/api/groq' || req.url.startsWith('/api/groq?'))) {
               if (req.method === 'OPTIONS') {

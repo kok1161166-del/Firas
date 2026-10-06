@@ -17,7 +17,10 @@ export interface ScoreCardData {
   letters: number;
   tiers: number;
   receipt: string;
+  /** True when the server accepted the run exactly as claimed. */
   verified: boolean;
+  /** False when the authority endpoint could not be reached at all. */
+  reached?: boolean;
   best: number;
 }
 
@@ -353,28 +356,34 @@ export const buildScoreCard = async (data: ScoreCardData): Promise<Blob> => {
   /* ------------------------------- verdict -------------------------------- */
   const badgeY = stripY + stripH + 78;
   const verified = data.verified;
+  // `reached === false` means the authority endpoint never answered — that is
+  // an offline run, not a disputed one, so it is labelled honestly instead of
+  // being called out as unverified.
+  const reached = data.reached !== false;
+  const offline = !reached;
 
   roundRect(ctx, W / 2 - 292, badgeY - 46, 584, 92, 46);
-  ctx.fillStyle = verified ? 'rgba(83,252,24,0.10)' : 'rgba(226,116,43,0.12)';
+  ctx.fillStyle = verified ? 'rgba(83,252,24,0.10)' : offline ? 'rgba(201,162,75,0.09)' : 'rgba(226,116,43,0.12)';
   ctx.fill();
-  ctx.strokeStyle = verified ? 'rgba(83,252,24,0.45)' : 'rgba(226,116,43,0.5)';
+  ctx.strokeStyle = verified ? 'rgba(83,252,24,0.45)' : offline ? 'rgba(201,162,75,0.4)' : 'rgba(226,116,43,0.5)';
   ctx.lineWidth = 2;
   ctx.stroke();
 
   // seal dot
   ctx.beginPath();
   ctx.arc(W / 2 - 238, badgeY, 15, 0, Math.PI * 2);
-  ctx.fillStyle = verified ? FIRE : EMBER;
-  ctx.shadowColor = verified ? 'rgba(83,252,24,0.85)' : 'rgba(226,116,43,0.85)';
+  ctx.fillStyle = verified ? FIRE : offline ? GOLD : EMBER;
+  ctx.shadowColor = verified ? 'rgba(83,252,24,0.85)' : offline ? 'rgba(201,162,75,0.8)' : 'rgba(226,116,43,0.85)';
   ctx.shadowBlur = 26;
   ctx.fill();
   ctx.shadowBlur = 0;
 
   ctx.textAlign = 'left';
-  ctx.fillStyle = verified ? '#DFFFC4' : '#FFD9A8';
+  ctx.fillStyle = verified ? '#DFFFC4' : offline ? GOLD_LT : '#FFD9A8';
   ctx.font = display(900, 30);
   try { (ctx as any).letterSpacing = '4px'; } catch { /* ignore */ }
-  ctx.fillText(verified ? 'SERVER VERIFIED' : 'UNVERIFIED RUN', W / 2 - 208, badgeY - 6);
+  const verdict = verified ? 'SERVER VERIFIED' : offline ? 'LOCAL RUN' : 'SCORE ADJUSTED';
+  ctx.fillText(verdict, W / 2 - 208, badgeY - 6);
 
   ctx.fillStyle = 'rgba(240,221,174,0.55)';
   ctx.font = display(700, 20);
@@ -386,11 +395,13 @@ export const buildScoreCard = async (data: ScoreCardData): Promise<Blob> => {
   ctx.fillText(data.receipt || '— LOCAL ONLY —', W / 2 - 84, badgeY + 27);
   try { (ctx as any).letterSpacing = '0px'; } catch { /* ignore */ }
 
-  if (!verified) {
+  // Only a reached-but-adjusted run gets called out; a clean run never does,
+  // and an offline run simply states that it was not signed.
+  if (!verified && reached) {
     ctx.textAlign = 'center';
     ctx.fillStyle = 'rgba(226,116,43,0.8)';
     ctx.font = arabic(500, 22);
-    ctx.fillText('السكور مش متحقق منه على السيرفر', W / 2, badgeY + 80);
+    ctx.fillText('تم تعديل السكور حسب فيزياء السيرفر', W / 2, badgeY + 80);
   }
 
   /* -------------------------------- footer -------------------------------- */
